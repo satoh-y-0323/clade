@@ -77,8 +77,10 @@ if (fs.existsSync(skillsDir)) {
 }
 
 lines.push('=========================================');
-lines.push('  /agent:developer|architect|reviewer で');
-lines.push('  エージェントを選択してください');
+lines.push('  /agent:developer | /agent:architect');
+lines.push('  /agent:tester');
+lines.push('  /agent:code-reviewer | /agent:security-reviewer');
+lines.push('  でエージェントを選択してください');
 lines.push('=========================================');
 
 process.stdout.write(lines.join('\n') + '\n');

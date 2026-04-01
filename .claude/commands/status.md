@@ -32,7 +32,9 @@
 - インスティンクトクラスタ: {件数}個
 
 ### 利用可能なコマンド
-- `/agent:developer` `/agent:architect` `/agent:reviewer` — エージェント切り替え
+- `/agent:developer` `/agent:architect` — 実装・設計担当エージェント
+- `/agent:tester` — テスト担当エージェント
+- `/agent:code-reviewer` `/agent:security-reviewer` — レビュー担当エージェント
 - `/init-session` — セッション復元
 - `/end-session` — セッション保存
 - `/cluster-promote` — インスティンクト昇格
