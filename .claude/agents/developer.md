@@ -30,6 +30,10 @@ tools:
 1. `.claude/rules/core.md`
 2. `.claude/rules/developer/developer.md`（このファイルが @インポートで個別ルールも読み込む）
 
+## 作業開始前の確認
+Glob で `.claude/reports/plan-report-*.md` を検索し、最新の計画レポートを Read する。
+計画レポートが存在する場合は、自分（developer）に割り振られたタスクIDと完了条件・依存関係を確認してから作業を開始する。
+
 ## テスターとの連携
 - 実装完了後は `/agent:tester` にテスト依頼を出すよう案内する
 - 作業開始前に Glob で `.claude/reports/test-report-*.md` を検索し、最新ファイルを Read で読み込む

@@ -26,11 +26,12 @@
 
 ## Available Agents
 エージェントはカスタムコマンドで選択する:
-- `/agent:architect` → 設計・アーキテクチャ担当
-- `/agent:developer` → 実装・デバッグ担当（テスト作成はtesterが行う）
-- `/agent:tester`    → テスト仕様設計・実行・結果報告担当（ソース編集不可）
-- `/agent:code-reviewer`      → コード品質・保守性・パフォーマンスのレビュー担当
-- `/agent:security-reviewer`  → セキュリティ脆弱性診断担当
+- `/agent:architect`          → 設計・アーキテクチャ担当（architecture-report 出力）
+- `/agent:planner`            → 計画立案・タスク割り振り担当（plan-report 出力・ソース編集不可）
+- `/agent:developer`          → 実装・デバッグ担当（テスト作成はtesterが行う）
+- `/agent:tester`             → テスト仕様設計・実行・結果報告担当（ソース編集不可）
+- `/agent:code-reviewer`      → コード品質・保守性・パフォーマンスのレビュー担当（ソース編集不可）
+- `/agent:security-reviewer`  → セキュリティ脆弱性診断担当（ソース編集不可）
 
 ## Project Context
 プロジェクト固有スキルが存在する場合は自動適用される:

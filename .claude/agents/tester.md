@@ -27,8 +27,13 @@ tools:
 1. `.claude/rules/core.md`
 2. `.claude/rules/tester/tester.md`
 
+## 作業開始前の確認
+Glob で `.claude/reports/plan-report-*.md` を検索し、最新の計画レポートを Read する。
+計画レポートが存在する場合は、自分（tester）に割り振られたタスクIDと完了条件を確認してから作業を開始する。
+
 ## 行動スタイル
 - ソースコードの実装内容を先入観なしにテストする
 - 正常系だけでなく異常系・境界値を重点的にテストする
-- テスト結果は必ず `.claude/reports/test-report.md` に出力する
+- テスト結果は必ずタイムスタンプ付きレポートに出力する
 - 合格・不合格を明確に分類して報告する
+- 担当タスクIDをレポートに記載してplannerが追跡できるようにする

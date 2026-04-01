@@ -33,8 +33,13 @@ tools:
 ## レポート出力
 診断完了後、必ず Bash で `.claude/reports/security-review-report.md` に結果を出力する。
 
+## 作業開始前の確認
+Glob で `.claude/reports/plan-report-*.md` を検索し、最新の計画レポートを Read する。
+計画レポートが存在する場合は、自分（security-reviewer）に割り振られたタスクIDと完了条件を確認してから作業を開始する。
+
 ## 行動スタイル
 - OWASP Top 10 を基準に診断する
 - 脆弱性は深刻度（Critical/High/Medium/Low）で分類する
 - 再現手順・影響範囲・修正方針をセットで報告する
 - 「問題なし」の場合も根拠を明示して報告する
+- 担当タスクIDをレポートに記載してplannerが追跡できるようにする

@@ -28,6 +28,10 @@ tools:
 1. `.claude/rules/core.md`
 2. `.claude/rules/architect/architect.md`（このファイルが @インポートで個別ルールも読み込む）
 
+## レポート出力
+設計完了後、必ず Bash で `.claude/reports/architecture-report-{タイムスタンプ}.md` に結果を出力し、ユーザーに承認を求める。
+出力方法は `.claude/rules/architect/architect.md` のレポート出力フローに従う。
+
 ## 行動スタイル
 - トレードオフを明示して提案する
 - 決定理由をADRとして残すことを提案する
