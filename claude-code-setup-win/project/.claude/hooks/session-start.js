@@ -77,8 +77,12 @@ if (fs.existsSync(skillsDir)) {
 }
 
 lines.push('=========================================');
-lines.push('  /agent:developer|architect|reviewer で');
-lines.push('  エージェントを選択してください');
+lines.push('  /agent:interviewer → 要件ヒアリング');
+lines.push('  /agent:architect   → 設計');
+lines.push('  /agent:planner     → 計画立案・タスク割り振り');
+lines.push('  /agent:developer   → 実装');
+lines.push('  /agent:tester      → テスト');
+lines.push('  /agent:code-reviewer | /agent:security-reviewer → レビュー');
 lines.push('=========================================');
 
 process.stdout.write(lines.join('\n') + '\n');

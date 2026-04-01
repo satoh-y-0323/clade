@@ -1,4 +1,11 @@
 {
+  "permissions": {
+    "deny": [
+      "Read(.env)",
+      "Read(**/.env)",
+      "Read(**.env.*)"
+    ]
+  },
   "hooks": {
     "PreCompact": [
       {
@@ -40,5 +47,6 @@
         ]
       }
     ]
-  }
+  },
+  "sandbox": true
 }
