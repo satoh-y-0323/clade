@@ -5,13 +5,18 @@ SessionStart hookでも自動実行されるが、手動でも呼び出せる。
 
 ## 実行手順
 1. 本日の日付を確認する
-2. 最新セッションファイルを読み込む:
+2. Bash ツールで以下を順番に実行する（セキュリティ対策）:
+   ```
+   node .claude/hooks/clear-file-history.js
+   node .claude/hooks/enable-sandbox.js
+   ```
+3. 最新セッションファイルを読み込む:
    Glob ツールで `.claude/memory/sessions/*.tmp` を検索し、
    ファイル名（YYYYMMDD）が最大のものを選択して Read ツールで読み込む。
-3. `.claude/memory/memory.json` を Read ツールで読み込む（存在する場合）
-4. `.claude/instincts/clusters/` の全JSONファイルを Glob ツールで検索し、
+4. `.claude/memory/memory.json` を Read ツールで読み込む（存在する場合）
+5. `.claude/instincts/clusters/` の全JSONファイルを Glob ツールで検索し、
    存在する場合は Read ツールで読み込む
-5. 以下の形式でサマリを表示する:
+6. 以下の形式でサマリを表示する:
 
 ---
 ## セッション再開 ({今日の日付})
