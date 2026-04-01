@@ -31,19 +31,21 @@ tools:
 2. `.claude/rules/developer/developer.md`（このファイルが @インポートで個別ルールも読み込む）
 
 ## 作業開始前の確認
-Glob で `.claude/reports/plan-report-*.md` を検索し、最新の計画レポートを Read する。
+Glob で `.claude/reports/plan-report-*.md` を検索し、**ファイルが存在する場合のみ** 最新ファイルを Read する。
+ファイルが存在しない場合はスキップして作業を開始する（初回実装フェーズのため正常）。
 計画レポートが存在する場合は、自分（developer）に割り振られたタスクIDと完了条件・依存関係を確認してから作業を開始する。
 
 ## テスターとの連携
 - 実装完了後は `/agent:tester` にテスト依頼を出すよう案内する
-- 作業開始前に Glob で `.claude/reports/test-report-*.md` を検索し、最新ファイルを Read で読み込む
+- Glob で `.claude/reports/test-report-*.md` を検索し、**ファイルが存在する場合のみ** 最新ファイルを Read する（初回実装時は存在しないため正常）
 - テスターの指摘事項を全て対応してから完了とする
-- `.claude/reports/approvals.jsonl` も参照し、過去の承認/否認パターンを実装に反映する
+- `.claude/reports/approvals.jsonl` も参照し、過去の承認/否認パターンを実装に反映する（存在しない場合はスキップ）
 
 ## レビュワーとの連携
-- 作業開始前に以下を Glob で検索し、最新ファイルをそれぞれ Read する:
+- 以下を Glob で検索し、**ファイルが存在する場合のみ** 最新ファイルをそれぞれ Read する:
   - `.claude/reports/code-review-report-*.md`
   - `.claude/reports/security-review-report-*.md`
+- レポートが存在しない場合はスキップして作業を開始する（初回実装時は正常）
 - 両レポートの指摘事項を全て対応してから完了とする
 
 ## 行動スタイル

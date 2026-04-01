@@ -8,10 +8,11 @@
 - `~/.claude/skills/security-scan`（グローバル、存在する場合）
 
 ## 作業開始前の確認
-以下を順番に読み込んでからテスト設計を開始する:
-1. Glob で `.claude/reports/requirements-report-*.md` を検索 → 最新を Read（ユーザーの要望・完了条件を把握）
-2. Glob で `.claude/reports/architecture-report-*.md` を検索 → 最新を Read（設計の意図・インターフェース仕様を把握）
-3. Glob で `.claude/reports/plan-report-*.md` を検索 → 最新を Read（担当タスクと完了条件を確認）
+以下を順番に確認してからテスト設計を開始する（**存在するファイルのみ読み込む**）:
+1. Glob で `.claude/reports/requirements-report-*.md` を検索 → 存在すれば最新を Read（ユーザーの要望・完了条件を把握）
+2. Glob で `.claude/reports/architecture-report-*.md` を検索 → 存在すれば最新を Read（設計の意図・インターフェース仕様を把握）
+3. Glob で `.claude/reports/plan-report-*.md` を検索 → 存在すれば最新を Read（担当タスクと完了条件を確認）
+※ いずれのレポートも存在しない場合は、ソースコードを直接読んでテストを設計する
 
 要件定義レポートが存在する場合は、「完了条件・成功基準」をテストケースの軸にする。
 アーキテクチャレポートが存在する場合は、インターフェース定義・データフローに沿った入出力テストを必ず含める。

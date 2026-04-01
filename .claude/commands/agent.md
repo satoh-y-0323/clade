@@ -29,20 +29,39 @@
 
 ※ 全レポートは `.claude/reports/` 配下にタイムスタンプ付きで保存される。
 
-## 標準ワークフロー
+## 標準ワークフロー（フェーズ構成）
+
+### フェーズ1: 要件定義・設計
 ```
-0. /agent:interviewer → 要件ヒアリング・requirements-report 出力・承認
-   ※ 新規開発の場合は省略可。機能追加・バグ修正では必ず実施。
-1. /agent:architect   → requirements-report 読み込み・設計・architecture-report 出力・承認
-2. /agent:planner     → 全レポート統合・plan-report 出力・承認
-3. /agent:tester      → plan 確認・テスト設計（Red）
-4. /agent:developer   → plan 確認・実装（Green → Refactor）
-5. /agent:tester      → テスト再実行・test-report 出力・承認
-6. /agent:code-reviewer → code-review-report 出力・承認
-7. /agent:security-reviewer → security-review-report 出力・承認
-8. /agent:planner     → 全レポート再統合・次サイクルの plan-report 出力
-   （指摘がなくなるまで 3〜8 を繰り返す）
+Step 0. /agent:interviewer  → 要件ヒアリング・requirements-report 出力・承認
+        ※ 機能追加・バグ修正では必ず実施。新規開発の場合は省略可。
+Step 1. /agent:architect    → requirements-report 読み込み・設計・architecture-report 出力・承認
 ```
+このフェーズ完了時点で存在するレポート: requirements-report, architecture-report
+
+### フェーズ2: 初回計画立案
+```
+Step 2. /agent:planner      → requirements-report + architecture-report を読み込み
+                              初回 plan-report 出力・承認
+                              ※ test/review レポートはまだ存在しないためスキップ（正常）
+```
+このフェーズ完了時点で存在するレポート: + plan-report
+
+### フェーズ3: 実装・テスト（TDDサイクル）
+```
+Step 3. /agent:tester       → plan-report 確認・テスト仕様設計・失敗テスト作成（Red）
+Step 4. /agent:developer    → plan-report 確認・実装（Green → Refactor）
+Step 5. /agent:tester       → テスト再実行・test-report 出力・承認
+```
+このフェーズ完了時点で存在するレポート: + test-report
+
+### フェーズ4: レビュー・計画更新
+```
+Step 6. /agent:code-reviewer     → code-review-report 出力・承認
+Step 7. /agent:security-reviewer → security-review-report 出力・承認
+Step 8. /agent:planner           → 全レポート統合・更新 plan-report 出力・承認
+```
+指摘がなくなるまで Step 3〜8 を繰り返す。
 
 ## TDD フロー（developer ↔ tester）
 1. `/agent:tester` でテスト仕様設計・失敗テスト作成（Red）

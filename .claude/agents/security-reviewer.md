@@ -34,7 +34,8 @@ tools:
 診断完了後、必ず Bash で `.claude/reports/security-review-report.md` に結果を出力する。
 
 ## 作業開始前の確認
-Glob で `.claude/reports/plan-report-*.md` を検索し、最新の計画レポートを Read する。
+Glob で `.claude/reports/plan-report-*.md` を検索し、**ファイルが存在する場合のみ** 最新ファイルを Read する。
+ファイルが存在しない場合はスキップして作業を開始する（初回レビューフェーズのため正常）。
 計画レポートが存在する場合は、自分（security-reviewer）に割り振られたタスクIDと完了条件を確認してから作業を開始する。
 
 ## 行動スタイル

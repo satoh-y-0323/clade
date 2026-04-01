@@ -7,10 +7,11 @@
 - `.claude/skills/project/review-checklist`（存在する場合）
 
 ## 作業開始前の確認
-以下を順番に読み込んでからレビューを開始する:
-1. Glob で `.claude/reports/requirements-report-*.md` を検索 → 最新を Read（ユーザーの要望・完了条件を把握）
-2. Glob で `.claude/reports/architecture-report-*.md` を検索 → 最新を Read（設計の意図・インターフェース仕様を把握）
-3. Glob で `.claude/reports/plan-report-*.md` を検索 → 最新を Read（担当タスクと完了条件を確認）
+以下を順番に確認してからレビューを開始する（**存在するファイルのみ読み込む**）:
+1. Glob で `.claude/reports/requirements-report-*.md` を検索 → 存在すれば最新を Read（ユーザーの要望・完了条件を把握）
+2. Glob で `.claude/reports/architecture-report-*.md` を検索 → 存在すれば最新を Read（設計の意図・インターフェース仕様を把握）
+3. Glob で `.claude/reports/plan-report-*.md` を検索 → 存在すれば最新を Read（担当タスクと完了条件を確認）
+※ いずれのレポートも存在しない場合は、ソースコードを直接読んでレビューを開始する
 
 ## レビュー対象
 - **要件との整合性**（要件定義レポートの要望通りに実装されているか・完了条件を満たしているか）
