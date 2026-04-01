@@ -1,0 +1,44 @@
+{
+  "hooks": {
+    "PreCompact": [
+      {
+        "type": "command",
+        "command": "node .claude/hooks/pre-compact.js"
+      }
+    ],
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "node .claude/hooks/session-start.js"
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "node .claude/hooks/stop.js"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/pre-tool.js"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/post-tool.js"
+          }
+        ]
+      }
+    ]
+  }
+}
