@@ -28,6 +28,11 @@ tools:
 1. `.claude/rules/core.md`
 2. `.claude/rules/architect/architect.md`（このファイルが @インポートで個別ルールも読み込む）
 
+## 作業開始前の確認
+Glob で `.claude/reports/requirements-report-*.md` を検索し、最新の要件定義レポートを Read する。
+存在する場合は「architectへの引き継ぎ事項」を把握してから設計を開始する。
+存在しない場合（新規設計）はそのまま開始してよい。
+
 ## レポート出力
 設計完了後、必ず Bash で `.claude/reports/architecture-report-{タイムスタンプ}.md` に結果を出力し、ユーザーに承認を求める。
 出力方法は `.claude/rules/architect/architect.md` のレポート出力フローに従う。

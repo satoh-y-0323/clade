@@ -77,6 +77,7 @@ if (fs.existsSync(skillsDir)) {
 }
 
 lines.push('=========================================');
+lines.push('  /agent:interviewer → 要件ヒアリング');
 lines.push('  /agent:architect   → 設計');
 lines.push('  /agent:planner     → 計画立案・タスク割り振り');
 lines.push('  /agent:developer   → 実装');

@@ -4,6 +4,7 @@
 
 ## 使い方
 ```
+/agent:interviewer        # 要件ヒアリング担当（作業開始前の要望聞き出し）
 /agent:architect          # 設計・アーキテクチャ担当
 /agent:planner            # 計画立案・タスク割り振り担当
 /agent:developer          # 実装・デバッグ担当（テスト作成はtesterが行う）
@@ -18,6 +19,7 @@
 
 | エージェント | モデル | 主な権限 | レポート出力先 |
 |---|---|---|---|
+| interviewer | sonnet | 読み取り・実行のみ（Write/Edit不可）| `requirements-report-*.md` |
 | architect | sonnet | 読み書き・実行（削除は確認後）| `architecture-report-*.md` |
 | planner | sonnet | 読み取り・実行のみ（Write/Edit不可）| `plan-report-*.md` |
 | developer | sonnet | 読み書き・実行・TodoWrite | - |
@@ -29,7 +31,9 @@
 
 ## 標準ワークフロー
 ```
-1. /agent:architect   → 設計・architecture-report 出力・承認
+0. /agent:interviewer → 要件ヒアリング・requirements-report 出力・承認
+   ※ 新規開発の場合は省略可。機能追加・バグ修正では必ず実施。
+1. /agent:architect   → requirements-report 読み込み・設計・architecture-report 出力・承認
 2. /agent:planner     → 全レポート統合・plan-report 出力・承認
 3. /agent:tester      → plan 確認・テスト設計（Red）
 4. /agent:developer   → plan 確認・実装（Green → Refactor）

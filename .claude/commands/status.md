@@ -32,6 +32,7 @@
 - インスティンクトクラスタ: {件数}個
 
 ### 利用可能なコマンド
+- `/agent:interviewer` — 要件ヒアリング担当
 - `/agent:architect` — 設計担当
 - `/agent:planner` — 計画立案・タスク割り振り担当
 - `/agent:developer` — 実装担当

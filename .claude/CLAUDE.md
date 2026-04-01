@@ -26,6 +26,7 @@
 
 ## Available Agents
 エージェントはカスタムコマンドで選択する:
+- `/agent:interviewer`        → 要件ヒアリング担当（requirements-report 出力・ソース編集不可）
 - `/agent:architect`          → 設計・アーキテクチャ担当（architecture-report 出力）
 - `/agent:planner`            → 計画立案・タスク割り振り担当（plan-report 出力・ソース編集不可）
 - `/agent:developer`          → 実装・デバッグ担当（テスト作成はtesterが行う）

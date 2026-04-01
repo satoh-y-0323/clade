@@ -9,6 +9,11 @@
 - `.claude/skills/project/api-design`（存在する場合）
 - `~/.claude/skills/db-schema`（グローバル、存在する場合）
 
+## 作業開始前の確認
+Glob で `.claude/reports/requirements-report-*.md` を検索し、最新の要件定義レポートを Read する。
+要件定義レポートが存在する場合は、「architectへの引き継ぎ事項」と「深堀りしてほしい点」を確認してから設計を開始する。
+要件定義レポートがない場合（新規でarchitectから始める場合）はそのまま設計を開始してよい。
+
 ## 設計原則
 - 依存関係は内側から外側への方向のみ許可する
 - インターフェースを先に設計してから実装する
