@@ -31,11 +31,24 @@
 - **Medium**: 計画的に対応。条件次第で悪用される可能性がある
 - **Low**: 対応推奨。影響は限定的だが改善が望ましい
 
-## レポート出力方法
-Bash ツールで以下のように出力する（ディレクトリが存在しない場合も自動作成される）:
-```
-node .claude/hooks/write-report.js .claude/reports/security-review-report.md "{レポート内容}"
-```
+## レポート出力と承認確認フロー
+1. Bash ツールでレポートを出力する（実際のファイルパスが返る）:
+   ```
+   node .claude/hooks/write-report.js security-review-report "{レポート内容}"
+   ```
+   → 出力例: `[write-report] .claude/reports/security-review-report-20260401-143022.md`
+
+2. 出力されたファイルパスをメモしておく。
+
+3. レポートの内容をユーザーに提示し、承認を求める:
+   「セキュリティ診断レポートを `.claude/reports/security-review-report-{タイムスタンプ}.md` に保存しました。
+   上記のレポート内容を確認してください。
+   **このレポートを承認しますか？（yes / no）理由もお知らせください。**」
+
+4. ユーザーの回答を受けて、Bash ツールで承認を記録する:
+   ```
+   node .claude/hooks/record-approval.js {reportFileName} {yes|no} security-review "{ユーザーのコメント}"
+   ```
 
 ## レポートフォーマット
 ```markdown

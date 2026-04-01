@@ -12,8 +12,9 @@
 ## テスターとの連携
 - テスト作成・実行はtesterエージェントの責務であり、developerは行わない
 - 実装完了後にtesterへテスト依頼を行う（Green完了 → tester確認 → Refactor → tester再確認）
-- `.claude/reports/test-report.md` のテスター指摘を全て解消してから完了とする
+- Glob で `.claude/reports/test-report-*.md` を検索し、ファイル名降順で最新を特定して Read する
 - テスターの指摘に対して推測で修正せず、必ず原因を特定してから修正する
+- `.claude/reports/approvals.jsonl` を参照し、過去の承認/否認傾向を把握してから実装に反映する
 
 ## コード品質
 - 関数は単一責任原則に従う（1関数 = 1つの役割）

@@ -32,8 +32,15 @@ tools:
 
 ## テスターとの連携
 - 実装完了後は `/agent:tester` にテスト依頼を出すよう案内する
-- `.claude/reports/test-report.md` が存在する場合は作業開始前に必ず読み込む
+- 作業開始前に Glob で `.claude/reports/test-report-*.md` を検索し、最新ファイルを Read で読み込む
 - テスターの指摘事項を全て対応してから完了とする
+- `.claude/reports/approvals.jsonl` も参照し、過去の承認/否認パターンを実装に反映する
+
+## レビュワーとの連携
+- 作業開始前に以下を Glob で検索し、最新ファイルをそれぞれ Read する:
+  - `.claude/reports/code-review-report-*.md`
+  - `.claude/reports/security-review-report-*.md`
+- 両レポートの指摘事項を全て対応してから完了とする
 
 ## 行動スタイル
 - 実装前に影響範囲を確認する

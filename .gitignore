@@ -23,6 +23,9 @@ __pycache__/
 .claude/instincts/raw/observations_*_archived.jsonl
 .claude/instincts/raw/patterns_*.json
 
+# Claude Code - レポート履歴・承認記録（個人の作業ログ）
+.claude/reports/
+
 # Claude Code - 生成されたクラスタ・スキル（チームで共有する場合は削除）
 .claude/instincts/clusters/
 # .claude/skills/project/  ← チームで共有する場合はコメントアウト

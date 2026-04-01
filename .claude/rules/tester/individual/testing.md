@@ -11,13 +11,26 @@
 2. テスト仕様書を設計する（正常系・異常系・境界値）
 3. **実装前に失敗するテストを書く**（Redフェーズ: 既存テストファイルへの追記はdeveloperに依頼）
 4. テストを実行する: `Bash` でテストコマンドを実行
-5. 結果を `.claude/reports/test-report.md` に出力する
+5. 結果を以下のフローでレポートに出力し、承認を確認する
 
-## レポート出力方法
-Bash ツールで以下のように出力する（ディレクトリが存在しない場合も自動作成される）:
-```
-node .claude/hooks/write-report.js .claude/reports/test-report.md "{レポート内容}"
-```
+## レポート出力と承認確認フロー
+1. Bash ツールでレポートを出力する（実際のファイルパスが返る）:
+   ```
+   node .claude/hooks/write-report.js test-report "{レポート内容}"
+   ```
+   → 出力例: `[write-report] .claude/reports/test-report-20260401-143022.md`
+
+2. 出力されたファイルパスをメモしておく。
+
+3. レポートの内容をユーザーに提示し、承認を求める:
+   「テストレポートを `.claude/reports/test-report-{タイムスタンプ}.md` に保存しました。
+   上記のレポート内容を確認してください。
+   **このレポートを承認しますか？（yes / no）理由もお知らせください。**」
+
+4. ユーザーの回答を受けて、Bash ツールで承認を記録する:
+   ```
+   node .claude/hooks/record-approval.js {reportFileName} {yes|no} test "{ユーザーのコメント}"
+   ```
 
 ## レポートフォーマット
 ```markdown
