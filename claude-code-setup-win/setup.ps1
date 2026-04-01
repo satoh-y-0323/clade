@@ -1,4 +1,4 @@
-# setup.ps1
+﻿# setup.ps1
 # Claude Code プロジェクトセットアップ（WSL不要版）
 #
 # 実行方法:
@@ -35,7 +35,7 @@ Write-Host ""
 Write-Host "[1/3] プロジェクト設定を配置中: $ProjectPath\.claude\" -ForegroundColor Cyan
 
 $projClaude = Join-Path $ProjectPath ".claude"
-$sourceClaude = Join-Path $ScriptDir ".claude"
+$sourceClaude = Join-Path $ScriptDir "project\.claude"
 
 if (-not (Test-Path $sourceClaude)) {
     Write-Host "[ERROR] セットアップ元の .claude\ フォルダが見つかりません: $sourceClaude" -ForegroundColor Red
@@ -88,16 +88,16 @@ $entries = @(
 )
 
 if (Test-Path $gitignore) {
-    $existing = Get-Content $gitignore -Raw
+    $existing = Get-Content $gitignore -Raw -Encoding UTF8
     $toAdd = $entries | Where-Object { $existing -notmatch [regex]::Escape($_) }
     if ($toAdd.Count -gt 0) {
-        Add-Content $gitignore ("`n" + ($toAdd -join "`n"))
+        Add-Content $gitignore ("`n" + ($toAdd -join "`n")) -Encoding UTF8
         foreach ($e in $toAdd) { Write-Host "  -> 追加: $e" }
     } else {
         Write-Host "  -> 既に設定済みです"
     }
 } else {
-    $entries | Set-Content $gitignore
+    $entries | Set-Content $gitignore -Encoding UTF8
     Write-Host "  -> .gitignore を作成しました" -ForegroundColor Green
 }
 
