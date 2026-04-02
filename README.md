@@ -40,7 +40,7 @@ cd clade
 ```powershell
 # Windows (PowerShell)
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\clade-setup-win\setup.ps1 -ProjectPath "C:\path\to\your\project"
+.\setup.ps1 -ProjectPath "C:\path\to\your\project"
 ```
 
 `-ProjectPath` specifies the full path to the project you want to set up.  
@@ -149,16 +149,20 @@ Session state, memory, and learned patterns are automatically saved between sess
 ## Project Structure
 
 ```
-.claude/
-├── agents/          # Agent definitions (YAML frontmatter + instructions)
-├── commands/        # Custom slash commands (/agent-xxx)
-├── hooks/           # Lifecycle hooks (session start/stop, tool pre/post)
-├── rules/           # Agent behavior rules (core + per-agent)
-├── skills/
-│   └── project/     # Project-specific skill files (coding conventions, etc.)
-├── reports/         # Generated reports (auto-created)
-├── memory/          # Session memory (auto-managed)
-└── CLAUDE.md        # Entry point for Claude Code
+clade/
+├── .claude/             # Clade configuration (this is what setup.ps1 copies)
+│   ├── agents/          # Agent definitions (YAML frontmatter + instructions)
+│   ├── commands/        # Custom slash commands (/agent-xxx)
+│   ├── hooks/           # Lifecycle hooks (session start/stop, tool pre/post)
+│   ├── rules/           # Agent behavior rules (core + per-agent)
+│   ├── skills/
+│   │   └── project/     # Project-specific skill files (coding conventions, etc.)
+│   ├── reports/         # Generated reports (auto-created)
+│   ├── memory/          # Session memory (auto-managed)
+│   └── CLAUDE.md        # Entry point for Claude Code
+├── setup.ps1            # Setup script for existing projects
+├── README.md
+└── LICENSE
 ```
 
 ---

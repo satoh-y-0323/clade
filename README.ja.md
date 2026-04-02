@@ -38,7 +38,7 @@ cd clade
 ```powershell
 # Windows（PowerShell）
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\clade-setup-win\setup.ps1 -ProjectPath "C:\path\to\your\project"
+.\setup.ps1 -ProjectPath "C:\path\to\your\project"
 ```
 
 `-ProjectPath` にはセットアップしたいプロジェクトのフルパスを指定します。  
@@ -148,16 +148,20 @@ TypeScript・Python・C#・Go・Java・Ruby など、あらゆる言語に対応
 ## プロジェクト構成
 
 ```
-.claude/
-├── agents/          # エージェント定義（YAML frontmatter + 指示）
-├── commands/        # カスタムスラッシュコマンド（/agent-xxx）
-├── hooks/           # ライフサイクルフック（セッション開始/終了・ツール前後）
-├── rules/           # エージェントの行動ルール（共通 + エージェントごと）
-├── skills/
-│   └── project/     # プロジェクト固有のスキルファイル（コーディング規約等）
-├── reports/         # 生成されたレポート（自動作成）
-├── memory/          # セッションメモリ（自動管理）
-└── CLAUDE.md        # Claude Code のエントリポイント
+clade/
+├── .claude/             # Clade の設定（setup.ps1 がコピーするもの）
+│   ├── agents/          # エージェント定義（YAML frontmatter + 指示）
+│   ├── commands/        # カスタムスラッシュコマンド（/agent-xxx）
+│   ├── hooks/           # ライフサイクルフック（セッション開始/終了・ツール前後）
+│   ├── rules/           # エージェントの行動ルール（共通 + エージェントごと）
+│   ├── skills/
+│   │   └── project/     # プロジェクト固有のスキルファイル（コーディング規約等）
+│   ├── reports/         # 生成されたレポート（自動作成）
+│   ├── memory/          # セッションメモリ（自動管理）
+│   └── CLAUDE.md        # Claude Code のエントリポイント
+├── setup.ps1            # 既存プロジェクトへの導入スクリプト
+├── README.md
+└── LICENSE
 ```
 
 ---

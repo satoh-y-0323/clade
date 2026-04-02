@@ -1,9 +1,8 @@
-﻿# setup.ps1
-# Claude Code プロジェクトセットアップ（WSL不要版）
+# setup.ps1
+# Clade セットアップ（WSL不要版）
 #
 # 実行方法:
 #   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-#   .\setup.ps1
 #   .\setup.ps1 -ProjectPath "C:\path\to\your\project"
 
 param(
@@ -14,7 +13,7 @@ $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 Write-Host "============================================" -ForegroundColor Cyan
-Write-Host "  Claude Code セットアップ（プロジェクト用）" -ForegroundColor Cyan
+Write-Host "  Clade セットアップ（プロジェクト用）" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  プロジェクト: $ProjectPath" -ForegroundColor Yellow
@@ -35,7 +34,7 @@ Write-Host ""
 Write-Host "[1/3] プロジェクト設定を配置中: $ProjectPath\.claude\" -ForegroundColor Cyan
 
 $projClaude = Join-Path $ProjectPath ".claude"
-$sourceClaude = Join-Path $ScriptDir "project\.claude"
+$sourceClaude = Join-Path $ScriptDir ".claude"
 
 if (-not (Test-Path $sourceClaude)) {
     Write-Host "[ERROR] セットアップ元の .claude\ フォルダが見つかりません: $sourceClaude" -ForegroundColor Red
@@ -77,13 +76,13 @@ Write-Host "[3/3] .gitignore を更新中..." -ForegroundColor Cyan
 
 $gitignore = Join-Path $ProjectPath ".gitignore"
 $entries = @(
-    "# Claude Code - ローカル設定（機械固有パスを含む）",
+    "# Clade - ローカル設定（機械固有パスを含む）",
     ".claude/settings.local.json",
-    "# Claude Code - セッション記録",
+    "# Clade - セッション記録",
     ".claude/memory/sessions/",
-    "# Claude Code - 観察データ",
+    "# Clade - 観察データ",
     ".claude/instincts/raw/",
-    "# Claude Code - クラスタデータ",
+    "# Clade - クラスタデータ",
     ".claude/instincts/clusters/"
 )
 
@@ -111,13 +110,13 @@ Write-Host "  次のステップ:" -ForegroundColor Cyan
 Write-Host "  1. VSCode でプロジェクトを開く"
 Write-Host "  2. Claude Code を起動（SessionStart hook が自動実行される）"
 Write-Host "  3. エージェントを選択:"
-Write-Host "       /agent:interviewer       （要件ヒアリング）"
-Write-Host "       /agent:architect         （設計）"
-Write-Host "       /agent:planner           （計画立案）"
-Write-Host "       /agent:developer         （実装・デバッグ）"
-Write-Host "       /agent:tester            （テスト）"
-Write-Host "       /agent:code-reviewer     （コードレビュー）"
-Write-Host "       /agent:security-reviewer （セキュリティ診断）"
+Write-Host "       /agent-interviewer       （要件ヒアリング）"
+Write-Host "       /agent-architect         （設計）"
+Write-Host "       /agent-planner           （計画立案）"
+Write-Host "       /agent-developer         （実装・デバッグ）"
+Write-Host "       /agent-tester            （テスト）"
+Write-Host "       /agent-code-reviewer     （コードレビュー）"
+Write-Host "       /agent-security-reviewer （セキュリティ診断）"
 Write-Host ""
 Write-Host "  利用可能なコマンド:" -ForegroundColor Cyan
 Write-Host "       /init-session        （セッション復元）"
