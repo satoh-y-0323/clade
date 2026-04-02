@@ -5,6 +5,7 @@
 @.claude/rules/developer/individual/git.md
 
 ## 使用可能スキル
+- `.claude/skills/project/coding-conventions.md`（存在する場合）— **作業開始前に必ず最初に Read すること**
 - `.claude/skills/project/git-workflow`（存在する場合）
 - `.claude/skills/project/debug-loop`（存在する場合）
 - `~/.claude/skills/refactor`（グローバル、存在する場合）
