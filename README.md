@@ -31,7 +31,7 @@ It organizes specialized agents by role — interviewer, architect, planner, dev
 ### 1. Clone this repository
 
 ```bash
-git clone https://github.com/satoh-y-0323/github_testproject.git clade
+git clone https://github.com/satoh-y-0323/clade.git clade
 cd clade
 ```
 

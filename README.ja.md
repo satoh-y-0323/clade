@@ -29,7 +29,7 @@
 ### 1. リポジトリをクローンする
 
 ```bash
-git clone https://github.com/satoh-y-0323/github_testproject.git clade
+git clone https://github.com/satoh-y-0323/clade.git clade
 cd clade
 ```
 
