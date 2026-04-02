@@ -5,7 +5,7 @@
 1. `.claude/hooks/session-start.js` が SessionStart hook として自動実行される
    → 前回セッション・memory.json・インスティンクト・スキル一覧がコンテキストに注入される
 2. 前回の残タスクをユーザーに提示する
-3. エージェントを選択する: `/agent:developer` / `/agent:architect` / `/agent:code-reviewer` / `/agent:security-reviewer`
+3. エージェントを選択する: `/agent-developer` / `/agent-architect` / `/agent-code-reviewer` / `/agent-security-reviewer`
 
 手動実行が必要な場合: `/init-session`
 
@@ -26,13 +26,13 @@
 
 ## Available Agents
 エージェントはカスタムコマンドで選択する:
-- `/agent:interviewer`        → 要件ヒアリング担当（requirements-report 出力・ソース編集不可）
-- `/agent:architect`          → 設計・アーキテクチャ担当（architecture-report 出力）
-- `/agent:planner`            → 計画立案・タスク割り振り担当（plan-report 出力・ソース編集不可）
-- `/agent:developer`          → 実装・デバッグ担当（テスト作成はtesterが行う）
-- `/agent:tester`             → テスト仕様設計・実行・結果報告担当（ソース編集不可）
-- `/agent:code-reviewer`      → コード品質・保守性・パフォーマンスのレビュー担当（ソース編集不可）
-- `/agent:security-reviewer`  → セキュリティ脆弱性診断担当（ソース編集不可）
+- `/agent-interviewer`        → 要件ヒアリング担当（requirements-report 出力・ソース編集不可）
+- `/agent-architect`          → 設計・アーキテクチャ担当（architecture-report 出力）
+- `/agent-planner`            → 計画立案・タスク割り振り担当（plan-report 出力・ソース編集不可）
+- `/agent-developer`          → 実装・デバッグ担当（テスト作成はtesterが行う）
+- `/agent-tester`             → テスト仕様設計・実行・結果報告担当（ソース編集不可）
+- `/agent-code-reviewer`      → コード品質・保守性・パフォーマンスのレビュー担当（ソース編集不可）
+- `/agent-security-reviewer`  → セキュリティ脆弱性診断担当（ソース編集不可）
 
 ## Project Context
 プロジェクト固有スキルが存在する場合は自動適用される:

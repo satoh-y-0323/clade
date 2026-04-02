@@ -32,12 +32,12 @@
 - インスティンクトクラスタ: {件数}個
 
 ### 利用可能なコマンド
-- `/agent:interviewer` — 要件ヒアリング担当
-- `/agent:architect` — 設計担当
-- `/agent:planner` — 計画立案・タスク割り振り担当
-- `/agent:developer` — 実装担当
-- `/agent:tester` — テスト担当
-- `/agent:code-reviewer` `/agent:security-reviewer` — レビュー担当
+- `/agent-interviewer` — 要件ヒアリング担当
+- `/agent-architect` — 設計担当
+- `/agent-planner` — 計画立案・タスク割り振り担当
+- `/agent-developer` — 実装担当
+- `/agent-tester` — テスト担当
+- `/agent-code-reviewer` `/agent-security-reviewer` — レビュー担当
 - `/init-session` — セッション復元
 - `/end-session` — セッション保存
 - `/cluster-promote` — インスティンクト昇格
