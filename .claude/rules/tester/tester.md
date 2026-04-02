@@ -4,6 +4,7 @@
 @.claude/rules/tester/individual/testing.md
 
 ## 使用可能スキル
+- `.claude/skills/project/coding-conventions.md`（存在する場合）— **作業開始前に必ず最初に Read すること**（テスト命名規則・構造に反映する）
 - `.claude/skills/project/review-checklist`（存在する場合）
 - `~/.claude/skills/security-scan`（グローバル、存在する場合）
 

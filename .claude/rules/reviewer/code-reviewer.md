@@ -4,6 +4,7 @@
 @.claude/rules/reviewer/individual/code-checklist.md
 
 ## 使用可能スキル
+- `.claude/skills/project/coding-conventions.md`（存在する場合）— **作業開始前に必ず最初に Read すること**
 - `.claude/skills/project/review-checklist`（存在する場合）
 
 ## 作業開始前の確認

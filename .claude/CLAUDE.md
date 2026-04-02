@@ -35,6 +35,7 @@
 - `/agent-security-reviewer`  → セキュリティ脆弱性診断担当（ソース編集不可）
 
 ### ユーティリティエージェント（標準ワークフロー外・単独完結）
+- `/agent-project-setup`      → コーディング規約の設定・coding-conventions.md 生成担当
 - `/agent-mcp-setup`          → MCPサーバの調査・接続設定・スキルファイル生成担当
 
 ## Project Context
