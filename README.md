@@ -22,6 +22,7 @@ It organizes specialized agents by role — interviewer, architect, planner, dev
 - [Claude Code](https://claude.ai/code) (CLI or VS Code extension)
 - Node.js v18 or later
 - Git
+- Windows (WSL not required)
 
 ---
 
@@ -30,17 +31,19 @@ It organizes specialized agents by role — interviewer, architect, planner, dev
 ### 1. Clone this repository
 
 ```bash
-git clone https://github.com/satoh-y-0323/github_testproject.git my-project
-cd my-project
+git clone https://github.com/satoh-y-0323/github_testproject.git clade
+cd clade
 ```
 
 ### 2. Run the setup script
 
 ```powershell
 # Windows (PowerShell)
-.\project\setup.ps1
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\clade-setup-win\setup.ps1 -ProjectPath "C:\path\to\your\project"
 ```
 
+`-ProjectPath` specifies the full path to the project you want to set up.  
 This copies the `.claude/` directory into your project and initializes the session management hooks.
 
 ### 3. Set up your coding conventions (recommended)

@@ -20,6 +20,7 @@
 - [Claude Code](https://claude.ai/code)（CLI または VS Code 拡張）
 - Node.js v18 以上
 - Git
+- Windows（WSL 不要）
 
 ---
 
@@ -28,17 +29,19 @@
 ### 1. リポジトリをクローンする
 
 ```bash
-git clone https://github.com/satoh-y-0323/github_testproject.git my-project
-cd my-project
+git clone https://github.com/satoh-y-0323/github_testproject.git clade
+cd clade
 ```
 
 ### 2. セットアップスクリプトを実行する
 
 ```powershell
 # Windows（PowerShell）
-.\project\setup.ps1
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\clade-setup-win\setup.ps1 -ProjectPath "C:\path\to\your\project"
 ```
 
+`-ProjectPath` にはセットアップしたいプロジェクトのフルパスを指定します。  
 `.claude/` ディレクトリをプロジェクトにコピーし、セッション管理フックを初期化します。
 
 ### 3. コーディング規約を設定する（推奨）
