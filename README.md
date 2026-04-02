@@ -1,5 +1,7 @@
 # Clade
 
+[日本語版はこちら](README.ja.md)
+
 **Clade** is a multi-agent development framework built on top of [Claude Code](https://claude.ai/code).  
 It organizes specialized agents by role — interviewer, architect, planner, developer, tester, reviewer — and connects them through a structured workflow, all defined in plain Markdown. No code required.
 
