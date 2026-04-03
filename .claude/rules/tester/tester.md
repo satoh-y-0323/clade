@@ -6,7 +6,7 @@
 ## 使用可能スキル
 - `.claude/skills/project/coding-conventions.md`（存在する場合）— **作業開始前に必ず最初に Read すること**（テスト命名規則・構造に反映する）
 - `.claude/skills/project/review-checklist`（存在する場合）
-- `~/.claude/skills/security-scan`（グローバル、存在する場合）
+- `.claude/skills/project/security-scan`（存在する場合）
 
 ## 作業開始前の確認
 以下を順番に確認してからテスト設計を開始する（**存在するファイルのみ読み込む**）:

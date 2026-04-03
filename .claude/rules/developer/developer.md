@@ -8,7 +8,7 @@
 - `.claude/skills/project/coding-conventions.md`（存在する場合）— **作業開始前に必ず最初に Read すること**
 - `.claude/skills/project/git-workflow`（存在する場合）
 - `.claude/skills/project/debug-loop`（存在する場合）
-- `~/.claude/skills/refactor`（グローバル、存在する場合）
+- `.claude/skills/project/refactor`（存在する場合）
 
 ## テスターとの連携
 - テスト作成・実行はtesterエージェントの責務であり、developerは行わない

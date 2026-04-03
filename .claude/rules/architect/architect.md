@@ -8,7 +8,7 @@
 - `.claude/skills/project/coding-conventions.md`（存在する場合）— **作業開始前に必ず最初に Read すること**（言語・パターン選定の前提として確認する）
 - `.claude/skills/project/system-design`（存在する場合）
 - `.claude/skills/project/api-design`（存在する場合）
-- `~/.claude/skills/db-schema`（グローバル、存在する場合）
+- `.claude/skills/project/db-schema`（存在する場合）
 
 ## 作業開始前の確認
 Glob で `.claude/reports/requirements-report-*.md` を検索し、最新の要件定義レポートを Read する。

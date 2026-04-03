@@ -4,7 +4,7 @@
 @.claude/rules/reviewer/individual/security-checklist.md
 
 ## 使用可能スキル
-- `~/.claude/skills/security-scan`（グローバル、存在する場合）
+- `.claude/skills/project/security-scan`（存在する場合）
 
 ## 作業開始前の確認
 以下を順番に確認してから診断を開始する（**存在するファイルのみ読み込む**）:

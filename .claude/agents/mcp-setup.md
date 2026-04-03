@@ -63,9 +63,9 @@ MCPサーバの導入を支援する専門エージェント。
    - 必要な環境変数: {リスト}
    - 使えるツール: {ツール一覧}
 
-   追加してよいですか？また、スコープを教えてください:
-   - project: このプロジェクト専用（.claude/settings.json に追加）
-   - global:  全プロジェクト共通（~/.claude/settings.json に追加）
+   このプロジェクト専用（project スコープ）として追加します。
+   追加してよいですか？ [yes / no]
+   ※ 全プロジェクトで使いたくなった場合は後から /promote で昇格できます。
    ```
 
 ### Step 2b: プライベート・社内MCPサーバの場合
@@ -110,12 +110,8 @@ Web検索はせず、ユーザーに直接ヒアリングを行う。
    提供されるツール・機能を簡単に説明してもらえると
    スキルファイルに記載できます。
 ```
-↓ 回答を受けてから次へ
-```
-6. スコープを教えてください:
-   - project: このプロジェクト専用（.claude/settings.json に追加）
-   - global:  全プロジェクト共通（~/.claude/settings.json に追加）
-```
+※ このプロジェクト専用（project スコープ）として追加します。
+  全プロジェクトで使いたくなった場合は後から /promote で昇格できます。
 
 ### Step 3: 接続設定の追加
 
@@ -125,7 +121,7 @@ Web検索はせず、ユーザーに直接ヒアリングを行う。
 以下の設定を追加します。よいですか？
 
 サーバ名: {name}
-スコープ: {project / global}
+スコープ: project（このプロジェクト専用）
 コマンド: {command}  または  URL: {url}
 環境変数: {env vars}
 
@@ -136,23 +132,22 @@ Web検索はせず、ユーザーに直接ヒアリングを行う。
 
 ```bash
 # stdio の場合
-claude mcp add {name} --scope {scope} -- {command} {args...}
+claude mcp add {name} --scope project -- {command} {args...}
 
 # sse の場合
-claude mcp add {name} --transport sse --scope {scope} {url}
+claude mcp add {name} --transport sse --scope project {url}
 
 # 環境変数がある場合は -e フラグを追加
-claude mcp add {name} --scope {scope} -e KEY=value -- {command}
+claude mcp add {name} --scope project -e KEY=value -- {command}
 ```
 
 実行後、`claude mcp list` で追加を確認する。
 
 ### Step 4: スキルファイルの生成
 
-スコープに応じてスキルファイルを作成する:
+プロジェクトスコープのスキルファイルを作成する:
 
-- project スコープ: `.claude/skills/project/{name}-mcp.md`
-- global スコープ: `~/.claude/skills/{name}-mcp.md`
+- `.claude/skills/project/{name}-mcp.md`
 
 **スキルファイルのフォーマット:**
 ```markdown
@@ -183,12 +178,14 @@ claude mcp add {name} --scope {scope} -e KEY=value -- {command}
 ```
 MCPサーバのセットアップが完了しました。
 
-✓ 接続設定: {scope} スコープに追加済み
+✓ 接続設定: project スコープに追加済み（.claude/settings.json）
 ✓ スキルファイル: {ファイルパス} を作成
 
 【次のステップ】
 {環境変数の設定が必要な場合はその手順}
 {Claude Code の再起動が必要な場合はその旨}
+
+全プロジェクトで使いたい場合は /promote でグローバルに昇格できます。
 ```
 
 ## 注意事項
