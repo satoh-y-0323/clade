@@ -15,6 +15,8 @@ It organizes specialized agents by role — interviewer, architect, planner, dev
 - **Role-based agents** — Each agent has a clearly defined responsibility and rule set
 - **Structured workflow** — Phases from requirements → design → planning → implementation → testing → review
 - **Human-in-the-loop** — Every phase produces a report that requires your approval before moving on
+- **Project-contained by default** — All configuration lives inside `.claude/` and travels with the project. Nothing leaks into your global environment without your explicit intent
+- **Promote when ready** — Skills, rules, and MCP servers that prove useful across multiple projects can be elevated to global scope with `/promote`, on your terms
 - **Fully customizable** — Tailor agents, rules, and skills to your team's conventions
 - **No code required** — Everything is configured in Markdown files
 
@@ -44,10 +46,15 @@ cd clade
 # Windows (PowerShell)
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\setup.ps1 -ProjectPath "C:\path\to\your\project"
+
+# With GitHub MCP integration (requires a GitHub Personal Access Token)
+.\setup.ps1 -ProjectPath "C:\path\to\your\project" -MCP
 ```
 
 `-ProjectPath` specifies the full path to the project you want to set up.  
 This copies the `.claude/` directory into your project and initializes the session management hooks.
+
+`-MCP` enables the GitHub MCP server. You will be prompted to enter your GitHub Personal Access Token on first run. The token is stored in `.claude/settings.local.json` (gitignored).
 
 ### 3. Set up your coding conventions (recommended)
 
@@ -132,8 +139,32 @@ Files placed here are automatically picked up by the relevant agents.
 ### Rules
 Modify `.claude/rules/` to adjust agent behavior globally or per-agent.
 
-### Adding MCP servers
-Run `/agent-mcp-setup` to add public or private (internal) MCP servers and generate skill files for them.
+### Built-in MCP servers
+
+Clade includes the following MCP servers out of the box:
+
+| Server | Purpose |
+|---|---|
+| `filesystem` | Read/write files outside the project directory |
+| `memory` | Persistent knowledge graph across sessions |
+| `sequential-thinking` | Structured multi-step reasoning for complex tasks |
+| `github` | Access GitHub Issues, PRs, and repositories (requires `-MCP` setup) |
+| `playwright` | Browser automation and E2E testing (localhost only by default) |
+
+The Playwright server restricts access to `localhost` by default. Use these commands to manage allowed origins per project:
+
+```
+/playwright-list-origins                          # Show current allowed origins
+/playwright-add-origin https://staging.example.com   # Add an origin
+/playwright-remove-origin https://staging.example.com # Remove an origin
+```
+
+Additional origins are stored in `.claude/settings.local.json` only — `settings.json` is never modified.
+
+### Adding more MCP servers
+Run `/agent-mcp-setup` to add public or private (internal) MCP servers. All servers are added to project scope (`.claude/settings.json`) and a skill file is generated automatically.
+
+If a server proves useful across multiple projects, run `/promote` to elevate it to global scope (`~/.claude/settings.json`).
 
 ---
 

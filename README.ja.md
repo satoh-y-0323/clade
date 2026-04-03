@@ -13,6 +13,8 @@
 - **役割ベースのエージェント** — 各エージェントに明確な責務とルールを定義
 - **構造化されたワークフロー** — 要件定義 → 設計 → 計画 → 実装 → テスト → レビューのフェーズ構成
 - **Human-in-the-Loop** — 各フェーズでレポートを出力し、あなたの承認を待ってから次へ進む
+- **プロジェクト内完結** — すべての設定は `.claude/` に収まり、リポジトリとともに管理される。意図しない形でグローバル環境に影響することはない
+- **必要なときだけ昇格** — 複数プロジェクトで有用と判断したスキル・ルール・MCP サーバは `/promote` でグローバルに昇格できる。昇格するかどうかは常に自分で決める
 - **完全カスタマイズ可能** — エージェント・ルール・スキルをチームの規約に合わせて自由に変更できる
 - **コード不要** — すべての設定を Markdown ファイルで管理
 
@@ -42,10 +44,15 @@ cd clade
 # Windows（PowerShell）
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\setup.ps1 -ProjectPath "C:\path\to\your\project"
+
+# GitHub MCP 連携を有効にする場合（GitHub Personal Access Token が必要）
+.\setup.ps1 -ProjectPath "C:\path\to\your\project" -MCP
 ```
 
 `-ProjectPath` にはセットアップしたいプロジェクトのフルパスを指定します。  
 `.claude/` ディレクトリをプロジェクトにコピーし、セッション管理フックを初期化します。
+
+`-MCP` を指定すると GitHub MCP サーバが有効になります。初回実行時に GitHub Personal Access Token の入力を求められます。トークンは `.claude/settings.local.json`（gitignore 対象）に保存されます。
 
 ### 3. コーディング規約を設定する（推奨）
 
@@ -131,8 +138,32 @@ TypeScript・Python・C#・Go・Java・Ruby など、あらゆる言語に対応
 `.claude/rules/` を編集してエージェントの動作をカスタマイズできます。  
 全エージェント共通の設定と、エージェントごとの個別設定の両方に対応しています。
 
+### 同梱 MCP サーバ
+
+Clade には以下の MCP サーバが最初から含まれています：
+
+| サーバ | 用途 |
+|---|---|
+| `filesystem` | プロジェクト外のファイルの読み書き |
+| `memory` | セッションをまたぐ永続的なナレッジグラフ |
+| `sequential-thinking` | 複雑なタスクの段階的・構造化された推論 |
+| `github` | GitHub Issues・PR・リポジトリへのアクセス（`-MCP` セットアップが必要） |
+| `playwright` | ブラウザ自動操作・E2E テスト（デフォルトは localhost のみ許可） |
+
+Playwright サーバはデフォルトで `localhost` のみにアクセスを制限しています。プロジェクトごとに許可オリジンを管理するには以下のコマンドを使います：
+
+```
+/playwright-list-origins                               # 現在の許可オリジンを確認する
+/playwright-add-origin https://staging.example.com    # オリジンを追加する
+/playwright-remove-origin https://staging.example.com # オリジンを削除する
+```
+
+追加オリジンは `.claude/settings.local.json` にのみ保存されます。`settings.json` は変更されません。
+
 ### MCP サーバの追加
-`/agent-mcp-setup` を実行すると、公開 MCP サーバや社内プライベート MCP サーバを追加し、スキルファイルを自動生成できます。
+`/agent-mcp-setup` を実行すると、公開 MCP サーバや社内プライベート MCP サーバを追加し、スキルファイルを自動生成できます。サーバは常にプロジェクトスコープ（`.claude/settings.json`）に追加されます。
+
+複数のプロジェクトで使いたくなった場合は `/promote` でグローバルスコープ（`~/.claude/settings.json`）に昇格できます。
 
 ---
 
