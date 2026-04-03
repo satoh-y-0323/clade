@@ -1,4 +1,4 @@
-# setup.ps1
+﻿# setup.ps1
 # Clade セットアップ（WSL不要版）
 #
 # 実行方法:
