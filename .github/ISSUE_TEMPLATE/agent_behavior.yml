@@ -1,0 +1,88 @@
+name: Agent Behavior Issue
+description: Report an agent not following its rules, skipping workflow steps, or producing wrong output
+labels: ["agent", "bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This template is specific to Clade's multi-agent workflow.
+        Use this when an agent (interviewer, architect, developer, etc.) behaves differently from what its rules define.
+
+  - type: dropdown
+    id: agent
+    attributes:
+      label: Which agent?
+      options:
+        - /agent-interviewer
+        - /agent-architect
+        - /agent-planner
+        - /agent-developer
+        - /agent-tester
+        - /agent-code-reviewer
+        - /agent-security-reviewer
+        - /agent-project-setup
+        - /agent-mcp-setup
+        - Other / Unknown
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Type of misbehavior
+      options:
+        - Skipped a required workflow step
+        - Ignored a rule in its rule file
+        - Edited files it should not (read-only agents)
+        - Did not produce the expected report
+        - Produced a report in the wrong format
+        - Handed off to wrong next agent
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: rule_file
+    attributes:
+      label: Related rule file (if known)
+      description: e.g. `.claude/rules/developer/individual/tdd.md`
+      placeholder: ".claude/rules/..."
+    validations:
+      required: false
+
+  - type: textarea
+    id: prompt
+    attributes:
+      label: Prompt / input you gave
+      description: What did you ask the agent to do?
+      placeholder: "Example: I typed /agent-developer and asked it to implement a login feature."
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: According to the rules, what should the agent have done?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What did the agent actually do instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      value: |
+        - OS: Windows 11
+        - Node.js version:
+        - Claude Code version:
+        - Clade version / commit:
+    validations:
+      required: false

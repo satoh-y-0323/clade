@@ -1,0 +1,48 @@
+name: Documentation Issue
+description: Report an error, gap, or improvement in the documentation
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve the docs!
+
+  - type: input
+    id: location
+    attributes:
+      label: Where is the issue?
+      description: File name, section heading, or URL.
+      placeholder: "Example: README.md — Getting Started section"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type of issue
+      options:
+        - Incorrect information
+        - Missing information
+        - Unclear explanation
+        - Broken link
+        - Typo / grammar
+        - Translation issue
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: current
+    attributes:
+      label: Current content (if applicable)
+      description: Copy the text that needs to be fixed.
+    validations:
+      required: false
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested improvement
+      description: What should it say or include instead?
+    validations:
+      required: true
