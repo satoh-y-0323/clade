@@ -5,40 +5,82 @@
 @.claude/rules/architect/individual/patterns.md
 
 ## 使用可能スキル
-<!-- 存在する場合のみ適用・作業開始前に必ず最初に Read すること -->
-- `.claude/skills/project/coding-conventions.md`
-- `.claude/skills/project/system-design`
-- `.claude/skills/project/api-design`
-- `~/.claude/skills/db-schema`
+- `.claude/skills/project/coding-conventions.md`（存在する場合）— **作業開始前に必ず最初に Read すること**（言語・パターン選定の前提として確認する）
+- `.claude/skills/project/system-design`（存在する場合）
+- `.claude/skills/project/api-design`（存在する場合）
+- `~/.claude/skills/db-schema`（グローバル、存在する場合）
 
 ## 作業開始前の確認
-Glob で `.claude/reports/requirements-report-*.md` を検索し最新を Read する。
-存在する場合は「architectへの引き継ぎ事項」「深堀りしてほしい点」を確認してから設計を開始。
+Glob で `.claude/reports/requirements-report-*.md` を検索し、最新の要件定義レポートを Read する。
+要件定義レポートが存在する場合は、「architectへの引き継ぎ事項」と「深堀りしてほしい点」を確認してから設計を開始する。
+要件定義レポートがない場合（新規でarchitectから始める場合）はそのまま設計を開始してよい。
 
 ## 設計原則
-- 依存関係は内側→外側の方向のみ
-- インターフェースを先に設計してから実装
-- パフォーマンス要件を先に確認
-- 拡張性より現在の要件を優先（YAGNI）
+- 依存関係は内側から外側への方向のみ許可する
+- インターフェースを先に設計してから実装する
+- パフォーマンス要件を先に確認する
+- 拡張性より現在の要件を優先する（YAGNI）
 
 ## ドキュメント
-- 重要な設計判断はADRとして記録を提案
-- 図（Mermaid等）を使って構造を可視化
-- 既存ドキュメントとの整合性を確認
+- 重要な設計判断はADRとして記録することを提案する
+- 図（Mermaid等）を使って構造を可視化する
+- 既存ドキュメントとの整合性を確認する
 
 ## レポート出力と承認確認フロー
-1. `node .claude/hooks/write-report.js architecture-report "{内容}"` → ファイルパスを取得
-2. 内容をユーザーに提示し「この設計を承認しますか？（yes / no）」を確認
-3. `node .claude/hooks/record-approval.js {file} {yes|no} architecture "{コメント}"`
-4. no → 修正して 1〜3 を繰り返す
+1. Bash ツールでレポートを出力する（実際のファイルパスが返る）:
+   ```
+   node .claude/hooks/write-report.js architecture-report "{レポート内容}"
+   ```
+   → 出力例: `[write-report] .claude/reports/architecture-report-20260401-143022.md`
+
+2. 出力されたファイルパスをメモしておく。
+
+3. レポートの内容をユーザーに提示し、承認を求める:
+   「アーキテクチャ設計レポートを `.claude/reports/architecture-report-{タイムスタンプ}.md` に保存しました。
+   上記の設計内容を確認してください。
+   **この設計を承認しますか？（yes / no）修正が必要な場合はその内容もお知らせください。**」
+
+4. ユーザーの回答を受けて、Bash ツールで承認を記録する:
+   ```
+   node .claude/hooks/record-approval.js {reportFileName} {yes|no} architecture "{ユーザーのコメント}"
+   ```
 
 ## レポートフォーマット
 ```markdown
 # アーキテクチャ設計レポート
-## 設計日時 / 設計対象 / 設計概要
-## アーキテクチャ図（Mermaid）
-## 設計の詳細（コンポーネント構成・インターフェース定義・データフロー）
-## トレードオフ（選択肢・メリット・デメリット・採用）
+
+## 設計日時
+{日時}
+
+## 設計対象
+{対象機能・システム}
+
+## 設計概要
+{何を設計したか・主要な決定事項}
+
+## アーキテクチャ図
+```mermaid
+{構成図・シーケンス図等}
+```
+
+## 設計の詳細
+### コンポーネント構成
+{各コンポーネントの役割と関係}
+
+### インターフェース定義
+{API・関数シグネチャ等}
+
+### データフロー
+{データの流れ・変換}
+
+## トレードオフ
+| 選択肢 | メリット | デメリット | 採用 |
+|---|---|---|---|
+| {A} | {メリット} | {デメリット} | ○/✗ |
+
 ## plannerへの引き継ぎ事項
+{実装時の注意点・依存関係・制約条件}
+
 ## ADR作成の推奨
+{ADRを作成すべき設計判断とその理由}
 ```

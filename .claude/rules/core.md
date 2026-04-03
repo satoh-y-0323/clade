@@ -1,41 +1,77 @@
 # Core Rules（全エージェント共通）
 
 ## 作業原則
-- 変更前に現状確認（Read / git status / Glob）
-- 1タスク = 1コミット
-- エラーは原因特定してから修正（推測禁止）
-- 不明点はユーザー確認
-- ファイル削除はユーザー確認必須
+- 変更前に必ず現状を確認する（Read ツール / git status / Glob ツール）
+- 1タスク = 1コミットの粒度を保つ
+- エラーが出たら原因を特定してから修正する（推測で修正しない）
+- 不明な点はユーザーに確認してから進む
+- ファイルを削除する前に必ずユーザーに確認する
 
 ## コミュニケーション
-- 作業開始前に計画を1〜3行提示
-- 完了後は簡潔に報告
-- 失敗時は理由と代替案を提示
+- 作業開始前に計画を1〜3行で提示する
+- 完了後は何をしたかを簡潔に報告する
+- 失敗した場合は理由と代替案を提示する
+- 長い処理は進捗を報告しながら進める
 
 ## セキュリティ
-- 秘密鍵・APIキー・パスワードをコードに書かない
-- .env は .gitignore 対象であることを確認
-- force push はユーザー確認後のみ
+- 秘密鍵・APIキー・パスワードをコードに直接書かない
+- .env ファイルは .gitignore に含まれていることを確認する
+- force push は必ずユーザー確認後に実行する
 
-## 標準ワークフロー
-
-<!-- 詳細: docs/workflow.md （エージェント連携時は明示的に Read すること） -->
+## 標準ワークフロー（フェーズ構成）
 
 ### AIとしての厳守ルール
-自律的にエージェント連携する場合はフェーズ順を必ず厳守。スキップ・順序変更禁止。
+AIが自律的にエージェントを選択・連携させる場合は、以下のワークフローを**必ず厳守**する。
+フェーズをスキップしたり、順序を入れ替えることは禁止。
 
-### ユーザーが直接エージェントを指定した場合
-作業開始前に確認:
-> 標準ワークフローに沿って進めますか？
-> [yes] ワークフローに従い次フェーズへ連携
-> [no]  このエージェントの作業のみ実施して終了
+### ユーザーが直接エージェントを指定した場合の確認ルール
+ユーザーが `/agent-xxx` を直接呼び出した場合は、作業開始前に以下を確認する:
 
-- yes: 標準ワークフローを厳守して進める
-- no: 指定エージェントの作業のみ実施・完了報告して終了（次エージェントへの連携なし）
+```
+標準ワークフロー（フェーズ構成）に沿って作業を進めますか？
+  [yes] ワークフローに従い、次フェーズへの連携も行います
+  [no]  このエージェントの作業のみ実施し、完了後にユーザーへ報告して終了します
+```
 
-### フェーズ概要
-- フェーズ1: interviewer（要件）→ architect（設計）
-- フェーズ2: planner（計画）
-- フェーズ3: tester（Red）→ developer（Green/Refactor）→ tester（確認）
-- フェーズ4: code-reviewer → security-reviewer → planner（更新）
-- 指摘がなくなるまで フェーズ3〜4 を繰り返す
+- **yes の場合**: 以下の標準ワークフローを厳守して進める
+- **no の場合**: 指定されたエージェントの作業のみ実施し、完了後はユーザーへ完了報告して終了する（次エージェントへの連携は行わない）
+
+---
+
+### フェーズ1: 要件定義・設計
+```
+Step 0. /agent-interviewer  → 要件ヒアリング・requirements-report 出力・承認
+        ※ 機能追加・バグ修正では必ず実施。新規開発の場合は省略可。
+Step 1. /agent-architect    → requirements-report 読み込み・設計・architecture-report 出力・承認
+```
+このフェーズ完了時点で存在するレポート: requirements-report, architecture-report
+
+### フェーズ2: 初回計画立案
+```
+Step 2. /agent-planner      → requirements-report + architecture-report を読み込み
+                              初回 plan-report 出力・承認
+                              ※ test/review レポートはまだ存在しないためスキップ（正常）
+```
+このフェーズ完了時点で存在するレポート: + plan-report
+
+### フェーズ3: 実装・テスト（TDDサイクル）
+```
+Step 3. /agent-tester       → plan-report 確認・テスト仕様設計・失敗テスト作成（Red）
+Step 4. /agent-developer    → plan-report 確認・実装（Green → Refactor）
+Step 5. /agent-tester       → テスト再実行・test-report 出力・承認
+```
+このフェーズ完了時点で存在するレポート: + test-report
+
+### フェーズ4: レビュー・計画更新
+```
+Step 6. /agent-code-reviewer     → code-review-report 出力・承認
+Step 7. /agent-security-reviewer → security-review-report 出力・承認
+Step 8. /agent-planner           → 全レポート統合・更新 plan-report 出力・承認
+```
+指摘がなくなるまで Step 3〜8 を繰り返す。
+
+### TDD フロー（developer ↔ tester）
+1. `/agent-tester` でテスト仕様設計・失敗テスト作成（Red）
+2. `/agent-developer` で実装（Green）→ tester に再確認依頼
+3. `/agent-developer` でリファクタ（Refactor）→ tester に再確認依頼
+4. 不合格がなくなるまで 2〜3 を繰り返す
