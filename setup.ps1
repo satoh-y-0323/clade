@@ -6,7 +6,8 @@
 #   .\setup.ps1 -ProjectPath "C:\path\to\your\project"
 
 param(
-    [string]$ProjectPath = (Get-Location).Path
+    [string]$ProjectPath = (Get-Location).Path,
+    [switch]$MCP
 )
 
 $ErrorActionPreference = "Stop"
@@ -100,6 +101,54 @@ if (Test-Path $gitignore) {
     Write-Host "  -> .gitignore を作成しました" -ForegroundColor Green
 }
 
+# ===== MCP 認証情報のセットアップ =====
+if ($MCP) {
+    Write-Host ""
+    Write-Host "[MCP] MCP サーバの認証情報をセットアップ中..." -ForegroundColor Cyan
+
+    $localSettingsPath = Join-Path $projClaude "settings.local.json"
+
+    # 既存の settings.local.json を読み込む（なければ空オブジェクト）
+    if (Test-Path $localSettingsPath) {
+        $localSettings = Get-Content $localSettingsPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    } else {
+        $localSettings = [PSCustomObject]@{}
+    }
+
+    # env プロパティがなければ追加
+    if (-not ($localSettings.PSObject.Properties.Name -contains "env")) {
+        $localSettings | Add-Member -MemberType NoteProperty -Name "env" -Value ([PSCustomObject]@{})
+    }
+
+    # --- GitHub MCP サーバ ---
+    $existingToken = $localSettings.env.PSObject.Properties["GITHUB_PERSONAL_ACCESS_TOKEN"]
+    if ($existingToken -and $existingToken.Value -ne "") {
+        Write-Host "  [SKIP] GitHub MCP: GITHUB_PERSONAL_ACCESS_TOKEN は既に設定済みです" -ForegroundColor Yellow
+    } else {
+        Write-Host ""
+        Write-Host "  GitHub MCP サーバを利用するには Personal Access Token が必要です。" -ForegroundColor White
+        Write-Host "  取得方法: https://github.com/settings/tokens" -ForegroundColor Gray
+        Write-Host "  必要なスコープ: repo, read:org, read:user" -ForegroundColor Gray
+        Write-Host ""
+        $ghToken = Read-Host "  GITHUB_PERSONAL_ACCESS_TOKEN を入力してください（スキップは Enter）"
+        if ($ghToken -ne "") {
+            if ($localSettings.env.PSObject.Properties.Name -contains "GITHUB_PERSONAL_ACCESS_TOKEN") {
+                $localSettings.env.GITHUB_PERSONAL_ACCESS_TOKEN = $ghToken
+            } else {
+                $localSettings.env | Add-Member -MemberType NoteProperty -Name "GITHUB_PERSONAL_ACCESS_TOKEN" -Value $ghToken
+            }
+            Write-Host "  -> GITHUB_PERSONAL_ACCESS_TOKEN を設定しました" -ForegroundColor Green
+        } else {
+            Write-Host "  -> スキップしました（後で .claude\settings.local.json に追記してください）" -ForegroundColor Yellow
+        }
+    }
+
+    # settings.local.json に書き込む
+    $localSettings | ConvertTo-Json -Depth 10 | Set-Content $localSettingsPath -Encoding UTF8
+    Write-Host ""
+    Write-Host "  -> .claude\settings.local.json を更新しました" -ForegroundColor Green
+}
+
 # ===== 完了 =====
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Green
@@ -125,3 +174,13 @@ Write-Host "       /status              （状態確認）"
 Write-Host "       /cluster-promote     （インスティンクト昇格）"
 Write-Host "       /enable-sandbox      （サンドボックス有効化）"
 Write-Host "       /clear-file-history  （ファイル履歴クリア）"
+Write-Host ""
+Write-Host "  MCP サーバ（自動有効）:" -ForegroundColor Cyan
+Write-Host "       filesystem          （プロジェクト内ファイル操作）"
+Write-Host "       memory              （ナレッジグラフ型永続メモリ）"
+Write-Host "       sequential-thinking （段階的思考・問題解決）"
+Write-Host "       github              （GitHub 操作 ※要トークン設定）"
+Write-Host ""
+Write-Host "  GitHub トークンを後で設定する場合:" -ForegroundColor Gray
+Write-Host "       .\setup.ps1 -MCP  または"
+Write-Host "       .claude\settings.local.json の env.GITHUB_PERSONAL_ACCESS_TOKEN に直接記入"
