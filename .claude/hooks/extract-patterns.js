@@ -99,19 +99,37 @@ function analyzeRetryPatterns(records) {
 
 /**
  * 3. 高頻度ツールシーケンス（bigram: 2つ連続するツールの組み合わせ）
+ *    セッション分散（異なる日に出現）と入力多様性（異なる入力で使用）を追跡する。
+ *    セッションをまたぐ隣接ペアは除外する（セッション末尾→翌セッション先頭は無意味）。
  */
 function analyzeToolSequences(records) {
   const postRecords = records.filter(r => r.event === 'post' && r.status === 'success');
-  const bigramCount = {};
+  const bigramMap = {};
 
   for (let i = 0; i < postRecords.length - 1; i++) {
-    const key = `${postRecords[i].tool} → ${postRecords[i+1].tool}`;
-    bigramCount[key] = (bigramCount[key] || 0) + 1;
+    const curr = postRecords[i];
+    const next = postRecords[i + 1];
+    // セッションをまたぐペアは除外
+    if (String(curr.session) !== String(next.session)) continue;
+
+    const key = `${curr.tool} → ${next.tool}`;
+    if (!bigramMap[key]) {
+      bigramMap[key] = { sessions: new Set(), inputs: new Set(), count: 0 };
+    }
+    bigramMap[key].sessions.add(String(curr.session));
+    // 入力の先頭100文字を多様性の指紋として使用
+    bigramMap[key].inputs.add((curr.input || '').slice(0, 100));
+    bigramMap[key].count++;
   }
 
-  return Object.entries(bigramCount)
-    .filter(([, count]) => count >= 2)
-    .map(([sequence, count]) => ({ sequence, count }))
+  return Object.entries(bigramMap)
+    .map(([sequence, d]) => ({
+      sequence,
+      count:         d.count,
+      sessionCount:  d.sessions.size,
+      sessions:      [...d.sessions],
+      inputDiversity: d.inputs.size,
+    }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 10);
 }
@@ -180,31 +198,36 @@ function generatePromotionCandidates(toolStats, retryPatterns, toolSequences) {
   const ruleCandidates  = [];
 
   // 高頻度成功シーケンス → スキル候補
+  // 条件: 3つ以上の異なるセッション（日）で出現 かつ 2つ以上の異なる入力で使用
   for (const seq of toolSequences) {
-    if (seq.count >= 3) {
+    if (seq.sessionCount >= 3 && seq.inputDiversity >= 2) {
       skillCandidates.push({
         type:       'skill',
         name:       seq.sequence.replace(' → ', '-to-').toLowerCase().replace(/\s+/g, '-'),
-        summary:    `${seq.sequence} のシーケンスが${seq.count}回成功`,
-        evidence:   `sequence: "${seq.sequence}", count: ${seq.count}`,
-        confidence: seq.count >= 5 ? 'high' : 'medium',
+        summary:    `${seq.sequence} のシーケンスが${seq.sessionCount}セッション・${seq.inputDiversity}種の入力で確認`,
+        evidence:   `sequence: "${seq.sequence}", sessions: ${seq.sessionCount}, inputDiversity: ${seq.inputDiversity}`,
+        confidence: seq.sessionCount >= 5 ? 'high' : 'medium',
       });
     }
   }
 
   // 高頻度リトライパターン → ルール候補
+  // 条件: 2つ以上の異なるセッションで発生 かつ 2つ以上の異なる入力で発生
   const retryByTool = {};
   for (const p of retryPatterns) {
-    retryByTool[p.tool] = (retryByTool[p.tool] || 0) + 1;
+    if (!retryByTool[p.tool]) retryByTool[p.tool] = { sessions: new Set(), inputs: new Set(), count: 0 };
+    retryByTool[p.tool].sessions.add(String(p.session));
+    retryByTool[p.tool].inputs.add((p.failedInput || '').slice(0, 100));
+    retryByTool[p.tool].count++;
   }
-  for (const [tool, count] of Object.entries(retryByTool)) {
-    if (count >= 2) {
+  for (const [tool, data] of Object.entries(retryByTool)) {
+    if (data.sessions.size >= 2 && data.inputs.size >= 2) {
       ruleCandidates.push({
         type:       'rule',
         name:       `avoid-first-try-${tool.toLowerCase().replace(/\s+/g, '-')}`,
-        summary:    `${tool} で${count}回失敗→成功のリトライパターンを検出`,
-        evidence:   `tool: "${tool}", retry_count: ${count}`,
-        confidence: count >= 4 ? 'high' : 'medium',
+        summary:    `${tool} で失敗→成功のリトライが${data.sessions.size}セッション・${data.inputs.size}種の入力で検出`,
+        evidence:   `tool: "${tool}", sessions: ${data.sessions.size}, inputDiversity: ${data.inputs.size}`,
+        confidence: data.sessions.size >= 4 ? 'high' : 'medium',
       });
     }
   }
@@ -247,9 +270,11 @@ function main() {
   console.log(`[extract-patterns] 対象レコード: ${targetRecords.length}件 (session: ${todayPrefix})`);
 
   // 各分析を実行
+  // toolStats / errorKeywords は本日分のみ対象
+  // retryPatterns / toolSequences はセッション分散を正しく計算するため全履歴を使用
   const toolStats      = analyzeToolStats(targetRecords);
-  const retryPatterns  = analyzeRetryPatterns(targetRecords);
-  const toolSequences  = analyzeToolSequences(targetRecords);
+  const retryPatterns  = analyzeRetryPatterns(records);
+  const toolSequences  = analyzeToolSequences(records);
   const errorKeywords  = analyzeErrorKeywords(targetRecords);
   const sessionTrend   = analyzeSessionTrend(records); // 全履歴でトレンド計算
 

@@ -7,8 +7,15 @@
 const fs   = require('fs');
 const path = require('path');
 
-const tool    = process.env.CLAUDE_TOOL_NAME  || 'unknown';
-const input   = process.env.CLAUDE_TOOL_INPUT || '{}';
+// Claude Code はフック入力を stdin (JSON) で渡す
+let hookInput = {};
+try {
+  const stdinData = fs.readFileSync(0, 'utf8');
+  hookInput = JSON.parse(stdinData);
+} catch (_) {}
+
+const tool    = hookInput.tool_name || 'unknown';
+const input   = JSON.stringify(hookInput.tool_input || {});
 const ts      = new Date().toISOString();
 const session = new Date().toISOString().slice(0, 10).replace(/-/g, '');
 
