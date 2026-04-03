@@ -1,0 +1,67 @@
+name: バグ報告
+description: バグや予期しない動作を報告する
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        バグ報告ありがとうございます！
+        できるだけ詳しく記入してください。
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 何が起きましたか？
+      description: バグの内容を具体的に説明してください。
+      placeholder: "例: /agent-developer を実行すると、tdd.md のルールに従わずにテストを書かずに実装を始める。"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順
+      description: バグを再現するための手順を記載してください。
+      placeholder: |
+        1. リポジトリをクローンして setup.ps1 を実行する
+        2. プロジェクトを開いて /agent-developer と入力する
+        3. 機能の実装を依頼する
+        4. テスターへの連携ステップが省略されることを確認する
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待していた動作
+      description: 本来どのように動作するべきでしたか？
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 実際の動作
+      description: 実際にはどのように動作しましたか？
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: 実行環境
+      value: |
+        - OS: Windows 11
+        - Node.js バージョン:
+        - Claude Code バージョン:
+        - シェル: PowerShell / bash
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 補足情報
+      description: ログ・スクリーンショットなど、参考になる情報があれば記載してください。
+    validations:
+      required: false

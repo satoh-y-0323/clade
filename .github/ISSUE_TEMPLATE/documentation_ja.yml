@@ -1,0 +1,48 @@
+name: ドキュメントの問題
+description: ドキュメントの誤り・不足・わかりにくい箇所を報告する
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ドキュメント改善のご報告ありがとうございます！
+
+  - type: input
+    id: location
+    attributes:
+      label: どこに問題がありますか？
+      description: ファイル名・セクション名・URLを記載してください。
+      placeholder: "例: README.ja.md — Getting Started セクション"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: 問題の種類
+      options:
+        - 内容が間違っている
+        - 情報が不足している
+        - 説明がわかりにくい
+        - リンクが壊れている
+        - 誤字・文法の誤り
+        - 翻訳の問題
+        - その他
+    validations:
+      required: true
+
+  - type: textarea
+    id: current
+    attributes:
+      label: 現在の記述（該当箇所があれば）
+      description: 修正が必要な箇所のテキストをコピーしてください。
+    validations:
+      required: false
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: 改善案
+      description: どのような内容に修正・追記すればよいですか？
+    validations:
+      required: true

@@ -1,0 +1,88 @@
+name: エージェント動作の問題
+description: エージェントがルール通りに動かない・ワークフローのステップを飛ばす・誤った出力をするなどを報告する
+labels: ["agent", "bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        これは Clade のマルチエージェントワークフロー専用のテンプレートです。
+        エージェント（interviewer・architect・developer など）がルールに反した動作をした場合に使用してください。
+
+  - type: dropdown
+    id: agent
+    attributes:
+      label: どのエージェントで発生しましたか？
+      options:
+        - /agent-interviewer
+        - /agent-architect
+        - /agent-planner
+        - /agent-developer
+        - /agent-tester
+        - /agent-code-reviewer
+        - /agent-security-reviewer
+        - /agent-project-setup
+        - /agent-mcp-setup
+        - その他 / 不明
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: 問題の種類
+      options:
+        - 必須のワークフローステップを省略した
+        - ルールファイルの指示を無視した
+        - 編集禁止のファイルを編集した（読み取り専用エージェント）
+        - 期待するレポートを出力しなかった
+        - レポートのフォーマットが間違っていた
+        - 次のエージェントへの引き継ぎが誤っていた
+        - その他
+    validations:
+      required: true
+
+  - type: input
+    id: rule_file
+    attributes:
+      label: 関連するルールファイル（わかれば）
+      description: 例：`.claude/rules/developer/individual/tdd.md`
+      placeholder: ".claude/rules/..."
+    validations:
+      required: false
+
+  - type: textarea
+    id: prompt
+    attributes:
+      label: 与えたプロンプト・指示
+      description: エージェントに何を依頼しましたか？
+      placeholder: "例: /agent-developer と入力し、ログイン機能の実装を依頼した。"
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待していた動作
+      description: ルールに従うと、エージェントはどう動作するべきでしたか？
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 実際の動作
+      description: 実際にはどのように動作しましたか？
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: 実行環境
+      value: |
+        - OS: Windows 11
+        - Node.js バージョン:
+        - Claude Code バージョン:
+        - Clade バージョン / コミット:
+    validations:
+      required: false
