@@ -28,3 +28,4 @@
 `.claude/skills/project/` 配下のスキルが存在すれば自動適用
 
 <!-- Notes: セッション終了時は /end-session、パターン昇格は /cluster-promote、グローバル展開は /promote -->
+<!-- 新規mdファイル追加時: node .claude/scripts/compress-md.js --dry-run -->
