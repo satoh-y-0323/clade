@@ -2,6 +2,9 @@
 
 セキュリティ診断エージェント（security-reviewer）をサブエージェントとして起動する。
 
+## ルールの読み込み
+**起動時の最初のアクションとして** `.claude/skills/agents/security-reviewer.md` を Read し、ルールを確認してから作業を開始すること。
+
 ## 動作
 Agent ツールで `subagent_type: security-reviewer` を指定して起動する。
 現在の作業コンテキスト（ユーザーの依頼内容・既存レポートの有無）をプロンプトに含めること。

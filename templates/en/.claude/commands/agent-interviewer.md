@@ -2,6 +2,9 @@
 
 Launches the requirements gathering agent (interviewer) as a sub-agent.
 
+## Rules
+**As the first action upon launch**, Read `.claude/skills/agents/interviewer.md` to review the rules before starting work.
+
 ## Behavior
 Launch with `subagent_type: interviewer` specified in the Agent tool.
 Include the current work context (user's request and presence of existing reports) in the prompt.

@@ -2,6 +2,9 @@
 
 Launches the code review agent (code-reviewer) as a sub-agent.
 
+## Rules
+**As the first action upon launch**, Read `.claude/skills/agents/code-reviewer.md` to review the rules before starting work.
+
 ## Behavior
 Launch with `subagent_type: code-reviewer` specified in the Agent tool.
 Include the current work context (user's request and presence of existing reports) in the prompt.
