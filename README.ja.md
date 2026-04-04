@@ -139,6 +139,12 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 > yes
 ──────────────────────────────────────────
 ```
+![](docs/images/step1-1.png)  
+![](docs/images/step1-2.png)  
+![](docs/images/step1-3.png)  
+![](docs/images/step1-4.png)  
+![](docs/images/step1-5.png)  
+![](docs/images/step1-6.png)  
 
 ### ステップ2 — 設計
 
@@ -155,6 +161,8 @@ requirements-report-20260404-103012.md を読み込み中...
 この設計を承認しますか？（yes / no）
 > yes
 ```
+![](docs/images/step2-1.png)  
+![](docs/images/step2-2.png)  
 
 ### ステップ3 — 計画 → 実装 → テスト → レビュー
 
@@ -166,6 +174,12 @@ requirements-report-20260404-103012.md を読み込み中...
 > /agent-code-reviewer      # code-review-report を出力
 > /agent-security-reviewer  # security-review-report を出力
 ```
+![](docs/images/step3-1.png)  
+![](docs/images/step3-2.png)  
+![](docs/images/step3-3.png)  
+![](docs/images/step3-4.png)  
+![](docs/images/step3-5.png)  
+![](docs/images/step3-6.png)  
 
 各ステップでタイムスタンプ付きのレポートが保存され、あなたの承認を待ってから次に進みます。
 

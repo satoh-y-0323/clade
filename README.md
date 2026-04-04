@@ -143,6 +143,12 @@ Here is a typical session using Clade to add a new feature.
 > yes
 ──────────────────────────────────────────
 ```
+![](docs/images/step1-1.png)  
+![](docs/images/step1-2.png)  
+![](docs/images/step1-3.png)  
+![](docs/images/step1-4.png)  
+![](docs/images/step1-5.png)  
+![](docs/images/step1-6.png)  
 
 ### Step 2 — Design
 
@@ -159,6 +165,8 @@ requirements-report-20260404-103012.md を読み込み中...
 この設計を承認しますか？（yes / no）
 > yes
 ```
+![](docs/images/step2-1.png)  
+![](docs/images/step2-2.png)  
 
 ### Step 3 — Planning → Implementation → Testing → Review
 
@@ -170,6 +178,12 @@ requirements-report-20260404-103012.md を読み込み中...
 > /agent-code-reviewer      # code-review-report を出力
 > /agent-security-reviewer  # security-review-report を出力
 ```
+![](docs/images/step3-1.png)  
+![](docs/images/step3-2.png)  
+![](docs/images/step3-3.png)  
+![](docs/images/step3-4.png)  
+![](docs/images/step3-5.png)  
+![](docs/images/step3-6.png)  
 
 Each step saves a timestamped report and waits for your approval before proceeding.
 
