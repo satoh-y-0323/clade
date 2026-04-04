@@ -42,22 +42,40 @@ cd clade
 
 ### 2. Run the setup script
 
+Choose the script that matches your preferred language:
+
+**English version**
+
+```powershell
+# Windows (PowerShell)
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\setup_en.ps1 -ProjectPath "C:\path\to\your\project"
+
+# With GitHub MCP integration (requires a GitHub Personal Access Token)
+.\setup_en.ps1 -ProjectPath "C:\path\to\your\project" -MCP
+```
+
+```bash
+# macOS / Linux
+chmod +x setup_en.sh
+./setup_en.sh /path/to/your/project
+
+# With GitHub MCP integration (requires a GitHub Personal Access Token)
+./setup_en.sh --mcp /path/to/your/project
+```
+
+**Japanese version**
+
 ```powershell
 # Windows (PowerShell)
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\setup.ps1 -ProjectPath "C:\path\to\your\project"
-
-# With GitHub MCP integration (requires a GitHub Personal Access Token)
-.\setup.ps1 -ProjectPath "C:\path\to\your\project" -MCP
 ```
 
 ```bash
 # macOS / Linux
 chmod +x setup.sh
 ./setup.sh /path/to/your/project
-
-# With GitHub MCP integration (requires a GitHub Personal Access Token)
-./setup.sh --mcp /path/to/your/project
 ```
 
 The path argument specifies the project you want to set up.  
@@ -119,8 +137,6 @@ Each phase waits for your approval before proceeding.
 ---
 
 ## Example
-
-> **Note:** Agent interactions are currently in Japanese only. English support is planned if there is demand — feel free to open an issue if you need it.
 
 Here is a typical session using Clade to add a new feature.
 
@@ -290,18 +306,22 @@ Session state, memory, and learned patterns are automatically saved between sess
 
 ```
 clade/
-├── .claude/             # Clade configuration (this is what setup.ps1 copies)
-│   ├── agents/          # Agent definitions (YAML frontmatter + instructions)
-│   ├── commands/        # Custom slash commands (/agent-xxx)
-│   ├── hooks/           # Lifecycle hooks (session start/stop, tool pre/post)
-│   ├── rules/           # Agent behavior rules (core + per-agent)
+├── .claude/              # Japanese template (also the active config for this repo)
+│   ├── agents/           # Agent definitions (YAML frontmatter + instructions)
+│   ├── commands/         # Custom slash commands (/agent-xxx)
+│   ├── hooks/            # Lifecycle hooks (session start/stop, tool pre/post)
+│   ├── rules/            # Agent behavior rules (core + per-agent)
 │   ├── skills/
-│   │   └── project/     # Project-specific skill files (coding conventions, etc.)
-│   ├── reports/         # Generated reports (auto-created)
-│   ├── memory/          # Session memory (auto-managed)
-│   └── CLAUDE.md        # Entry point for Claude Code
-├── setup.ps1            # Setup script (Windows)
-├── setup.sh             # Setup script (macOS / Linux)
+│   │   └── project/      # Project-specific skill files (coding conventions, etc.)
+│   ├── reports/          # Generated reports (auto-created)
+│   ├── memory/           # Session memory (auto-managed)
+│   └── CLAUDE.md         # Entry point for Claude Code
+├── templates/
+│   └── en/.claude/       # English template (same structure as above)
+├── setup.ps1             # Setup script - Japanese (Windows)
+├── setup.sh              # Setup script - Japanese (macOS / Linux)
+├── setup_en.ps1          # Setup script - English (Windows)
+├── setup_en.sh           # Setup script - English (macOS / Linux)
 ├── README.md
 └── LICENSE
 ```
