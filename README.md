@@ -27,7 +27,7 @@ It organizes specialized agents by role — interviewer, architect, planner, dev
 - [Claude Code](https://claude.ai/code) (CLI or VS Code extension)
 - Node.js v18 or later
 - Git
-- Windows (WSL not required)
+- Windows, macOS, or Linux
 
 ---
 
@@ -51,10 +51,19 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\setup.ps1 -ProjectPath "C:\path\to\your\project" -MCP
 ```
 
-`-ProjectPath` specifies the full path to the project you want to set up.  
+```bash
+# macOS / Linux
+chmod +x setup.sh
+./setup.sh /path/to/your/project
+
+# With GitHub MCP integration (requires a GitHub Personal Access Token)
+./setup.sh --mcp /path/to/your/project
+```
+
+The path argument specifies the project you want to set up.  
 This copies the `.claude/` directory into your project and initializes the session management hooks.
 
-`-MCP` enables the GitHub MCP server. You will be prompted to enter your GitHub Personal Access Token on first run. The token is stored in `.claude/settings.local.json` (gitignored).
+`-MCP` / `--mcp` enables the GitHub MCP server. You will be prompted to enter your GitHub Personal Access Token on first run. The token is stored in `.claude/settings.local.json` (gitignored).
 
 ### 3. Set up your coding conventions (recommended)
 
@@ -291,7 +300,8 @@ clade/
 │   ├── reports/         # Generated reports (auto-created)
 │   ├── memory/          # Session memory (auto-managed)
 │   └── CLAUDE.md        # Entry point for Claude Code
-├── setup.ps1            # Setup script for existing projects
+├── setup.ps1            # Setup script (Windows)
+├── setup.sh             # Setup script (macOS / Linux)
 ├── README.md
 └── LICENSE
 ```

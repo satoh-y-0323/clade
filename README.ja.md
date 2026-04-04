@@ -25,7 +25,7 @@
 - [Claude Code](https://claude.ai/code)（CLI または VS Code 拡張）
 - Node.js v18 以上
 - Git
-- Windows（WSL 不要）
+- Windows / macOS / Linux
 
 ---
 
@@ -49,10 +49,19 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\setup.ps1 -ProjectPath "C:\path\to\your\project" -MCP
 ```
 
-`-ProjectPath` にはセットアップしたいプロジェクトのフルパスを指定します。  
+```bash
+# macOS / Linux
+chmod +x setup.sh
+./setup.sh /path/to/your/project
+
+# GitHub MCP 連携を有効にする場合（GitHub Personal Access Token が必要）
+./setup.sh --mcp /path/to/your/project
+```
+
+パス引数にはセットアップしたいプロジェクトのパスを指定します。  
 `.claude/` ディレクトリをプロジェクトにコピーし、セッション管理フックを初期化します。
 
-`-MCP` を指定すると GitHub MCP サーバが有効になります。初回実行時に GitHub Personal Access Token の入力を求められます。トークンは `.claude/settings.local.json`（gitignore 対象）に保存されます。
+`-MCP` / `--mcp` を指定すると GitHub MCP サーバが有効になります。初回実行時に GitHub Personal Access Token の入力を求められます。トークンは `.claude/settings.local.json`（gitignore 対象）に保存されます。
 
 ### 3. コーディング規約を設定する（推奨）
 
@@ -288,7 +297,8 @@ clade/
 │   ├── reports/         # 生成されたレポート（自動作成）
 │   ├── memory/          # セッションメモリ（自動管理）
 │   └── CLAUDE.md        # Claude Code のエントリポイント
-├── setup.ps1            # 既存プロジェクトへの導入スクリプト
+├── setup.ps1            # セットアップスクリプト（Windows）
+├── setup.sh             # セットアップスクリプト（macOS / Linux）
 ├── README.md
 └── LICENSE
 ```

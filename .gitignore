@@ -29,3 +29,8 @@ __pycache__/
 # Claude Code - 生成されたクラスタ・スキル（チームで共有する場合は削除）
 .claude/instincts/clusters/
 # .claude/skills/project/  ← チームで共有する場合はコメントアウト
+
+# Clade - ローカル設定（機械固有パスを含む）
+# Clade - セッション記録
+# Clade - 観察データ
+# Clade - クラスタデータ
