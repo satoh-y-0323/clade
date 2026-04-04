@@ -109,6 +109,89 @@ Each phase waits for your approval before proceeding.
 
 ---
 
+## Example
+
+> **Note:** Agent interactions are currently in Japanese only. English support is planned if there is demand — feel free to open an issue if you need it.
+
+Here is a typical session using Clade to add a new feature.
+
+### Step 1 — Requirements gathering
+
+```
+> /agent-interviewer
+
+今回の作業はどのようなものでしょうか？
+1. 新規開発
+2. 機能追加  ← 選択
+3. バグ修正
+...
+
+どのようなことを実現したいですか？
+→ "メールとパスワードでログインできるようにしたい"
+
+それはどのような場面で使いますか？
+→ "ユーザーがセッションをまたいでデータを保存できるようにしたい"
+
+どうなったら完成と判断しますか？
+→ "登録・ログイン・自分のデータだけ見られる状態"
+
+──────────────────────────────────────────
+要件定義レポートを保存しました:
+  .claude/reports/requirements-report-20260404-103012.md
+
+このレポートを承認しますか？（yes / no）
+> yes
+──────────────────────────────────────────
+```
+
+### Step 2 — Design
+
+```
+> /agent-architect
+
+requirements-report-20260404-103012.md を読み込み中...
+
+[認証フロー・データモデル・API インターフェースを設計中...]
+
+アーキテクチャ設計レポートを保存しました:
+  .claude/reports/architecture-report-20260404-103521.md
+
+この設計を承認しますか？（yes / no）
+> yes
+```
+
+### Step 3 — Planning → Implementation → Testing → Review
+
+```
+> /agent-planner            # plan-report を生成
+> /agent-tester             # 失敗するテストを作成（Red）
+> /agent-developer          # 実装（Green → Refactor）
+> /agent-tester             # テスト再実行・test-report を出力
+> /agent-code-reviewer      # code-review-report を出力
+> /agent-security-reviewer  # security-review-report を出力
+```
+
+Each step saves a timestamped report and waits for your approval before proceeding.
+
+### Session restore
+
+When you return to the project the next day:
+
+```
+> /init-session
+
+## セッション再開 (2026-04-05)
+
+### 前回セッション (2026-04-04)
+残タスク:
+- [ ] コードレビュー指摘対応: 認証ロジックをサービス層に分離する
+- [ ] リファクタ後のテスト再実行
+
+続きから作業しますか？それとも新しいタスクを開始しますか？
+```
+
+---
+
 ## Available Agents
 
 | Command | Role |
