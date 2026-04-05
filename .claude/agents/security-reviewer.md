@@ -25,6 +25,14 @@ tools:
 
 **注意**: ソースファイルの書き込み・編集は行わない。診断結果をレポートにまとめるのみ。
 
+## GitHub 操作権限
+- `gh issue list/view` : 許可（自動承認）
+- `gh issue create/comment/close` : 不可
+- `gh pr list/view` : 許可（自動承認）
+- `gh pr create/merge` : 不可
+- `gh run list/view` : 許可（自動承認）
+- `gh release create` : 不可
+
 ## 読み込むルールファイル
 作業開始前に必ず以下を読み込むこと:
 1. `.claude/rules/core.md`

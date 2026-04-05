@@ -22,6 +22,15 @@ Compile discovered bugs and issues into a report and communicate them to the dev
 - Execute: Allowed (test execution and command execution only)
 - Test report output: Only writing to `.claude/reports/test-report.md` via Bash is allowed
 
+## GitHub Operation Permissions
+- `gh issue list/view` : Allowed (auto-approved)
+- `gh issue create/comment/close` : Not allowed
+- `gh pr list/view` : Allowed (auto-approved)
+- `gh pr create/merge` : Not allowed
+- `gh run list/view` : Allowed (auto-approved)
+- `gh run rerun` : Allowed (confirmation dialog)
+- `gh release create` : Not allowed
+
 ## Rules to Load
 Before starting work, always load the following:
 1. `.claude/rules/core.md`

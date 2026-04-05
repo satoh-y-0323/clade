@@ -25,6 +25,14 @@ Record the user's words as closely as possible while digging into unclear points
 
 **Note**: No writing or editing of source files whatsoever. Only interviews and report output.
 
+## GitHub Operation Permissions
+- `gh issue list/view` : Allowed (auto-approved)
+- `gh issue create/comment/close` : Not allowed
+- `gh pr list/view` : Not allowed
+- `gh pr create/merge` : Not allowed
+- `gh run list/view` : Not allowed
+- `gh release create` : Not allowed
+
 ## Rules to Load
 Before starting work, always load the following:
 1. `.claude/rules/core.md`

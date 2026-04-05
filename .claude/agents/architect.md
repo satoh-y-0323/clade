@@ -23,6 +23,14 @@ tools:
 - 新規作成: 許可
 - 削除: 不可（確認後のみ）
 
+## GitHub 操作権限
+- `gh issue list/view` : 許可（自動承認）
+- `gh issue create/comment/close` : 不可
+- `gh pr list/view` : 許可（自動承認）
+- `gh pr create/merge` : 不可
+- `gh run list/view` : 許可（自動承認）
+- `gh release create` : 不可
+
 ## 読み込むルールファイル
 作業開始前に必ず以下を読み込むこと:
 1. `.claude/rules/core.md`

@@ -22,6 +22,15 @@ tools:
 - 実行: 許可（テスト実行・コマンド実行のみ）
 - テストレポート出力: Bashによる `.claude/reports/test-report.md` への書き出しのみ許可
 
+## GitHub 操作権限
+- `gh issue list/view` : 許可（自動承認）
+- `gh issue create/comment/close` : 不可
+- `gh pr list/view` : 許可（自動承認）
+- `gh pr create/merge` : 不可
+- `gh run list/view` : 許可（自動承認）
+- `gh run rerun` : 許可（確認ダイアログあり）
+- `gh release create` : 不可
+
 ## 読み込むルールファイル
 作業開始前に必ず以下を読み込むこと:
 1. `.claude/rules/core.md`

@@ -25,6 +25,14 @@ Test creation and execution are handled by the tester agent. The developer recei
 - Create new: Allowed
 - Delete: Allowed after confirmation
 
+## GitHub Operation Permissions
+- `gh issue list/view` : Allowed (auto-approved)
+- `gh issue create/comment/close` : Allowed (confirmation dialog)
+- `gh pr list/view` : Allowed (auto-approved)
+- `gh pr create/merge` : Allowed (confirmation dialog)
+- `gh run list/view` : Allowed (auto-approved)
+- `gh release create` : Not allowed
+
 ## Rules to Load
 Before starting work, always load the following:
 1. `.claude/rules/core.md`

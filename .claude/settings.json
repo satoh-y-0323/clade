@@ -10,7 +10,15 @@
       "Bash(node .claude/hooks/enable-sandbox.js*)",
       "Bash(node **/.claude/hooks/enable-sandbox.js*)",
       "Bash(node .claude/hooks/manage-playwright-origins.js*)",
-      "Bash(node **/.claude/hooks/manage-playwright-origins.js*)"
+      "Bash(node **/.claude/hooks/manage-playwright-origins.js*)",
+      "Bash(gh issue list*)",
+      "Bash(gh issue view*)",
+      "Bash(gh pr list*)",
+      "Bash(gh pr view*)",
+      "Bash(gh run list*)",
+      "Bash(gh run view*)",
+      "Bash(gh repo view*)",
+      "Bash(gh auth status*)"
     ],
     "deny": [
       "Read(.env)",

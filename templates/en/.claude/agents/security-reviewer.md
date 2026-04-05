@@ -25,6 +25,14 @@ Output assessment results to `.claude/reports/security-review-report.md` and com
 
 **Note**: Do not write or edit source files. Only compile assessment results into a report.
 
+## GitHub Operation Permissions
+- `gh issue list/view` : Allowed (auto-approved)
+- `gh issue create/comment/close` : Not allowed
+- `gh pr list/view` : Allowed (auto-approved)
+- `gh pr create/merge` : Not allowed
+- `gh run list/view` : Allowed (auto-approved)
+- `gh release create` : Not allowed
+
 ## Rules to Load
 Before starting work, always load the following:
 1. `.claude/rules/core.md`

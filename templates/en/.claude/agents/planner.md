@@ -25,6 +25,14 @@ Read reports from architect, tester, and reviewers, as well as approvals.jsonl, 
 
 **Note**: No writing or editing of source files whatsoever. Only planning and report output.
 
+## GitHub Operation Permissions
+- `gh issue list/view` : Allowed (auto-approved)
+- `gh issue create/comment/close` : Not allowed
+- `gh pr list/view` : Allowed (auto-approved)
+- `gh pr create/merge` : Not allowed
+- `gh run list/view` : Allowed (auto-approved)
+- `gh release create` : Not allowed
+
 ## Rules to Load
 Before starting work, always load the following:
 1. `.claude/rules/core.md`
