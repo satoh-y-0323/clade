@@ -5,11 +5,9 @@ SessionStart hookでも自動実行されるが、手動でも呼び出せる。
 
 ## 実行手順
 1. 本日の日付を確認する
-2. Bash ツールで以下を順番に実行する（セキュリティ対策）:
-   ```
-   node .claude/hooks/clear-file-history.js
-   node .claude/hooks/enable-sandbox.js
-   ```
+2. Bash ツールを **2回に分けて** 以下を別々に実行する（`&&` で結合しないこと・セキュリティ対策）:
+   - 1回目: `node .claude/hooks/clear-file-history.js`
+   - 2回目: `node .claude/hooks/enable-sandbox.js`
 3. 最新セッションファイルを読み込む:
    Glob ツールで `.claude/memory/sessions/*.tmp` を検索し、
    ファイル名（YYYYMMDD）が最大のものを選択して Read ツールで読み込む。

@@ -1,11 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node .claude/hooks/write-report.js*)",
-      "Bash(node .claude/hooks/record-approval.js*)",
-      "Bash(node .claude/hooks/clear-file-history.js*)",
-      "Bash(node .claude/hooks/enable-sandbox.js*)",
-      "Bash(node .claude/hooks/manage-playwright-origins.js*)"
+      "Bash(node **.claude/hooks/write-report.js*)",
+      "Bash(node **.claude/hooks/record-approval.js*)",
+      "Bash(node **.claude/hooks/clear-file-history.js*)",
+      "Bash(node **.claude/hooks/enable-sandbox.js*)",
+      "Bash(node **.claude/hooks/manage-playwright-origins.js*)"
     ],
     "deny": [
       "Read(.env)",

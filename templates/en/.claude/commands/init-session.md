@@ -5,11 +5,9 @@ Also runs automatically via the SessionStart hook, but can be called manually.
 
 ## Execution Steps
 1. Check today's date
-2. Run the following in order using the Bash tool (security measures):
-   ```
-   node .claude/hooks/clear-file-history.js
-   node .claude/hooks/enable-sandbox.js
-   ```
+2. Run the following as **two separate** Bash tool calls (do NOT combine with `&&` — security measures):
+   - 1st call: `node .claude/hooks/clear-file-history.js`
+   - 2nd call: `node .claude/hooks/enable-sandbox.js`
 3. Load the latest session file:
    Search for `.claude/memory/sessions/*.tmp` with the Glob tool,
    select the one with the largest filename (YYYYMMDD), and load it with the Read tool.
