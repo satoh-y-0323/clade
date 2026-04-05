@@ -5,7 +5,6 @@
 # Usage:
 #   chmod +x setup_en.sh
 #   ./setup_en.sh [project-path]
-#   ./setup_en.sh --mcp [project-path]   # Also set up MCP credentials
 
 set -euo pipefail
 
@@ -14,19 +13,14 @@ CYAN='\033[0;36m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 RED='\033[0;31m'
-WHITE='\033[0;37m'
 GRAY='\033[0;90m'
 RESET='\033[0m'
 
 # ===== Parse arguments =====
-MCP=false
 PROJECT_PATH=""
 
 for arg in "$@"; do
-    case "$arg" in
-        --mcp|-mcp) MCP=true ;;
-        *) PROJECT_PATH="$arg" ;;
-    esac
+    PROJECT_PATH="$arg"
 done
 
 if [ -z "$PROJECT_PATH" ]; then
@@ -50,6 +44,22 @@ else
     echo -e "${RED}[ERROR] Node.js not found.${RESET}"
     echo -e "${RED}  Please install it from https://nodejs.org${RESET}"
     exit 1
+fi
+
+# ===== Check gh CLI =====
+if command -v gh &>/dev/null; then
+    GH_VERSION=$(gh --version | head -1)
+    echo -e "${GREEN}[OK] gh CLI: ${GH_VERSION}${RESET}"
+    if gh auth status &>/dev/null; then
+        echo -e "${GREEN}[OK] gh: authenticated${RESET}"
+    else
+        echo -e "${YELLOW}[WARN] gh CLI is installed but not authenticated.${RESET}"
+        echo -e "${YELLOW}  Run after setup: gh auth login${RESET}"
+    fi
+else
+    echo -e "${YELLOW}[WARN] gh CLI not found.${RESET}"
+    echo -e "${YELLOW}  gh CLI is required for GitHub operations (Issues, PRs, etc.).${RESET}"
+    echo -e "${GRAY}  Install: https://cli.github.com${RESET}"
 fi
 
 # ===== Copy project configuration =====
@@ -131,57 +141,6 @@ else
     echo -e "  ${GREEN}-> .gitignore created${RESET}"
 fi
 
-# ===== MCP credentials setup =====
-if [ "$MCP" = true ]; then
-    echo ""
-    echo -e "${CYAN}[MCP] Setting up MCP server credentials...${RESET}"
-
-    LOCAL_SETTINGS_PATH="${PROJ_CLAUDE}/settings.local.json"
-
-    if [ ! -f "$LOCAL_SETTINGS_PATH" ]; then
-        echo '{}' > "$LOCAL_SETTINGS_PATH"
-    fi
-
-    # Check for existing token (read JSON via Node.js)
-    EXISTING_TOKEN=$(LOCAL_SETTINGS_PATH="$LOCAL_SETTINGS_PATH" node -e "
-        const fs = require('fs');
-        try {
-            const s = JSON.parse(fs.readFileSync(process.env.LOCAL_SETTINGS_PATH, 'utf8'));
-            console.log((s.env && s.env.GITHUB_PERSONAL_ACCESS_TOKEN) || '');
-        } catch { console.log(''); }
-    ")
-
-    if [ -n "$EXISTING_TOKEN" ]; then
-        echo -e "${YELLOW}  [SKIP] GitHub MCP: GITHUB_PERSONAL_ACCESS_TOKEN is already set${RESET}"
-    else
-        echo ""
-        echo -e "${WHITE}  A Personal Access Token is required to use the GitHub MCP server.${RESET}"
-        echo -e "${GRAY}  How to get one: https://github.com/settings/tokens${RESET}"
-        echo -e "${GRAY}  Required scopes: repo, read:org, read:user${RESET}"
-        echo ""
-        printf "  Enter GITHUB_PERSONAL_ACCESS_TOKEN (press Enter to skip): "
-        read -r GH_TOKEN
-        if [ -n "$GH_TOKEN" ]; then
-            # Pass token via environment variable to avoid shell injection
-            GH_TOKEN="$GH_TOKEN" LOCAL_SETTINGS_PATH="$LOCAL_SETTINGS_PATH" node -e "
-                const fs = require('fs');
-                const path = process.env.LOCAL_SETTINGS_PATH;
-                let s = {};
-                try { s = JSON.parse(fs.readFileSync(path, 'utf8')); } catch {}
-                s.env = s.env || {};
-                s.env.GITHUB_PERSONAL_ACCESS_TOKEN = process.env.GH_TOKEN;
-                fs.writeFileSync(path, JSON.stringify(s, null, 2) + '\n', 'utf8');
-            "
-            echo -e "  ${GREEN}-> GITHUB_PERSONAL_ACCESS_TOKEN set${RESET}"
-        else
-            echo -e "${YELLOW}  -> Skipped (add it later to .claude/settings.local.json)${RESET}"
-        fi
-    fi
-
-    echo ""
-    echo -e "  ${GREEN}-> .claude/settings.local.json updated${RESET}"
-fi
-
 # ===== Done =====
 echo ""
 echo -e "${GREEN}============================================${RESET}"
@@ -212,8 +171,8 @@ echo -e "${CYAN}  MCP servers (auto-enabled):${RESET}"
 echo "       filesystem          (file operations in project)"
 echo "       memory              (knowledge graph persistent memory)"
 echo "       sequential-thinking (step-by-step reasoning)"
-echo "       github              (GitHub operations *requires token)"
+echo "       playwright          (browser automation)"
 echo ""
-echo -e "${GRAY}  To set up the GitHub token later:${RESET}"
-echo "       ./setup_en.sh --mcp  or"
-echo "       edit .claude/settings.local.json and set env.GITHUB_PERSONAL_ACCESS_TOKEN"
+echo -e "${CYAN}  GitHub operations (gh CLI):${RESET}"
+echo "       Issues/PRs are handled via the gh CLI."
+echo "       If not authenticated: gh auth login"

@@ -5,7 +5,6 @@
 # 実行方法:
 #   chmod +x setup.sh
 #   ./setup.sh [プロジェクトパス]
-#   ./setup.sh --mcp [プロジェクトパス]   # MCP 認証情報もセットアップ
 
 set -euo pipefail
 
@@ -14,19 +13,14 @@ CYAN='\033[0;36m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 RED='\033[0;31m'
-WHITE='\033[0;37m'
 GRAY='\033[0;90m'
 RESET='\033[0m'
 
 # ===== 引数パース =====
-MCP=false
 PROJECT_PATH=""
 
 for arg in "$@"; do
-    case "$arg" in
-        --mcp|-mcp) MCP=true ;;
-        *) PROJECT_PATH="$arg" ;;
-    esac
+    PROJECT_PATH="$arg"
 done
 
 if [ -z "$PROJECT_PATH" ]; then
@@ -50,6 +44,22 @@ else
     echo -e "${RED}[ERROR] Node.js が見つかりません。${RESET}"
     echo -e "${RED}  https://nodejs.org からインストールしてください。${RESET}"
     exit 1
+fi
+
+# ===== gh CLI の確認 =====
+if command -v gh &>/dev/null; then
+    GH_VERSION=$(gh --version | head -1)
+    echo -e "${GREEN}[OK] gh CLI: ${GH_VERSION}${RESET}"
+    if gh auth status &>/dev/null; then
+        echo -e "${GREEN}[OK] gh: 認証済み${RESET}"
+    else
+        echo -e "${YELLOW}[WARN] gh CLI はインストール済みですが未認証です。${RESET}"
+        echo -e "${YELLOW}  セットアップ後に: gh auth login${RESET}"
+    fi
+else
+    echo -e "${YELLOW}[WARN] gh CLI が見つかりません。${RESET}"
+    echo -e "${YELLOW}  GitHub 操作（Issue/PR 等）には gh CLI が必要です。${RESET}"
+    echo -e "${GRAY}  インストール: https://cli.github.com${RESET}"
 fi
 
 # ===== プロジェクト設定の配置 =====
@@ -131,57 +141,6 @@ else
     echo -e "  ${GREEN}-> .gitignore を作成しました${RESET}"
 fi
 
-# ===== MCP 認証情報のセットアップ =====
-if [ "$MCP" = true ]; then
-    echo ""
-    echo -e "${CYAN}[MCP] MCP サーバの認証情報をセットアップ中...${RESET}"
-
-    LOCAL_SETTINGS_PATH="${PROJ_CLAUDE}/settings.local.json"
-
-    if [ ! -f "$LOCAL_SETTINGS_PATH" ]; then
-        echo '{}' > "$LOCAL_SETTINGS_PATH"
-    fi
-
-    # 既存トークンの確認（Node.js で JSON 読み込み）
-    EXISTING_TOKEN=$(LOCAL_SETTINGS_PATH="$LOCAL_SETTINGS_PATH" node -e "
-        const fs = require('fs');
-        try {
-            const s = JSON.parse(fs.readFileSync(process.env.LOCAL_SETTINGS_PATH, 'utf8'));
-            console.log((s.env && s.env.GITHUB_PERSONAL_ACCESS_TOKEN) || '');
-        } catch { console.log(''); }
-    ")
-
-    if [ -n "$EXISTING_TOKEN" ]; then
-        echo -e "${YELLOW}  [SKIP] GitHub MCP: GITHUB_PERSONAL_ACCESS_TOKEN は既に設定済みです${RESET}"
-    else
-        echo ""
-        echo -e "${WHITE}  GitHub MCP サーバを利用するには Personal Access Token が必要です。${RESET}"
-        echo -e "${GRAY}  取得方法: https://github.com/settings/tokens${RESET}"
-        echo -e "${GRAY}  必要なスコープ: repo, read:org, read:user${RESET}"
-        echo ""
-        printf "  GITHUB_PERSONAL_ACCESS_TOKEN を入力してください（スキップは Enter）: "
-        read -r GH_TOKEN
-        if [ -n "$GH_TOKEN" ]; then
-            # 環境変数経由でトークンを渡す（シェルインジェクション対策）
-            GH_TOKEN="$GH_TOKEN" LOCAL_SETTINGS_PATH="$LOCAL_SETTINGS_PATH" node -e "
-                const fs = require('fs');
-                const path = process.env.LOCAL_SETTINGS_PATH;
-                let s = {};
-                try { s = JSON.parse(fs.readFileSync(path, 'utf8')); } catch {}
-                s.env = s.env || {};
-                s.env.GITHUB_PERSONAL_ACCESS_TOKEN = process.env.GH_TOKEN;
-                fs.writeFileSync(path, JSON.stringify(s, null, 2) + '\n', 'utf8');
-            "
-            echo -e "  ${GREEN}-> GITHUB_PERSONAL_ACCESS_TOKEN を設定しました${RESET}"
-        else
-            echo -e "${YELLOW}  -> スキップしました（後で .claude/settings.local.json に追記してください）${RESET}"
-        fi
-    fi
-
-    echo ""
-    echo -e "  ${GREEN}-> .claude/settings.local.json を更新しました${RESET}"
-fi
-
 # ===== 完了 =====
 echo ""
 echo -e "${GREEN}============================================${RESET}"
@@ -212,8 +171,8 @@ echo -e "${CYAN}  MCP サーバ（自動有効）:${RESET}"
 echo "       filesystem          （プロジェクト内ファイル操作）"
 echo "       memory              （ナレッジグラフ型永続メモリ）"
 echo "       sequential-thinking （段階的思考・問題解決）"
-echo "       github              （GitHub 操作 ※要トークン設定）"
+echo "       playwright          （ブラウザ自動操作）"
 echo ""
-echo -e "${GRAY}  GitHub トークンを後で設定する場合:${RESET}"
-echo "       ./setup.sh --mcp  または"
-echo "       .claude/settings.local.json の env.GITHUB_PERSONAL_ACCESS_TOKEN に直接記入"
+echo -e "${CYAN}  GitHub 操作（gh CLI）:${RESET}"
+echo "       Issue/PR 操作は gh CLI を使用します。"
+echo "       未認証の場合: gh auth login"

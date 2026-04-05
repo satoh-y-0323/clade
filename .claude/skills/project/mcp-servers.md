@@ -69,56 +69,12 @@
 
 ---
 
-### github（認証必要）
-
-GitHub リポジトリの操作・管理を行います。
-
-**必要な設定:**
-`.claude/settings.local.json` の `env.GITHUB_PERSONAL_ACCESS_TOKEN` にトークンを設定してください。
-
-```json
-{
-  "env": {
-    "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_xxxxxxxxxxxx"
-  }
-}
-```
-
-初回セットアップ時は以下を実行すると対話形式で設定できます:
-```powershell
-.\setup.ps1 -MCP
-```
-
-| ツール名（グループ） | 説明 | 使用場面 |
-|---|---|---|
-| repos 系 | リポジトリ操作・ファイル読み書き | コード参照・PR 作成 |
-| issues 系 | Issue の作成・更新・検索 | バグ報告・タスク管理 |
-| pull_requests 系 | PR の作成・レビュー・マージ | コードレビューフロー |
-| actions 系 | GitHub Actions の状態確認 | CI/CD モニタリング |
-| code_security 系 | Dependabot アラート確認 | 脆弱性管理 |
-
----
-
 ## このプロジェクトでの使い方
 
 - **filesystem** は Claude Code 組み込みのファイルツールが主体ですが、`directory_tree` や `get_file_info` など組み込みにない操作で活用できます。
 - **memory** はプロジェクト固有の用語・設計判断・よくある質問を記録しておくことでセッション間の文脈引き継ぎに使えます。
 - **sequential-thinking** は要件が複雑な場合や設計の選択肢を整理したい場面で積極的に使ってください。
-- **github** は `/agent-developer` や `/agent-code-reviewer` が PR 作成・Issue 参照する際に利用します。
-
----
-
-## 必要な環境変数
-
-| キー名 | 説明 | 設定場所 | 対象サーバ |
-|---|---|---|---|
-| GITHUB_PERSONAL_ACCESS_TOKEN | GitHub Personal Access Token | `.claude/settings.local.json` の `env` | github |
-
-### トークンの取得手順
-1. https://github.com/settings/tokens にアクセス
-2. "Generate new token (classic)" を選択
-3. 必要なスコープ: `repo`, `read:org`, `read:user`
-4. 生成されたトークンを `.claude/settings.local.json` に記入
+- **GitHub 操作**（Issue/PR 作成・Actions 確認等）は `gh` CLI を Bash ツール経由で実行します。未認証の場合は `gh auth login` を実行してください。
 
 ---
 
@@ -132,5 +88,8 @@ memory の create_entities を使って「このプロジェクトでは .NET 8 
 sequential-thinking を使って、この機能追加リクエストを段階的に分析してください。
 
 # GitHub の Issue を確認したい
-github ツールを使って open な Issue を一覧表示してください。
+gh issue list コマンドで open な Issue を一覧表示してください。
+
+# PR を作成したい
+gh pr create コマンドで PR を作成してください。
 ```

@@ -6,8 +6,7 @@
 #   .\setup_en.ps1 -ProjectPath "C:\path\to\your\project"
 
 param(
-    [string]$ProjectPath = (Get-Location).Path,
-    [switch]$MCP
+    [string]$ProjectPath = (Get-Location).Path
 )
 
 $ErrorActionPreference = "Stop"
@@ -28,6 +27,23 @@ try {
     Write-Host "[ERROR] Node.js not found." -ForegroundColor Red
     Write-Host "  Please install it from https://nodejs.org" -ForegroundColor Red
     exit 1
+}
+
+# ===== Check gh CLI =====
+try {
+    $ghVersion = (gh --version 2>$null | Select-Object -First 1)
+    Write-Host "[OK] gh CLI: $ghVersion" -ForegroundColor Green
+    $ghAuth = gh auth status 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "[OK] gh: authenticated" -ForegroundColor Green
+    } else {
+        Write-Host "[WARN] gh CLI is installed but not authenticated." -ForegroundColor Yellow
+        Write-Host "  Run after setup: gh auth login" -ForegroundColor Yellow
+    }
+} catch {
+    Write-Host "[WARN] gh CLI not found." -ForegroundColor Yellow
+    Write-Host "  gh CLI is required for GitHub operations (Issues, PRs, etc.)." -ForegroundColor Yellow
+    Write-Host "  Install: https://cli.github.com" -ForegroundColor Gray
 }
 
 # ===== Copy project configuration =====
@@ -101,51 +117,6 @@ if (Test-Path $gitignore) {
     Write-Host "  -> .gitignore created" -ForegroundColor Green
 }
 
-# ===== MCP credentials setup =====
-if ($MCP) {
-    Write-Host ""
-    Write-Host "[MCP] Setting up MCP server credentials..." -ForegroundColor Cyan
-
-    $localSettingsPath = Join-Path $projClaude "settings.local.json"
-
-    if (Test-Path $localSettingsPath) {
-        $localSettings = Get-Content $localSettingsPath -Raw -Encoding UTF8 | ConvertFrom-Json
-    } else {
-        $localSettings = [PSCustomObject]@{}
-    }
-
-    if (-not ($localSettings.PSObject.Properties.Name -contains "env")) {
-        $localSettings | Add-Member -MemberType NoteProperty -Name "env" -Value ([PSCustomObject]@{})
-    }
-
-    # --- GitHub MCP server ---
-    $existingToken = $localSettings.env.PSObject.Properties["GITHUB_PERSONAL_ACCESS_TOKEN"]
-    if ($existingToken -and $existingToken.Value -ne "") {
-        Write-Host "  [SKIP] GitHub MCP: GITHUB_PERSONAL_ACCESS_TOKEN is already set" -ForegroundColor Yellow
-    } else {
-        Write-Host ""
-        Write-Host "  A Personal Access Token is required to use the GitHub MCP server." -ForegroundColor White
-        Write-Host "  How to get one: https://github.com/settings/tokens" -ForegroundColor Gray
-        Write-Host "  Required scopes: repo, read:org, read:user" -ForegroundColor Gray
-        Write-Host ""
-        $ghToken = Read-Host "  Enter GITHUB_PERSONAL_ACCESS_TOKEN (press Enter to skip)"
-        if ($ghToken -ne "") {
-            if ($localSettings.env.PSObject.Properties.Name -contains "GITHUB_PERSONAL_ACCESS_TOKEN") {
-                $localSettings.env.GITHUB_PERSONAL_ACCESS_TOKEN = $ghToken
-            } else {
-                $localSettings.env | Add-Member -MemberType NoteProperty -Name "GITHUB_PERSONAL_ACCESS_TOKEN" -Value $ghToken
-            }
-            Write-Host "  -> GITHUB_PERSONAL_ACCESS_TOKEN set" -ForegroundColor Green
-        } else {
-            Write-Host "  -> Skipped (add it later to .claude\settings.local.json)" -ForegroundColor Yellow
-        }
-    }
-
-    $localSettings | ConvertTo-Json -Depth 10 | Set-Content $localSettingsPath -Encoding UTF8
-    Write-Host ""
-    Write-Host "  -> .claude\settings.local.json updated" -ForegroundColor Green
-}
-
 # ===== Done =====
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Green
@@ -176,8 +147,8 @@ Write-Host "  MCP servers (auto-enabled):" -ForegroundColor Cyan
 Write-Host "       filesystem          (file operations in project)"
 Write-Host "       memory              (knowledge graph persistent memory)"
 Write-Host "       sequential-thinking (step-by-step reasoning)"
-Write-Host "       github              (GitHub operations *requires token)"
+Write-Host "       playwright          (browser automation)"
 Write-Host ""
-Write-Host "  To set up the GitHub token later:" -ForegroundColor Gray
-Write-Host "       .\setup_en.ps1 -MCP  or"
-Write-Host "       edit .claude\settings.local.json and set env.GITHUB_PERSONAL_ACCESS_TOKEN"
+Write-Host "  GitHub operations (gh CLI):" -ForegroundColor Cyan
+Write-Host "       Issues/PRs are handled via the gh CLI."
+Write-Host "       If not authenticated: gh auth login"

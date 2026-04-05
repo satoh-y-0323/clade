@@ -6,8 +6,7 @@
 #   .\setup.ps1 -ProjectPath "C:\path\to\your\project"
 
 param(
-    [string]$ProjectPath = (Get-Location).Path,
-    [switch]$MCP
+    [string]$ProjectPath = (Get-Location).Path
 )
 
 $ErrorActionPreference = "Stop"
@@ -28,6 +27,23 @@ try {
     Write-Host "[ERROR] Node.js が見つかりません。" -ForegroundColor Red
     Write-Host "  https://nodejs.org からインストールしてください。" -ForegroundColor Red
     exit 1
+}
+
+# ===== gh CLI の確認 =====
+try {
+    $ghVersion = (gh --version 2>$null | Select-Object -First 1)
+    Write-Host "[OK] gh CLI: $ghVersion" -ForegroundColor Green
+    $ghAuth = gh auth status 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "[OK] gh: 認証済み" -ForegroundColor Green
+    } else {
+        Write-Host "[WARN] gh CLI はインストール済みですが未認証です。" -ForegroundColor Yellow
+        Write-Host "  セットアップ後に: gh auth login" -ForegroundColor Yellow
+    }
+} catch {
+    Write-Host "[WARN] gh CLI が見つかりません。" -ForegroundColor Yellow
+    Write-Host "  GitHub 操作（Issue/PR 等）には gh CLI が必要です。" -ForegroundColor Yellow
+    Write-Host "  インストール: https://cli.github.com" -ForegroundColor Gray
 }
 
 # ===== プロジェクト設定の配置 =====
@@ -101,54 +117,6 @@ if (Test-Path $gitignore) {
     Write-Host "  -> .gitignore を作成しました" -ForegroundColor Green
 }
 
-# ===== MCP 認証情報のセットアップ =====
-if ($MCP) {
-    Write-Host ""
-    Write-Host "[MCP] MCP サーバの認証情報をセットアップ中..." -ForegroundColor Cyan
-
-    $localSettingsPath = Join-Path $projClaude "settings.local.json"
-
-    # 既存の settings.local.json を読み込む（なければ空オブジェクト）
-    if (Test-Path $localSettingsPath) {
-        $localSettings = Get-Content $localSettingsPath -Raw -Encoding UTF8 | ConvertFrom-Json
-    } else {
-        $localSettings = [PSCustomObject]@{}
-    }
-
-    # env プロパティがなければ追加
-    if (-not ($localSettings.PSObject.Properties.Name -contains "env")) {
-        $localSettings | Add-Member -MemberType NoteProperty -Name "env" -Value ([PSCustomObject]@{})
-    }
-
-    # --- GitHub MCP サーバ ---
-    $existingToken = $localSettings.env.PSObject.Properties["GITHUB_PERSONAL_ACCESS_TOKEN"]
-    if ($existingToken -and $existingToken.Value -ne "") {
-        Write-Host "  [SKIP] GitHub MCP: GITHUB_PERSONAL_ACCESS_TOKEN は既に設定済みです" -ForegroundColor Yellow
-    } else {
-        Write-Host ""
-        Write-Host "  GitHub MCP サーバを利用するには Personal Access Token が必要です。" -ForegroundColor White
-        Write-Host "  取得方法: https://github.com/settings/tokens" -ForegroundColor Gray
-        Write-Host "  必要なスコープ: repo, read:org, read:user" -ForegroundColor Gray
-        Write-Host ""
-        $ghToken = Read-Host "  GITHUB_PERSONAL_ACCESS_TOKEN を入力してください（スキップは Enter）"
-        if ($ghToken -ne "") {
-            if ($localSettings.env.PSObject.Properties.Name -contains "GITHUB_PERSONAL_ACCESS_TOKEN") {
-                $localSettings.env.GITHUB_PERSONAL_ACCESS_TOKEN = $ghToken
-            } else {
-                $localSettings.env | Add-Member -MemberType NoteProperty -Name "GITHUB_PERSONAL_ACCESS_TOKEN" -Value $ghToken
-            }
-            Write-Host "  -> GITHUB_PERSONAL_ACCESS_TOKEN を設定しました" -ForegroundColor Green
-        } else {
-            Write-Host "  -> スキップしました（後で .claude\settings.local.json に追記してください）" -ForegroundColor Yellow
-        }
-    }
-
-    # settings.local.json に書き込む
-    $localSettings | ConvertTo-Json -Depth 10 | Set-Content $localSettingsPath -Encoding UTF8
-    Write-Host ""
-    Write-Host "  -> .claude\settings.local.json を更新しました" -ForegroundColor Green
-}
-
 # ===== 完了 =====
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Green
@@ -179,8 +147,8 @@ Write-Host "  MCP サーバ（自動有効）:" -ForegroundColor Cyan
 Write-Host "       filesystem          （プロジェクト内ファイル操作）"
 Write-Host "       memory              （ナレッジグラフ型永続メモリ）"
 Write-Host "       sequential-thinking （段階的思考・問題解決）"
-Write-Host "       github              （GitHub 操作 ※要トークン設定）"
+Write-Host "       playwright          （ブラウザ自動操作）"
 Write-Host ""
-Write-Host "  GitHub トークンを後で設定する場合:" -ForegroundColor Gray
-Write-Host "       .\setup.ps1 -MCP  または"
-Write-Host "       .claude\settings.local.json の env.GITHUB_PERSONAL_ACCESS_TOKEN に直接記入"
+Write-Host "  GitHub 操作（gh CLI）:" -ForegroundColor Cyan
+Write-Host "       Issue/PR 操作は gh CLI を使用します。"
+Write-Host "       未認証の場合: gh auth login"
