@@ -1,11 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node **.claude/hooks/write-report.js*)",
-      "Bash(node **.claude/hooks/record-approval.js*)",
-      "Bash(node **.claude/hooks/clear-file-history.js*)",
-      "Bash(node **.claude/hooks/enable-sandbox.js*)",
-      "Bash(node **.claude/hooks/manage-playwright-origins.js*)"
+      "Bash(node .claude/hooks/write-report.js*)",
+      "Bash(node **/.claude/hooks/write-report.js*)",
+      "Bash(node .claude/hooks/record-approval.js*)",
+      "Bash(node **/.claude/hooks/record-approval.js*)",
+      "Bash(node .claude/hooks/clear-file-history.js*)",
+      "Bash(node **/.claude/hooks/clear-file-history.js*)",
+      "Bash(node .claude/hooks/enable-sandbox.js*)",
+      "Bash(node **/.claude/hooks/enable-sandbox.js*)",
+      "Bash(node .claude/hooks/manage-playwright-origins.js*)",
+      "Bash(node **/.claude/hooks/manage-playwright-origins.js*)"
     ],
     "deny": [
       "Read(.env)",
@@ -59,20 +64,35 @@
   "hooks": {
     "PreCompact": [
       {
-        "type": "command",
-        "command": "node .claude/hooks/pre-compact.js"
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/pre-compact.js"
+          }
+        ]
       }
     ],
     "SessionStart": [
       {
-        "type": "command",
-        "command": "node .claude/hooks/session-start.js"
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/session-start.js"
+          }
+        ]
       }
     ],
     "Stop": [
       {
-        "type": "command",
-        "command": "node .claude/hooks/stop.js"
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/stop.js"
+          }
+        ]
       }
     ],
     "PreToolUse": [
@@ -97,6 +117,5 @@
         ]
       }
     ]
-  },
-  "sandbox": true
+  }
 }
