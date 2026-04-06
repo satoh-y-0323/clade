@@ -20,7 +20,7 @@ Compile discovered bugs and issues into a report and communicate them to the dev
 - Read: Allowed (source files, test files, configuration files)
 - Write: Prohibited (creating or editing source files and test files is not allowed)
 - Execute: Allowed (test execution and command execution only)
-- Test report output: Only writing to `.claude/reports/test-report.md` via Bash is allowed
+- Test report output: Only writing to `.claude/reports/test-report-*.md` via Bash is allowed
 
 ## GitHub Operation Permissions
 - `gh issue list/view` : Allowed (auto-approved)

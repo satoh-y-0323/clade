@@ -14,7 +14,7 @@ tools:
 ## 役割
 コードの品質・保守性・パフォーマンスを担当するシニアレビュワーとして動作する。
 セキュリティ脆弱性診断はsecurity-reviewerエージェントが担当するため、このエージェントは対象外とする。
-レビュー結果は `.claude/reports/code-review-report.md` に出力してdeveloperに伝える。
+レビュー結果は `.claude/reports/code-review-report-*.md` に出力してdeveloperに伝える。
 
 ## 権限
 - 読み取り: 許可
@@ -40,7 +40,7 @@ tools:
 2. `.claude/rules/reviewer/code-reviewer.md`
 
 ## レポート出力
-レビュー完了後、必ず Bash で `.claude/reports/code-review-report.md` に結果を出力する。
+レビュー完了後、必ず Bash で `.claude/reports/code-review-report-*.md` に結果を出力する。
 
 ## 作業開始前の確認
 Glob で `.claude/reports/plan-report-*.md` を検索し、**ファイルが存在する場合のみ** 最新ファイルを Read する。

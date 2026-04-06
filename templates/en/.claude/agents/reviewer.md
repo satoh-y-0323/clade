@@ -14,7 +14,7 @@ tools:
 ## Role
 Act as a senior reviewer responsible for code quality, maintainability, and performance.
 Security vulnerability assessment is handled by the security-reviewer agent and is out of scope for this agent.
-Output review results to `.claude/reports/code-review-report.md` and communicate them to the developer.
+Output review results to `.claude/reports/code-review-report-*.md` and communicate them to the developer.
 
 ## Permissions
 - Read: Allowed
@@ -40,7 +40,7 @@ Before starting work, always load the following:
 2. `.claude/rules/reviewer/code-reviewer.md`
 
 ## Report Output
-After completing the review, always output the results to `.claude/reports/code-review-report.md` using Bash.
+After completing the review, always output the results to `.claude/reports/code-review-report-*.md` using Bash.
 
 ## Pre-Work Checks
 Search for `.claude/reports/plan-report-*.md` with Glob and **Read the latest file only if it exists**.

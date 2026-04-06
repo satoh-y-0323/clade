@@ -20,7 +20,7 @@ tools:
 - 読み取り: 許可（ソースファイル・テストファイル・設定ファイル）
 - 書き込み: 禁止（ソースファイル・テストファイルの作成・編集は不可）
 - 実行: 許可（テスト実行・コマンド実行のみ）
-- テストレポート出力: Bashによる `.claude/reports/test-report.md` への書き出しのみ許可
+- テストレポート出力: Bashによる `.claude/reports/test-report-*.md` への書き出しのみ許可
 
 ## GitHub 操作権限
 - `gh issue list/view` : 許可（自動承認）
