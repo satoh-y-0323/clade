@@ -1,5 +1,7 @@
 # Clade
 
+[![version](https://img.shields.io/badge/version-1.3.0-blue)](CHANGELOG.md)
+
 > **読み方：** クレイド  
 > **由来：** *Claude* ＋ *made*（作られた）の造語。生物学では **clade（クレード）** は「共通の祖先を持つグループ」を意味し、Claude から生まれたエージェントたちがチームとして協働するイメージを込めています。
 
@@ -26,6 +28,27 @@
 - Node.js v18 以上
 - Git
 - Windows / macOS / Linux
+
+## CLI と VS Code 拡張の違い
+
+**CLI での実行を推奨します。**
+
+VS Code 拡張には現在既知のバグがあり、プロジェクトレベルの `.claude/settings.json` に記載した `permissions.allow` が反映されません。その結果、フック実行のたびに確認ダイアログが表示され、エージェントの並列バックグラウンド実行が正常に完了しません。
+
+| | CLI | VS Code 拡張 |
+|---|---|---|
+| `permissions.allow`（プロジェクトレベル） | 正常動作 | 認識されない（既知のバグ） |
+| 並列バックグラウンドエージェント | 完全対応 | 利用不可（バックグラウンドではダイアログを表示できない） |
+| 複数行入力 | `/terminal-setup` で有効化（`Shift+Enter`） | ネイティブ対応 |
+
+### VS Code 拡張で実行する場合
+
+Clade はセッション開始時に VS Code 拡張を検出し、制限事項をお知らせします。その後、以下のどちらかを選択できます：
+
+- **逐次実行で続ける** — エージェントを1つずつ順番に実行します。並列実行以外のすべての機能は正常に動作します。
+- **CLI に切り替える** — VS Code の統合ターミナルを開き（`Ctrl+`` / `Cmd+``）、`claude` を実行後、`/terminal-setup` で `Shift+Enter` による複数行入力を設定し、`/init-session` で前回のセッションを復元します。
+
+> この制限は [anthropics/claude-code#43787](https://github.com/anthropics/claude-code/issues/43787) が修正されれば解消される予定です。
 
 ---
 

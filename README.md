@@ -1,5 +1,7 @@
 # Clade
 
+[![version](https://img.shields.io/badge/version-1.3.0-blue)](CHANGELOG.md)
+
 [日本語版はこちら](README.ja.md)
 
 > **Pronunciation:** *Kleɪd* (クレイド)  
@@ -28,6 +30,27 @@ It organizes specialized agents by role — interviewer, architect, planner, dev
 - Node.js v18 or later
 - Git
 - Windows, macOS, or Linux
+
+## CLI vs VS Code Extension
+
+**Running via CLI is recommended.**
+
+The VS Code extension currently has a known bug where project-level `permissions.allow` entries in `.claude/settings.json` are not respected. This causes confirmation dialogs to appear for every hook script execution, which prevents parallel background agents from completing correctly.
+
+| | CLI | VS Code Extension |
+|---|---|---|
+| `permissions.allow` (project-level) | Works correctly | Not recognized (known bug) |
+| Parallel background agents | Fully supported | Not available (dialog cannot appear in background) |
+| Multi-line input | Enable with `/terminal-setup` (`Shift+Enter`) | Native support |
+
+### Running in the VS Code Extension
+
+Clade detects the VS Code extension at session start and notifies you of the limitation. You can either:
+
+- **Continue in sequential mode** — Agents run one at a time. All features work, just without parallelism.
+- **Switch to CLI** — Open the integrated terminal (`Ctrl+`` / `Cmd+``), run `claude`, then `/terminal-setup` to enable `Shift+Enter` for multi-line input, and `/init-session` to restore your previous session.
+
+> This limitation will be resolved once [anthropics/claude-code#43787](https://github.com/anthropics/claude-code/issues/43787) is fixed.
 
 ---
 
