@@ -4,10 +4,43 @@
 Automatically executed at session start:
 1. `.claude/hooks/session-start.js` runs automatically as a SessionStart hook
    → Previous session, memory.json, instincts, and skill list are injected into context
-2. Present remaining tasks from the previous session to the user
-3. Select an agent: `/agent-developer` / `/agent-architect` / `/agent-code-reviewer` / `/agent-security-reviewer`
+2. **Check the execution environment (see "Environment Check" below)**
+3. Present remaining tasks from the previous session to the user
+4. Select an agent: `/agent-developer` / `/agent-architect` / `/agent-code-reviewer` / `/agent-security-reviewer`
 
 For manual execution: `/init-session`
+
+## Environment Check
+
+> **Note:** Running via CLI is recommended. The VS Code extension currently has a bug that prevents parallel background agents from working correctly.
+
+### When launched from the VS Code extension
+
+If the system prompt contains `VSCode Extension Context`, the session is running inside the VS Code extension. In that case, notify the user and ask for confirmation:
+
+```
+⚠️ You are running inside the VS Code extension.
+
+The VS Code extension currently has a bug: when agents are run in parallel in the background,
+confirmation dialogs cannot be displayed and tasks may not complete correctly.
+
+Running via CLI is recommended, but you can continue in sequential (non-parallel) mode.
+
+Continue in sequential mode?
+  [yes] Continue the session in sequential mode (no parallel background execution)
+  [no]  Show CLI migration instructions and exit
+```
+
+- **If yes**: Do not use parallel or background agent execution for the rest of this session. Use sequential execution only.
+- **If no**: Show the following instructions and end the session:
+  1. Open the integrated terminal in VS Code (`Ctrl+\`` / `Cmd+\``)
+  2. Run `claude` to launch the CLI
+  3. Run `/terminal-setup` to enable multi-line input with `Shift+Enter`
+  4. Run `/init-session` to restore the previous session state
+
+### When launched from the CLI
+
+Normal behavior. Do not show any environment check message.
 
 ## Automatically Executed Hooks
 | Event | Script | Purpose |
