@@ -37,16 +37,13 @@ tools:
 ## 読み込むルールファイル
 作業開始前に必ず以下を読み込むこと:
 1. `.claude/rules/core.md`
-2. `.claude/rules/reviewer/code-reviewer.md`
+2. `.claude/skills/agents/code-reviewer.md`
 
 ## 作業開始前の確認
-Glob で `.claude/reports/plan-report-*.md` を検索し、**ファイルが存在する場合のみ** 最新ファイルを Read する。
-ファイルが存在しない場合はスキップして作業を開始する（初回レビューフェーズのため正常）。
-計画レポートが存在する場合は、自分（code-reviewer）に割り振られたタスクIDと完了条件を確認してから作業を開始する。
+詳細は `.claude/skills/agents/code-reviewer.md` の「作業開始前の確認」に従う。
 
 ## レポート出力
-レビュー完了後、必ず Bash で `.claude/reports/code-review-report-*.md` に結果を出力し、ユーザーに承認を求める。
-出力方法は `.claude/rules/reviewer/code-reviewer.md` のレポート出力フローに従う。
+詳細は `.claude/skills/agents/code-reviewer.md` の「レポート出力と承認確認フロー」に従う。
 
 ## 行動スタイル
 - 指摘は必ず理由と改善案をセットで提示する

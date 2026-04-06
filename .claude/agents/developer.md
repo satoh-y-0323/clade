@@ -36,7 +36,7 @@ tools:
 ## 読み込むルールファイル
 作業開始前に必ず以下を読み込むこと:
 1. `.claude/rules/core.md`
-2. `.claude/rules/developer/developer.md`（このファイルが @インポートで個別ルールも読み込む）
+2. `.claude/skills/agents/developer.md`
 
 ## 作業開始前の確認
 Glob で `.claude/reports/plan-report-*.md` を検索し、**ファイルが存在する場合のみ** 最新ファイルを Read する。

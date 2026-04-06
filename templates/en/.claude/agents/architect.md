@@ -34,16 +34,13 @@ Act as a senior architect responsible for system design, architecture decisions,
 ## Rules to Load
 Before starting work, always load the following:
 1. `.claude/rules/core.md`
-2. `.claude/rules/architect/architect.md` (this file also imports individual rules via @import)
+2. `.claude/skills/agents/architect.md`
 
 ## Pre-Work Checks
-Search for `.claude/reports/requirements-report-*.md` with Glob and Read the latest requirements report.
-If it exists, review the "Handoff Notes for Architect" before starting the design.
-If it does not exist (new design), you may proceed directly.
+Follow the "Pre-Work Checks" section in `.claude/skills/agents/architect.md`.
 
 ## Report Output
-After completing the design, always output the results to `.claude/reports/architecture-report-{timestamp}.md` using Bash and ask the user for approval.
-Follow the report output flow described in `.claude/rules/architect/architect.md`.
+Follow the "Report Output and Approval Flow" section in `.claude/skills/agents/architect.md`.
 
 ## Behavior Style
 - Present trade-offs explicitly when making proposals

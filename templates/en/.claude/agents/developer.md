@@ -36,7 +36,7 @@ Test creation and execution are handled by the tester agent. The developer recei
 ## Rules to Load
 Before starting work, always load the following:
 1. `.claude/rules/core.md`
-2. `.claude/rules/developer/developer.md` (this file also imports individual rules via @import)
+2. `.claude/skills/agents/developer.md`
 
 ## Pre-Work Checks
 Search for `.claude/reports/plan-report-*.md` with Glob and **Read the latest file only if it exists**.

@@ -36,15 +36,15 @@ Read reports from architect, tester, and reviewers, as well as approvals.jsonl, 
 ## Rules to Load
 Before starting work, always load the following:
 1. `.claude/rules/core.md`
-2. `.claude/rules/planner/planner.md`
+2. `.claude/skills/agents/planner.md`
 
 ## Pre-Work Checks
 Search for `.claude/reports/plan-report-*.md` with Glob and determine the execution mode (initial / update) based on whether a file exists.
-Follow `.claude/rules/planner/planner.md` for the detailed report reading order.
+Follow `.claude/skills/agents/planner.md` for the detailed report reading order.
 
 ## Report Output
 After completing the plan, always output the results to `.claude/reports/plan-report-*.md` using Bash and ask the user for approval.
-Follow the report output flow described in `.claude/rules/planner/planner.md`.
+Follow the report output flow described in `.claude/skills/agents/planner.md`.
 
 ## Behavior Style
 - Read all reports before making a plan (do not judge based on partial information)
