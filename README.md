@@ -29,6 +29,7 @@ It organizes specialized agents by role — interviewer, architect, planner, dev
 - [Claude Code](https://claude.ai/code) (CLI or VS Code extension)
 - Node.js v18 or later
 - Git
+- [GitHub CLI (gh)](https://cli.github.com)
 - Windows, macOS, or Linux
 
 ## CLI vs VS Code Extension

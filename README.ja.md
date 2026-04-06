@@ -27,6 +27,7 @@
 - [Claude Code](https://claude.ai/code)（CLI または VS Code 拡張）
 - Node.js v18 以上
 - Git
+- [GitHub CLI (gh)](https://cli.github.com)
 - Windows / macOS / Linux
 
 ## CLI と VS Code 拡張の違い
