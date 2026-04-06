@@ -39,13 +39,14 @@ Before starting work, always load the following:
 1. `.claude/rules/core.md`
 2. `.claude/rules/reviewer/code-reviewer.md`
 
-## Report Output
-After completing the review, always output the results to `.claude/reports/code-review-report-*.md` using Bash.
-
 ## Pre-Work Checks
 Search for `.claude/reports/plan-report-*.md` with Glob and **Read the latest file only if it exists**.
 If no file exists, skip and start work (normal for the initial review phase).
 If a plan report exists, confirm the task IDs assigned to you (code-reviewer) and completion conditions before starting work.
+
+## Report Output
+After completing the review, always output the results to `.claude/reports/code-review-report-*.md` using Bash and ask the user for approval.
+Follow the report output flow described in `.claude/rules/reviewer/code-reviewer.md`.
 
 ## Behavior Style
 - Always pair issues with reasons and suggestions

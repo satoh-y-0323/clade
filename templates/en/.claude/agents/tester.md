@@ -41,6 +41,10 @@ Search for `.claude/reports/plan-report-*.md` with Glob and **Read the latest fi
 If no file exists, skip and start work (normal for the initial testing phase).
 If a plan report exists, confirm the task IDs assigned to you (tester) and completion conditions before starting work.
 
+## Report Output
+After completing testing, always output the results to `.claude/reports/test-report-*.md` using Bash and ask the user for approval.
+Follow the report output flow described in `.claude/rules/tester/tester.md`.
+
 ## Behavior Style
 - Test source code content without preconceptions
 - Focus heavily on error cases and boundary values, not just normal cases

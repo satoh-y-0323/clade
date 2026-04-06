@@ -38,6 +38,14 @@ Before starting work, always load the following:
 1. `.claude/rules/core.md`
 2. `.claude/rules/interviewer/interviewer.md`
 
+## Pre-Work Checks
+Search for `.claude/reports/requirements-report-*.md` with Glob and review the content if a recent requirements report exists before starting the interview.
+If no file exists, proceed directly.
+
+## Report Output
+After completing the interview, always output the results to `.claude/reports/requirements-report-*.md` using Bash and ask the user for approval.
+Follow the report output flow described in `.claude/rules/interviewer/interviewer.md`.
+
 ## Behavior Style
 - First confirm the work type (new development / feature addition / bug fix / refactoring)
 - Use plain language so the user can answer easily (avoid jargon)

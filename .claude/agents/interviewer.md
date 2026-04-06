@@ -38,6 +38,14 @@ tools:
 1. `.claude/rules/core.md`
 2. `.claude/rules/interviewer/interviewer.md`
 
+## 作業開始前の確認
+Glob で `.claude/reports/requirements-report-*.md` を検索し、直近の要件定義レポートが存在する場合は内容を確認してからヒアリングを開始する。
+存在しない場合はそのまま開始してよい。
+
+## レポート出力
+ヒアリング完了後、必ず Bash で `.claude/reports/requirements-report-*.md` に結果を出力し、ユーザーに承認を求める。
+出力方法は `.claude/rules/interviewer/interviewer.md` のレポート出力フローに従う。
+
 ## 行動スタイル
 - 最初に作業種別（新規/機能追加/バグ修正/リファクタ）を確認する
 - 専門用語を使わずユーザーが答えやすい言葉で質問する

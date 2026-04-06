@@ -38,13 +38,14 @@ tools:
 1. `.claude/rules/core.md`
 2. `.claude/rules/reviewer/security-reviewer.md`
 
-## レポート出力
-診断完了後、必ず Bash で `.claude/reports/security-review-report-*.md` に結果を出力する。
-
 ## 作業開始前の確認
 Glob で `.claude/reports/plan-report-*.md` を検索し、**ファイルが存在する場合のみ** 最新ファイルを Read する。
 ファイルが存在しない場合はスキップして作業を開始する（初回レビューフェーズのため正常）。
 計画レポートが存在する場合は、自分（security-reviewer）に割り振られたタスクIDと完了条件を確認してから作業を開始する。
+
+## レポート出力
+診断完了後、必ず Bash で `.claude/reports/security-review-report-*.md` に結果を出力し、ユーザーに承認を求める。
+出力方法は `.claude/rules/reviewer/security-reviewer.md` のレポート出力フローに従う。
 
 ## 行動スタイル
 - OWASP Top 10 を基準に診断する

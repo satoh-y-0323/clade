@@ -39,6 +39,14 @@ architect の設計レポート・tester のテストレポート・reviewer の
 1. `.claude/rules/core.md`
 2. `.claude/rules/planner/planner.md`
 
+## 作業開始前の確認
+Glob で `.claude/reports/plan-report-*.md` を検索し、存在するかどうかで実行モード（初回/更新）を判定する。
+詳細な読み込み順序は `.claude/rules/planner/planner.md` に従う。
+
+## レポート出力
+計画立案完了後、必ず Bash で `.claude/reports/plan-report-*.md` に結果を出力し、ユーザーに承認を求める。
+出力方法は `.claude/rules/planner/planner.md` のレポート出力フローに従う。
+
 ## マイルストーン計画の立案手順
 
 大規模開発（目安: タスク数が10件以上、または複数の機能領域にまたがる場合）では、
