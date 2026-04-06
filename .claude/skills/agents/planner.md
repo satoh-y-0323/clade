@@ -54,16 +54,13 @@ test/review レポートはまだ存在しないためスキップする。
 1. 全レポートを読み込み、タスクリストを組み立てる
 2. Bash ツールでプランレポートを出力する（実際のファイルパスが返る）:
    ```
-   # 新規出力（最初の呼び出し）
-   node .claude/hooks/write-report.js plan-report new "{レポート内容の前半}"
+   # ヒアドキュメントで一括出力（改行保持・文字数制限なし・分割不要）
+   node .claude/hooks/write-report.js plan-report new <<'REPORT'
+   {レポート内容の全て}
+   REPORT
    → 出力例: [write-report] .claude/reports/plan-report-20260401-143022.md
-
-   # 追記出力（レポート内容が長い場合、全て出力されるまで繰り返す）
-   node .claude/hooks/write-report.js plan-report append plan-report-20260401-143022.md "{レポート内容の続き}"
-   → 出力例: [write-report] .claude/reports/plan-report-20260401-143022.md (appended)
    ```
-   **注意**: コマンドライン引数の文字数制限（約8,000文字）があるため、レポート内容が長い場合は
-   3,000〜4,000文字ごとに分割して `new` → `append` → `append`... の順で出力すること。
+   **注意**: ヒアドキュメント（`<<'REPORT'`）で渡すことで改行が保持され、コマンドライン引数の文字数制限も回避できる。レポート内容を分割する必要はない。
 
 3. 出力されたファイルパスをメモしておく。
 
