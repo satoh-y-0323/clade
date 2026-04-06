@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.3.2] - 2026-04-07
+
+### Bug Fixes
+- **Fix broken rule file paths in all agent files** — All 7 workflow agents (ja + en templates) referenced non-existent `.claude/rules/*/name.md` paths in their `## Rules to Load` / `## 読み込むルールファイル` sections. The actual detailed rules live in `.claude/skills/agents/`. Agents were silently failing to load their full ruleset. Paths now correctly point to `.claude/skills/agents/name.md`.
+- **Deduplicate Pre-Work Checks and Report Output sections** — Verbose content in `agents/*.md` that duplicated (and in some cases contradicted) `skills/agents/*.md` has been replaced with one-line delegations. This also fixes tester/reviewer/security-reviewer agents that were only checking `plan-report` for pre-work, while the skills files correctly require checking `requirements-report`, `architecture-report`, and `plan-report`.
+
+### Upgrade
+
+Re-run the setup script on your existing project to apply the changes:
+
+**English (Windows):**
+```powershell
+.\setup_en.ps1 -ProjectPath "C:\path\to\your\project"
+```
+
+**English (macOS/Linux):**
+```bash
+./setup_en.sh /path/to/your/project
+```
+
+**Japanese (Windows):**
+```powershell
+.\setup.ps1 -ProjectPath "C:\path\to\your\project"
+```
+
+**Japanese (macOS/Linux):**
+```bash
+./setup.sh /path/to/your/project
+```
+
+---
+
 ## [v1.3.1] - 2026-04-07
 
 ### Bug Fixes
