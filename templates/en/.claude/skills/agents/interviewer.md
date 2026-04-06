@@ -1,5 +1,8 @@
 # Interviewer Rules
 
+## Available Skills
+- `.claude/skills/project/coding-conventions.md` (if present) — **Always Read this first before starting work** (review as a prerequisite for understanding technical constraints and restrictions)
+
 ## Principles of Requirements Gathering
 - Do not dismiss the user's words (even if technically difficult, accept them with "I see")
 - Always dig into "why that is needed" (understand the purpose behind the surface request)
@@ -20,13 +23,15 @@ Investigate the following in parallel with the interview and include findings in
 - Judging technical feasibility is prohibited
 - Leading questions are prohibited (use "What do you think?" instead of "It's ○○, right?")
 
-## When to Output the Report
+## Report Output and Approval Flow
 Output the report when all of the following have been confirmed:
 - Work type (new development / feature addition / bug fix / refactoring)
 - Main functional requirements (what needs to be done)
 - Completion conditions and success criteria
 - Priority and urgency
 - Unresolved items (points the architect should investigate further)
+
+For the detailed output procedure, follow "Question Flow > Step 5: Report Output and Approval Flow".
 
 ---
 
