@@ -78,16 +78,13 @@ In test-driven development, the tester handles the Red phase.
 ## Report Output and Approval Flow
 1. Output the report using the Bash tool (the actual file path is returned):
    ```
-   # New output (first call)
-   node .claude/hooks/write-report.js test-report new "{first half of report content}"
+   # Output all at once via heredoc (newlines preserved, no length limit, no splitting needed)
+   node .claude/hooks/write-report.js test-report new <<'REPORT'
+   {full report content}
+   REPORT
    → Output example: [write-report] .claude/reports/test-report-20260401-143022.md
-
-   # Append output (repeat until all content is written for long reports)
-   node .claude/hooks/write-report.js test-report append test-report-20260401-143022.md "{continued content}"
-   → Output example: [write-report] .claude/reports/test-report-20260401-143022.md (appended)
    ```
-   **Note**: Due to command-line argument length limits (~8,000 characters), split long reports
-   into 3,000–4,000 character chunks and output using `new` → `append` → `append`... order.
+   **Note**: Use heredoc (`<<'REPORT'`) to preserve newlines and bypass command-line argument length limits. No need to split the report content.
 
 2. Note the output file path.
 

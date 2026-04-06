@@ -54,16 +54,13 @@ Read all reports and update the plan to reflect differences and unresolved items
 1. Read all reports and build the task list
 2. Output the plan report using the Bash tool (the actual file path is returned):
    ```
-   # New output (first call)
-   node .claude/hooks/write-report.js plan-report new "{first half of report content}"
+   # Output all at once via heredoc (newlines preserved, no length limit, no splitting needed)
+   node .claude/hooks/write-report.js plan-report new <<'REPORT'
+   {full report content}
+   REPORT
    → Output example: [write-report] .claude/reports/plan-report-20260401-143022.md
-
-   # Append output (repeat until all content is written for long reports)
-   node .claude/hooks/write-report.js plan-report append plan-report-20260401-143022.md "{continued content}"
-   → Output example: [write-report] .claude/reports/plan-report-20260401-143022.md (appended)
    ```
-   **Note**: Due to command-line argument length limits (~8,000 characters), split long reports
-   into 3,000–4,000 character chunks and output using `new` → `append` → `append`... order.
+   **Note**: Use heredoc (`<<'REPORT'`) to preserve newlines and bypass command-line argument length limits. No need to split the report content.
 
 3. Note the output file path.
 

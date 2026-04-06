@@ -6,6 +6,11 @@
 - Identify the root cause before fixing errors (do not fix by guessing)
 - Ask the user for clarification when uncertain before proceeding
 - Always confirm with the user before deleting files
+- Never pass long content as command-line arguments to Bash commands.
+  Reason: OS argument length limits (~8,000 characters) will cause errors.
+  Alternative: Use heredoc (`<<'EOF'`) or pipes to pass content via stdin.
+- If a Bash command fails due to argument length limits, do not attempt alternative approaches on your own.
+  Report the error to the user and wait for instructions.
 
 ## Communication
 - Present a 1–3 line plan before starting work

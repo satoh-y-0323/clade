@@ -4,26 +4,26 @@
  * Common script for writing timestamped report files in Windows native environments.
  * Called from tester / code-reviewer / security-reviewer.
  *
- * Usage:
- *   # New output (create file)
+ * Recommended: Pass content via heredoc (stdin) — no length limit, newlines preserved
+ *
+ *   # New output (heredoc recommended)
+ *   node .claude/hooks/write-report.js <baseName> new <<'EOF'
+ *   {full report content}
+ *   EOF
+ *
+ *   # Append output (heredoc recommended)
+ *   node .claude/hooks/write-report.js <baseName> append <targetFileName> <<'EOF'
+ *   {content to append}
+ *   EOF
+ *
+ * Backward compatible: content can also be passed as CLI args (beware length limits & lost newlines)
  *   node .claude/hooks/write-report.js <baseName> new "<content>"
- *
- *   # Append output
  *   node .claude/hooks/write-report.js <baseName> append <targetFileName> "<content>"
- *
- *   # Backward compatible (treated as new if 2nd arg is not new/append)
  *   node .claude/hooks/write-report.js <baseName> "<content>"
  *
  * Output:
  *   Displays the actual written file path to stdout.
  *   Example: [write-report] .claude/reports/test-report-20260401-143022.md
- *
- * How to output a long report in chunks:
- *   1. node write-report.js test-report new "# Test Report\n## First half..."
- *      → [write-report] .claude/reports/test-report-20260401-143022.md
- *   2. node write-report.js test-report append test-report-20260401-143022.md "## Second half..."
- *      → [write-report] .claude/reports/test-report-20260401-143022.md (appended)
- *   3. Repeat 2 until all content is output
  */
 
 'use strict';
@@ -34,9 +34,16 @@ const [, , baseName, modeOrContent, ...rest] = process.argv;
 
 if (!baseName) {
   console.error('[write-report] Usage:');
-  console.error('  New:    node write-report.js <baseName> new "<content>"');
-  console.error('  Append: node write-report.js <baseName> append <targetFile> "<content>"');
+  console.error('  New (stdin):    node write-report.js <baseName> new <<\'EOF\'');
+  console.error('  Append (stdin): node write-report.js <baseName> append <targetFile> <<\'EOF\'');
+  console.error('  New (arg):      node write-report.js <baseName> new "<content>"');
+  console.error('  Append (arg):   node write-report.js <baseName> append <targetFile> "<content>"');
   process.exit(1);
+}
+
+// Read content from stdin (when passed via heredoc)
+function readStdin() {
+  return fs.readFileSync(0, 'utf-8');
 }
 
 const reportsDir = path.join(process.cwd(), '.claude', 'reports');
@@ -69,8 +76,9 @@ const isNew    = modeOrContent === 'new';
 const isAppend = modeOrContent === 'append';
 
 if (isNew) {
-  // New output mode: node write-report.js <baseName> new "<content>"
-  const content    = rest.join(' ');
+  // New output mode
+  // Prefer stdin (heredoc); fall back to CLI args
+  const content    = rest.length > 0 ? rest.join(' ') : readStdin();
   const timestamp  = generateTimestamp();
   const outputPath = resolveNewPath(baseName, timestamp);
 
@@ -80,16 +88,17 @@ if (isNew) {
   console.log(`[write-report] ${relativePath}`);
 
 } else if (isAppend) {
-  // Append output mode: node write-report.js <baseName> append <targetFileName> "<content>"
+  // Append output mode
+  // File name is required. Content: prefer stdin (heredoc); fall back to CLI args
   const [targetFileName, ...contentParts] = rest;
 
   if (!targetFileName) {
     console.error('[write-report] append mode requires a target file name.');
-    console.error('  Example: node write-report.js test-report append test-report-20260401-143022.md "append content"');
+    console.error('  Example: node write-report.js test-report append test-report-20260401-143022.md <<\'EOF\'');
     process.exit(1);
   }
 
-  const content    = contentParts.join(' ');
+  const content    = contentParts.length > 0 ? contentParts.join(' ') : readStdin();
   const targetPath = path.join(reportsDir, targetFileName);
 
   if (!fs.existsSync(targetPath)) {
