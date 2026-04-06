@@ -35,9 +35,7 @@ function enableSandbox() {
       allowUnixSockets: [],
       allowAllUnixSockets: false,
       allowLocalBinding: false,
-      allowedDomains: [],
-      httpProxyPort: null,
-      socksProxyPort: null
+      allowedDomains: []
     },
     enableWeakerNestedSandbox: false
   };
