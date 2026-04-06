@@ -21,12 +21,26 @@ function enableSandbox() {
   const raw = fs.readFileSync(SETTINGS_PATH, 'utf-8');
   const settings = JSON.parse(raw);
 
-  if (settings.sandbox === true) {
+  if (settings.sandbox && settings.sandbox.enabled === true) {
     console.log('[enable-sandbox] Sandbox is already enabled.');
     return { success: true, alreadyEnabled: true };
   }
 
-  settings.sandbox = true;
+  settings.sandbox = {
+    enabled: true,
+    autoAllowBashIfSandboxed: true,
+    allowUnsandboxedCommands: false,
+    excludedCommands: [],
+    network: {
+      allowUnixSockets: [],
+      allowAllUnixSockets: false,
+      allowLocalBinding: false,
+      allowedDomains: [],
+      httpProxyPort: null,
+      socksProxyPort: null
+    },
+    enableWeakerNestedSandbox: false
+  };
   fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2) + '\n', 'utf-8');
   console.log('[enable-sandbox] Sandbox has been enabled. It will take effect after restarting Claude Code.');
   return { success: true, alreadyEnabled: false };
