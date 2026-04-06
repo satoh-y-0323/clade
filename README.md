@@ -50,18 +50,12 @@ Choose the script that matches your preferred language:
 # Windows (PowerShell)
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\setup_en.ps1 -ProjectPath "C:\path\to\your\project"
-
-# With GitHub MCP integration (requires a GitHub Personal Access Token)
-.\setup_en.ps1 -ProjectPath "C:\path\to\your\project" -MCP
 ```
 
 ```bash
 # macOS / Linux
 chmod +x setup_en.sh
 ./setup_en.sh /path/to/your/project
-
-# With GitHub MCP integration (requires a GitHub Personal Access Token)
-./setup_en.sh --mcp /path/to/your/project
 ```
 
 **Japanese version**
@@ -80,8 +74,6 @@ chmod +x setup.sh
 
 The path argument specifies the project you want to set up.  
 This copies the `.claude/` directory into your project and initializes the session management hooks.
-
-`-MCP` / `--mcp` enables the GitHub MCP server. You will be prompted to enter your GitHub Personal Access Token on first run. The token is stored in `.claude/settings.local.json` (gitignored).
 
 ### 3. Set up your coding conventions (recommended)
 
@@ -270,7 +262,6 @@ Clade includes the following MCP servers out of the box:
 | `filesystem` | Read/write files outside the project directory |
 | `memory` | Persistent knowledge graph across sessions |
 | `sequential-thinking` | Structured multi-step reasoning for complex tasks |
-| `github` | Access GitHub Issues, PRs, and repositories (requires `-MCP` setup) |
 | `playwright` | Browser automation and E2E testing (localhost only by default) |
 
 The Playwright server restricts access to `localhost` by default. Use these commands to manage allowed origins per project:

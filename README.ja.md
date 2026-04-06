@@ -48,18 +48,12 @@ cd clade
 # Windows（PowerShell）
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\setup.ps1 -ProjectPath "C:\path\to\your\project"
-
-# GitHub MCP 連携を有効にする場合（GitHub Personal Access Token が必要）
-.\setup.ps1 -ProjectPath "C:\path\to\your\project" -MCP
 ```
 
 ```bash
 # macOS / Linux
 chmod +x setup.sh
 ./setup.sh /path/to/your/project
-
-# GitHub MCP 連携を有効にする場合（GitHub Personal Access Token が必要）
-./setup.sh --mcp /path/to/your/project
 ```
 
 **英語版**
@@ -78,8 +72,6 @@ chmod +x setup_en.sh
 
 パス引数にはセットアップしたいプロジェクトのパスを指定します。  
 `.claude/` ディレクトリをプロジェクトにコピーし、セッション管理フックを初期化します。
-
-`-MCP` / `--mcp` を指定すると GitHub MCP サーバが有効になります。初回実行時に GitHub Personal Access Token の入力を求められます。トークンは `.claude/settings.local.json`（gitignore 対象）に保存されます。
 
 ### 3. コーディング規約を設定する（推奨）
 
@@ -269,7 +261,6 @@ Clade には以下の MCP サーバが最初から含まれています：
 | `filesystem` | プロジェクト外のファイルの読み書き |
 | `memory` | セッションをまたぐ永続的なナレッジグラフ |
 | `sequential-thinking` | 複雑なタスクの段階的・構造化された推論 |
-| `github` | GitHub Issues・PR・リポジトリへのアクセス（`-MCP` セットアップが必要） |
 | `playwright` | ブラウザ自動操作・E2E テスト（デフォルトは localhost のみ許可） |
 
 Playwright サーバはデフォルトで `localhost` のみにアクセスを制限しています。プロジェクトごとに許可オリジンを管理するには以下のコマンドを使います：
