@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.3.1] - 2026-04-07
+
+### Bug Fixes
+- **Heredoc-based report output** — `write-report.js` now reads content from stdin when no content argument is provided. Agents are instructed to pass report content via heredoc (`<<'REPORT'`), which eliminates the OS command-line argument length limit (~8,000 characters) and preserves newlines correctly. The previous split `new` → `append` approach caused missing newlines at chunk boundaries.
+- **Prohibit retrying on argument-length errors** — Added a rule to `core.md` (ja/en): if a Bash command fails due to argument length limits, agents must stop and report the error to the user instead of silently trying alternative approaches.
+
+### Upgrade
+
+Re-run the setup script on your existing project to apply the changes:
+
+**English (Windows):**
+```powershell
+.\setup_en.ps1 -ProjectPath "C:\path\to\your\project"
+```
+
+**English (macOS/Linux):**
+```bash
+./setup_en.sh /path/to/your/project
+```
+
+**Japanese (Windows):**
+```powershell
+.\setup.ps1 -ProjectPath "C:\path\to\your\project"
+```
+
+**Japanese (macOS/Linux):**
+```bash
+./setup.sh /path/to/your/project
+```
+
+---
+
 ## [v1.3.0] - 2026-04-06
 
 ### Features
