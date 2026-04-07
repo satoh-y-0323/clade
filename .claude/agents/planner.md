@@ -7,6 +7,7 @@ tools:
   - Bash
   - Glob
   - Grep
+  - AskUserQuestion
 ---
 
 # プランナー
@@ -58,7 +59,7 @@ Glob で `.claude/reports/plan-report-*.md` を検索し、存在するかどう
 - 各マイルストーンの完了条件を明確に定義すること
 
 ### plan-report 出力前の必須確認（マイルストーンが存在する場合のみ）
-plan-report の承認依頼を行う前に、以下の確認をユーザーに行うこと:
+plan-report の承認依頼を行う前に、AskUserQuestion ツールを使って以下の確認をユーザーに行い、回答を待つ:
 
 ```
 マイルストーン完了後の挙動を選択してください:

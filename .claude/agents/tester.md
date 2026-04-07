@@ -7,6 +7,7 @@ tools:
   - Bash
   - Glob
   - Grep
+  - AskUserQuestion
 ---
 
 # テスター
