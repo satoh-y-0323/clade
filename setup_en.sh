@@ -64,7 +64,7 @@ fi
 
 # ===== Copy project configuration =====
 echo ""
-echo -e "${CYAN}[1/3] Copying project config to: ${PROJECT_PATH}/.claude/${RESET}"
+echo -e "${CYAN}[1/4] Copying project config to: ${PROJECT_PATH}/.claude/${RESET}"
 
 PROJ_CLAUDE="${PROJECT_PATH}/.claude"
 SOURCE_CLAUDE="${SCRIPT_DIR}/templates/en/.claude"
@@ -88,9 +88,34 @@ else
     echo -e "  ${GREEN}-> Copy complete${RESET}"
 fi
 
+# ===== Deploy settings.local.json =====
+echo ""
+echo -e "${CYAN}[2/4] Deploying settings.local.json...${RESET}"
+
+LOCAL_JSON="${PROJ_CLAUDE}/settings.local.json"
+EXAMPLE_JSON="${PROJ_CLAUDE}/settings.local.json.example"
+
+if [ -f "$EXAMPLE_JSON" ]; then
+    if [ -f "$LOCAL_JSON" ]; then
+        printf "  Existing settings.local.json detected. Overwrite? [y/N]: "
+        read -r OVERWRITE_LOCAL
+        if [[ "$OVERWRITE_LOCAL" =~ ^[Yy]$ ]]; then
+            cp "$EXAMPLE_JSON" "$LOCAL_JSON"
+            echo -e "  ${GREEN}-> Overwrite complete${RESET}"
+        else
+            echo "  -> Skipped"
+        fi
+    else
+        cp "$EXAMPLE_JSON" "$LOCAL_JSON"
+        echo -e "  ${GREEN}-> Deploy complete${RESET}"
+    fi
+else
+    echo -e "  ${YELLOW}-> settings.local.json.example not found. Skipped.${RESET}"
+fi
+
 # ===== Create empty directories =====
 echo ""
-echo -e "${CYAN}[2/3] Creating required directories...${RESET}"
+echo -e "${CYAN}[3/4] Creating required directories...${RESET}"
 
 EMPTY_DIRS=(
     "skills/project"
@@ -107,7 +132,7 @@ echo -e "  ${GREEN}-> Done${RESET}"
 
 # ===== Update .gitignore =====
 echo ""
-echo -e "${CYAN}[3/3] Updating .gitignore...${RESET}"
+echo -e "${CYAN}[4/4] Updating .gitignore...${RESET}"
 
 GITIGNORE="${PROJECT_PATH}/.gitignore"
 ENTRIES=(

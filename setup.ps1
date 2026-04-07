@@ -48,7 +48,7 @@ try {
 
 # ===== プロジェクト設定の配置 =====
 Write-Host ""
-Write-Host "[1/3] プロジェクト設定を配置中: $ProjectPath\.claude\" -ForegroundColor Cyan
+Write-Host "[1/4] プロジェクト設定を配置中: $ProjectPath\.claude\" -ForegroundColor Cyan
 
 $projClaude = Join-Path $ProjectPath ".claude"
 $sourceClaude = Join-Path $ScriptDir ".claude"
@@ -71,9 +71,33 @@ if (Test-Path $projClaude) {
     Write-Host "  -> 配置完了" -ForegroundColor Green
 }
 
+# ===== settings.local.json の配置 =====
+Write-Host ""
+Write-Host "[2/4] settings.local.json を配置中..." -ForegroundColor Cyan
+
+$localJson = Join-Path $projClaude "settings.local.json"
+$exampleJson = Join-Path $projClaude "settings.local.json.example"
+
+if (Test-Path $exampleJson) {
+    if (Test-Path $localJson) {
+        $overwriteLocal = Read-Host "  既存の settings.local.json を検出。上書きしますか？ [y/N]"
+        if ($overwriteLocal -match "^[Yy]$") {
+            Copy-Item $exampleJson $localJson -Force
+            Write-Host "  -> 上書き完了" -ForegroundColor Green
+        } else {
+            Write-Host "  -> スキップしました"
+        }
+    } else {
+        Copy-Item $exampleJson $localJson
+        Write-Host "  -> 配置完了" -ForegroundColor Green
+    }
+} else {
+    Write-Host "  -> settings.local.json.example が見つかりません。スキップしました" -ForegroundColor Yellow
+}
+
 # ===== 空ディレクトリを作成 =====
 Write-Host ""
-Write-Host "[2/3] 必要なディレクトリを作成中..." -ForegroundColor Cyan
+Write-Host "[3/4] 必要なディレクトリを作成中..." -ForegroundColor Cyan
 
 $emptyDirs = @(
     "skills\project",
@@ -89,7 +113,7 @@ Write-Host "  -> 完了" -ForegroundColor Green
 
 # ===== .gitignore に追加 =====
 Write-Host ""
-Write-Host "[3/3] .gitignore を更新中..." -ForegroundColor Cyan
+Write-Host "[4/4] .gitignore を更新中..." -ForegroundColor Cyan
 
 $gitignore = Join-Path $ProjectPath ".gitignore"
 $entries = @(

@@ -64,7 +64,7 @@ fi
 
 # ===== プロジェクト設定の配置 =====
 echo ""
-echo -e "${CYAN}[1/3] プロジェクト設定を配置中: ${PROJECT_PATH}/.claude/${RESET}"
+echo -e "${CYAN}[1/4] プロジェクト設定を配置中: ${PROJECT_PATH}/.claude/${RESET}"
 
 PROJ_CLAUDE="${PROJECT_PATH}/.claude"
 SOURCE_CLAUDE="${SCRIPT_DIR}/.claude"
@@ -88,9 +88,34 @@ else
     echo -e "  ${GREEN}-> 配置完了${RESET}"
 fi
 
+# ===== settings.local.json の配置 =====
+echo ""
+echo -e "${CYAN}[2/4] settings.local.json を配置中...${RESET}"
+
+LOCAL_JSON="${PROJ_CLAUDE}/settings.local.json"
+EXAMPLE_JSON="${PROJ_CLAUDE}/settings.local.json.example"
+
+if [ -f "$EXAMPLE_JSON" ]; then
+    if [ -f "$LOCAL_JSON" ]; then
+        printf "  既存の settings.local.json を検出。上書きしますか？ [y/N]: "
+        read -r OVERWRITE_LOCAL
+        if [[ "$OVERWRITE_LOCAL" =~ ^[Yy]$ ]]; then
+            cp "$EXAMPLE_JSON" "$LOCAL_JSON"
+            echo -e "  ${GREEN}-> 上書き完了${RESET}"
+        else
+            echo "  -> スキップしました"
+        fi
+    else
+        cp "$EXAMPLE_JSON" "$LOCAL_JSON"
+        echo -e "  ${GREEN}-> 配置完了${RESET}"
+    fi
+else
+    echo -e "  ${YELLOW}-> settings.local.json.example が見つかりません。スキップしました${RESET}"
+fi
+
 # ===== 空ディレクトリを作成 =====
 echo ""
-echo -e "${CYAN}[2/3] 必要なディレクトリを作成中...${RESET}"
+echo -e "${CYAN}[3/4] 必要なディレクトリを作成中...${RESET}"
 
 EMPTY_DIRS=(
     "skills/project"
@@ -107,7 +132,7 @@ echo -e "  ${GREEN}-> 完了${RESET}"
 
 # ===== .gitignore に追加 =====
 echo ""
-echo -e "${CYAN}[3/3] .gitignore を更新中...${RESET}"
+echo -e "${CYAN}[4/4] .gitignore を更新中...${RESET}"
 
 GITIGNORE="${PROJECT_PATH}/.gitignore"
 ENTRIES=(

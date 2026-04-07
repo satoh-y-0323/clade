@@ -61,7 +61,7 @@ User-specific settings **not committed to the repository** (add to `.gitignore`)
 
 > **Important:** `isolation: "worktree"` agents do **not** read `settings.json` — they only read `settings.local.json`. Without this file, parallel agents will lack the permissions to write files or run git commands, causing them to fail silently.
 
-Create `.claude/settings.local.json` manually with the following content:
+The setup script (`setup_en.sh` / `setup_en.ps1`) automatically deploys this from `.claude/settings.local.json.example`. To create manually:
 
 ```json
 {

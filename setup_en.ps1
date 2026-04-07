@@ -48,7 +48,7 @@ try {
 
 # ===== Copy project configuration =====
 Write-Host ""
-Write-Host "[1/3] Copying project config to: $ProjectPath\.claude\" -ForegroundColor Cyan
+Write-Host "[1/4] Copying project config to: $ProjectPath\.claude\" -ForegroundColor Cyan
 
 $projClaude = Join-Path $ProjectPath ".claude"
 $sourceClaude = Join-Path $ScriptDir "templates\en\.claude"
@@ -71,9 +71,33 @@ if (Test-Path $projClaude) {
     Write-Host "  -> Copy complete" -ForegroundColor Green
 }
 
+# ===== Deploy settings.local.json =====
+Write-Host ""
+Write-Host "[2/4] Deploying settings.local.json..." -ForegroundColor Cyan
+
+$localJson = Join-Path $projClaude "settings.local.json"
+$exampleJson = Join-Path $projClaude "settings.local.json.example"
+
+if (Test-Path $exampleJson) {
+    if (Test-Path $localJson) {
+        $overwriteLocal = Read-Host "  Existing settings.local.json detected. Overwrite? [y/N]"
+        if ($overwriteLocal -match "^[Yy]$") {
+            Copy-Item $exampleJson $localJson -Force
+            Write-Host "  -> Overwrite complete" -ForegroundColor Green
+        } else {
+            Write-Host "  -> Skipped"
+        }
+    } else {
+        Copy-Item $exampleJson $localJson
+        Write-Host "  -> Deploy complete" -ForegroundColor Green
+    }
+} else {
+    Write-Host "  -> settings.local.json.example not found. Skipped." -ForegroundColor Yellow
+}
+
 # ===== Create empty directories =====
 Write-Host ""
-Write-Host "[2/3] Creating required directories..." -ForegroundColor Cyan
+Write-Host "[3/4] Creating required directories..." -ForegroundColor Cyan
 
 $emptyDirs = @(
     "skills\project",
@@ -89,7 +113,7 @@ Write-Host "  -> Done" -ForegroundColor Green
 
 # ===== Update .gitignore =====
 Write-Host ""
-Write-Host "[3/3] Updating .gitignore..." -ForegroundColor Cyan
+Write-Host "[4/4] Updating .gitignore..." -ForegroundColor Cyan
 
 $gitignore = Join-Path $ProjectPath ".gitignore"
 $entries = @(
