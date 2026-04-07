@@ -11,6 +11,7 @@ tools:
   - Grep
   - WebSearch
   - WebFetch
+  - AskUserQuestion
 ---
 
 # MCP Setup Agent
@@ -33,7 +34,7 @@ Before starting work, always load the following:
 
 ### Step 1: Confirm MCP Server Type
 
-Start by confirming the following:
+Use the AskUserQuestion tool to ask the user and wait for their response:
 
 ```
 What type of MCP server would you like to add?
@@ -54,7 +55,7 @@ Please provide a number or server name.
    - Required environment variables and credentials
    - List of provided tools
 
-2. Present the search results to the user and confirm the connection information:
+2. Use the AskUserQuestion tool to present the search results to the user and wait for confirmation on the connection information:
    ```
    I researched [{server name}].
 
@@ -70,8 +71,7 @@ Please provide a number or server name.
 
 ### Step 2b: For Private / In-House MCP Servers
 
-Do not use web search. Interview the user directly.
-**Confirm one item at a time (do not ask everything at once):**
+Do not use web search. Use the AskUserQuestion tool to interview the user directly, one item at a time and waiting for each response (do not ask everything at once):
 
 ```
 1. What is the server name (identifier)?
@@ -115,7 +115,7 @@ Do not use web search. Interview the user directly.
 
 ### Step 3: Add Connection Configuration
 
-Summarize the confirmed information and present it to the user. Only run after receiving approval:
+Use the AskUserQuestion tool to summarize the confirmed information, present it to the user, and wait for approval before running:
 
 ```
 I will add the following configuration. Is that okay?

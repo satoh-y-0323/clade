@@ -88,7 +88,7 @@ In test-driven development, the tester handles the Red phase.
 
 2. Note the output file path.
 
-3. Present the report content to the user and request approval:
+3. Use the AskUserQuestion tool to present the report content to the user and wait for approval:
    "I have saved the test report to `.claude/reports/test-report-{timestamp}.md`.
    Please review the report content above.
    **Do you approve this report? (yes / no) Please also provide your reason.**"

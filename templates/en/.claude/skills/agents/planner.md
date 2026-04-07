@@ -64,7 +64,7 @@ Read all reports and update the plan to reflect differences and unresolved items
 
 3. Note the output file path.
 
-4. Present the report content to the user and request approval:
+4. Use the AskUserQuestion tool to present the report content to the user and wait for approval:
    "I have saved the work plan report to `.claude/reports/plan-report-{timestamp}.md`.
    Please review the plan above.
    **Do you approve this plan? (yes / no) If changes are needed, please describe them.**"

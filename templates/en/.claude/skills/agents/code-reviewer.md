@@ -63,7 +63,7 @@ Suggestion: How to improve it
 
 2. Note the output file path.
 
-3. Present the report content to the user and request approval:
+3. Use the AskUserQuestion tool to present the report content to the user and wait for approval:
    "I have saved the code review report to `.claude/reports/code-review-report-{timestamp}.md`.
    Please review the report content above.
    **Do you approve this report? (yes / no) Please also provide your reason.**"

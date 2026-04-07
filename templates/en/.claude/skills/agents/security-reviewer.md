@@ -52,7 +52,7 @@ Use the architecture report to understand communication paths, authentication me
 
 2. Note the output file path.
 
-3. Present the report content to the user and request approval:
+3. Use the AskUserQuestion tool to present the report content to the user and wait for approval:
    "I have saved the security assessment report to `.claude/reports/security-review-report-{timestamp}.md`.
    Please review the report content above.
    **Do you approve this report? (yes / no) Please also provide your reason.**"

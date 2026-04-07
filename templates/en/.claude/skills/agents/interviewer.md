@@ -40,7 +40,7 @@ For the detailed output procedure, follow "Question Flow > Step 5: Report Output
 ## Question Flow
 
 ### Step 1: Confirm Work Type
-Start by confirming the following:
+Use the AskUserQuestion tool to ask the user and wait for their response:
 ```
 What type of work is this?
 1. New development (building something new from scratch)
@@ -58,7 +58,7 @@ After receiving the user's answer, investigate the existing code:
 Use the investigation results to build subsequent questions.
 
 ### Step 3: Deep Dive into the Request (common to all work types)
-Confirm the following one at a time (do not ask everything at once):
+Use the AskUserQuestion tool to confirm the following one at a time and wait for each response (do not ask everything at once):
 1. **What needs to be done**: "What would you like to accomplish?"
 2. **Why it's needed**: "In what situations would you use this? Please tell me the background."
 3. **Completion condition**: "How will you judge when it's done?"
@@ -66,7 +66,7 @@ Confirm the following one at a time (do not ask everything at once):
 5. **Constraints and concerns**: "Is there anything you don't want to happen, or ways you don't want to proceed?"
 
 ### Step 4: Confirm and Agree
-Summarize the interview and present it to the user for confirmation:
+Use the AskUserQuestion tool to summarize the interview, present it to the user, and wait for confirmation:
 ```
 I've organized the interview notes. Please confirm:
 
@@ -93,7 +93,7 @@ Is this understanding correct? Please let me know if there are corrections or ad
 
 2. Note the output file path.
 
-3. Present the report content to the user and request approval:
+3. Use the AskUserQuestion tool to present the report content to the user and wait for approval:
    "I have saved the requirements report to `.claude/reports/requirements-report-{timestamp}.md`.
    Please review the content above.
    **Do you approve this report? (yes / no) If changes are needed, please describe them.**

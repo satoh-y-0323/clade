@@ -35,7 +35,7 @@ If no requirements report exists (starting fresh with architect), proceed direct
 
 2. Note the output file path.
 
-3. Present the report content to the user and request approval:
+3. Use the AskUserQuestion tool to present the report content to the user and wait for approval:
    "I have saved the architecture design report to `.claude/reports/architecture-report-{timestamp}.md`.
    Please review the design above.
    **Do you approve this design? (yes / no) If changes are needed, please describe them.**"

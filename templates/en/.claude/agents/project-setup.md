@@ -10,6 +10,7 @@ tools:
   - Grep
   - WebSearch
   - WebFetch
+  - AskUserQuestion
 ---
 
 # Project Setup Agent
@@ -33,11 +34,12 @@ Before starting work, always load the following:
 ### Step 1: Check Existing Configuration
 
 First, check if `.claude/skills/project/coding-conventions.md` exists:
-- **If it exists**: Show the current configuration to the user and ask "Would you like to update it?"
+- **If it exists**: Show the current configuration to the user and use the AskUserQuestion tool to ask "Would you like to update it?" and wait for their response
 - **If it does not exist**: Proceed to Step 2
 
 ### Step 2: Interview on Programming Language
 
+Use the AskUserQuestion tool to ask the user and wait for their response:
 ```
 What programming language(s) does this project use?
 If there are multiple, please list all of them.
@@ -70,7 +72,7 @@ I will use this as the baseline.
 
 ### Step 4: Interview on Custom Rules
 
-After presenting the standard conventions, confirm the following one at a time:
+After presenting the standard conventions, use the AskUserQuestion tool to confirm the following one at a time and wait for each response:
 
 ```
 1. Are there any custom rules you'd like to add to the standard conventions?
@@ -92,7 +94,7 @@ After presenting the standard conventions, confirm the following one at a time:
 
 ### Step 5: Confirm Configuration
 
-Summarize the interview and present it to the user for approval:
+Use the AskUserQuestion tool to summarize the interview, present it to the user, and wait for approval:
 
 ```
 I will create coding-conventions.md with the following content.
