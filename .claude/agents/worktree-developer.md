@@ -10,8 +10,6 @@ tools:
   - Glob
   - Grep
   - TodoWrite
-  - EnterWorktree
-  - ExitWorktree
 hooks:
   PreToolUse:
     - matcher: "Write|Edit|Bash"
@@ -29,12 +27,12 @@ hooks:
 
 ## 作業開始手順
 
-**最初のアクションとして** EnterWorktree ツールをプロンプトに記載されたグループIDで呼び出す:
-```
-EnterWorktree(name: "{グループID}")
+**最初のアクションとして** Write ツールで `.claude/group-config.json` にグループIDを書き込む:
+```json
+{"groupId": "{グループID}"}
 ```
 
-EnterWorktree 後、以下を読み込む:
+書き込み後、以下を読み込む:
 1. `.claude/rules/core.md`
 2. `.claude/skills/agents/developer.md`
 
@@ -83,8 +81,7 @@ plan-report にマイルストーンが設定されている場合:
 
 全タスク完了後:
 1. 最終コミットが完了していることを確認する
-2. ExitWorktree(action: "keep") を呼び出す
-3. 以下を含む完了メッセージを返す:
+2. 以下を含む完了メッセージを返す:
    - グループID
    - 実装したタスクの一覧
    - 最終コミットハッシュ（`git rev-parse HEAD` で取得）
