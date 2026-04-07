@@ -80,3 +80,35 @@ Repeat Steps 3–8 until there are no more issues.
 2. `/agent-developer` implements (Green) → ask tester to re-verify
 3. `/agent-developer` refactors (Refactor) → ask tester to re-verify
 4. Repeat 2–3 until all tests pass
+
+---
+
+### Milestone Workflow
+
+In large-scale development, `plan-report` may include milestones.
+A milestone is a development unit that represents a state where the work so far can be verified as functional, and a commit is made upon completion.
+
+#### Planner Responsibilities (during planning)
+When outputting a plan that includes milestones, always ask the user the following before requesting approval of the `plan-report`:
+
+```
+Choose behavior after each milestone completes:
+  [confirm] Show a "Continue to next milestone?" dialog after each milestone commit
+            (choose this if you may want to pause mid-way)
+  [auto]    Automatically proceed to the next milestone after each commit without confirmation
+            (choose this if you want to complete everything today)
+```
+
+Record the selection in the meta section at the top of the `plan-report`:
+
+```
+## Meta
+- milestone_mode: confirm  # or auto
+```
+
+This confirmation may be omitted for small plans with no milestones.
+
+#### Developer Responsibilities (during implementation)
+When the prompt specifies "Target milestone: N", implement only that milestone's tasks, commit, and end work without proceeding to the next milestone.
+
+Continuation confirmation between milestones (`milestone_mode: confirm` / `auto`) is controlled by the `/agent-developer` command (parent Claude).

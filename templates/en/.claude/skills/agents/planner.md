@@ -76,6 +76,43 @@ Read all reports and update the plan to reflect differences and unresolved items
 
 6. If rejected, reflect the comments in the plan and repeat steps 1–5.
 
+## Parallel Development Mode Determination
+
+After building the task list, use **parallel development mode** and define `parallel_groups` in the plan-report if all of the following conditions are met:
+
+1. There are 2 or more independent task groups (no dependencies between groups)
+2. The files each group handles can be clearly separated
+3. Shared interfaces and type definitions can be finalized in advance
+
+If parallel development mode applies, output the following as a **YAML frontmatter** at the top of the plan-report:
+
+```yaml
+---
+parallel_groups:
+  group-a:
+    name: {group name}
+    tasks:
+      - {task ID}
+    files:
+      - {file pattern (e.g., src/user/**, src/types/user.ts)}
+  group-b:
+    name: {group name}
+    tasks:
+      - {task ID}
+    files:
+      - {file pattern}
+pre_implementation:
+  - {files that must be implemented and committed before parallel work begins (interfaces, type definitions, etc.)}
+---
+```
+
+**File pattern syntax:**
+- `src/user/**` — all files under `src/user/`
+- `src/types/user.ts` — a specific file
+- Patterns must not overlap between groups
+
+Omit the YAML frontmatter if parallel development mode does not apply.
+
 ## Report Format
 ```markdown
 # Work Plan Report

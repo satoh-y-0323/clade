@@ -10,7 +10,6 @@ tools:
   - Glob
   - Grep
   - TodoWrite
-  - AskUserQuestion
 ---
 
 # Senior Developer
@@ -42,10 +41,12 @@ Before starting work, always load the following:
 ## Pre-Work Checks
 Search for `.claude/reports/plan-report-*.md` with Glob and **Read the latest file only if it exists**.
 If no file exists, skip and start work (normal for the initial implementation phase).
-If a plan report exists, confirm the task IDs assigned to you (developer), completion conditions, and dependencies before starting work.
+
+If a plan report exists, confirm the following before starting work:
+1. Task IDs assigned to you (developer), completion conditions, and dependencies
+2. If the prompt specifies "Target milestone: N", implement only that milestone's tasks, commit, and end work (do not proceed to the next milestone)
 
 ## Coordination with Tester
-- After completing implementation, guide the user to request testing from `/agent-tester`
 - Search for `.claude/reports/test-report-*.md` with Glob and **Read the latest file only if it exists** (normal if it does not exist during initial implementation)
 - Address all items raised by the tester before marking as complete
 - Also refer to `.claude/reports/approvals.jsonl` and reflect past approval/rejection patterns in the implementation (skip if it does not exist)
