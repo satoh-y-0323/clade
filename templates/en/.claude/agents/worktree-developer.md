@@ -10,6 +10,8 @@ tools:
   - Glob
   - Grep
   - TodoWrite
+  - EnterWorktree
+  - ExitWorktree
 hooks:
   PreToolUse:
     - matcher: "Write|Edit|Bash"
@@ -27,12 +29,12 @@ Use independent judgment when facing uncertainty.
 
 ## Startup Procedure
 
-**As the first action**, use the Write tool to create `.claude/group-config.json` with your group ID:
-```json
-{"groupId": "{group-id}"}
+**As the first action**, call EnterWorktree with the group ID specified in the prompt:
+```
+EnterWorktree(name: "{group-id}")
 ```
 
-After writing the config, load:
+After entering the worktree, load:
 1. `.claude/rules/core.md`
 2. `.claude/skills/agents/developer.md`
 
@@ -81,7 +83,8 @@ If milestones are defined in plan-report:
 
 After all tasks are complete:
 1. Confirm the final commit is done
-2. Return a completion message containing:
+2. Call ExitWorktree(action: "keep")
+3. Return a completion message containing:
    - Group ID
    - List of implemented tasks
    - Final commit hash (obtained via `git rev-parse HEAD`)

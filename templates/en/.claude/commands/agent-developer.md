@@ -78,11 +78,11 @@ Launch all groups **simultaneously in the background**:
 
 ```
 For each group (group-a, group-b, ...):
-  Launch with subagent_type: worktree-developer, run_in_background: true, and isolation: "worktree" in the Agent tool
+  Launch with subagent_type: worktree-developer and run_in_background: true in the Agent tool
   Include the following in the prompt:
     - Group ID (e.g., group-a)
     - Task list for that group from plan-report
-    - "As your first action, create .claude/group-config.json using Write (content: {"groupId": "group-a"})"
+    - "As your first action, call EnterWorktree(name: 'group-a')"
 ```
 
 ### Step 3: Wait for All Groups to Complete

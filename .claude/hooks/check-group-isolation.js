@@ -19,15 +19,12 @@ const toolInput = hookInput.tool_input || {};
 const cwd       = hookInput.cwd || process.cwd();
 
 // ===== worktree グループID の抽出 =====
-// group-config.json からグループIDを読む（isolation: "worktree" 対応）
-const normalizedCwd   = cwd.replace(/\\/g, '/');
-const groupConfigPath = path.join(cwd, '.claude', 'group-config.json');
-let groupId;
-try {
-  const config = JSON.parse(fs.readFileSync(groupConfigPath, 'utf8'));
-  groupId = config.groupId;
-} catch (_) {}
-if (!groupId) process.exit(0); // group-config.json がなければチェックしない
+// EnterWorktree が作る .claude/worktrees/{groupId}/ のパスからグループIDを取得
+const normalizedCwd = cwd.replace(/\\/g, '/');
+const worktreeMatch = normalizedCwd.match(/\/\.claude\/worktrees\/([^/]+)\/?$/);
+if (!worktreeMatch) process.exit(0); // worktree 外はチェックしない
+
+const groupId = worktreeMatch[1];
 
 // ===== チェック対象のファイルパスを取得 =====
 let targetFiles = [];
