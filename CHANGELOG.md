@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.3.3] - 2026-04-07
+
+### Bug Fixes
+- **Fix multi-turn conversation in all agents** — SubAgents were spawning a new Agent invocation for each question, causing context loss and inefficiency. All 9 agents (ja + en templates) now explicitly use the `AskUserQuestion` tool for interactive questions, enabling true multi-turn conversation within a single agent session.
+
+### Upgrade
+
+Re-run the setup script on your existing project to apply the changes:
+
+**English (Windows):**
+```powershell
+.\setup_en.ps1 -ProjectPath "C:\path\to\your\project"
+```
+
+**English (macOS/Linux):**
+```bash
+./setup_en.sh /path/to/your/project
+```
+
+**Japanese (Windows):**
+```powershell
+.\setup.ps1 -ProjectPath "C:\path\to\your\project"
+```
+
+**Japanese (macOS/Linux):**
+```bash
+./setup.sh /path/to/your/project
+```
+
+---
+
 ## [v1.3.2] - 2026-04-07
 
 ### Bug Fixes
