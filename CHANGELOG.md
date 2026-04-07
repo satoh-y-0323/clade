@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.5.0] - 2026-04-08
+
+### Features
+- **`isolation: "worktree"` for parallel development** — `worktree-developer` agents now launch via `Agent({ isolation: "worktree" })` instead of `EnterWorktree`. Each agent automatically receives a dedicated, isolated Git worktree. This resolves the `Already in a worktree session` conflict that occurred when two agents called `EnterWorktree` concurrently (fixes [clade#1](https://github.com/satoh-y-0323/clade/issues/1)).
+- **`group-config.json` for group ID tracking** — Because `isolation: "worktree"` assigns auto-generated worktree names, each `worktree-developer` now writes `.claude/group-config.json` at startup to record its assigned group ID. The `check-group-isolation.js` hook reads this file first (falling back to CWD-based detection for backwards compatibility).
+- **`settings.local.json.example` template** — A recommended `settings.local.json` configuration is now included in both `.claude/` and `templates/en/.claude/`. Setup scripts deploy this as `settings.local.json` automatically during setup.
+- **Auto-deploy `settings.local.json` in setup scripts** — All four setup scripts (`setup.sh`, `setup.ps1`, `setup_en.sh`, `setup_en.ps1`) now include a `[2/4]` step that copies `settings.local.json.example` to `settings.local.json`, with an overwrite prompt if the file already exists.
+
+### Bug Fixes
+- **Fix `enable-sandbox.js` in Git worktrees** — The sandbox enable script now detects when it is running inside a Git worktree and exits early, preventing errors during worktree agent startup.
+- **Fix permissions for `isolation: "worktree"` agents** — `isolation: "worktree"` agents read `settings.local.json` instead of `settings.json`. Added `Read(**)`, `Glob(**)`, `Grep(**)`, `Bash(git:*)`, and `Bash(node*)` to `settings.local.json.example` so parallel agents have the permissions they need.
+- **Fix `settings.json` permissions cleanup** — Removed redundant and overly broad permission entries introduced during debugging.
+
+### Documentation
+- Added `## 設定ファイル` / `## Settings Files` section to `CLAUDE.md` (ja/en) explaining the role of `settings.local.json` and why it is required for `isolation: "worktree"` agents.
+
+### Upgrade
+
+Re-run the setup script on your existing project to apply the changes:
+
+**English (Windows):**
+```powershell
+.\setup_en.ps1 -ProjectPath "C:\path\to\your\project"
+```
+
+**English (macOS/Linux):**
+```bash
+./setup_en.sh /path/to/your/project
+```
+
+**Japanese (Windows):**
+```powershell
+.\setup.ps1 -ProjectPath "C:\path\to\your\project"
+```
+
+**Japanese (macOS/Linux):**
+```bash
+./setup.sh /path/to/your/project
+```
+
+> **Note:** The setup script will prompt before overwriting an existing `settings.local.json`.
+
+---
+
 ## [v1.4.0] - 2026-04-08
 
 ### Features
