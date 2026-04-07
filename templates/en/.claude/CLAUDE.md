@@ -51,6 +51,34 @@ Normal behavior. Do not show any environment check message.
 | Stop | `.claude/hooks/stop.js` | Save session + launch pattern extraction |
 | PreCompact | `.claude/hooks/pre-compact.js` | Save session state before compaction |
 
+## Settings Files
+
+### `settings.json`
+Project-wide settings committed to the repository. Defines permissions, hooks, sandbox, and MCP servers.
+
+### `settings.local.json` (required for parallel development)
+User-specific settings **not committed to the repository** (add to `.gitignore`). Required for `isolation: "worktree"` agents to function correctly.
+
+> **Important:** `isolation: "worktree"` agents do **not** read `settings.json` — they only read `settings.local.json`. Without this file, parallel agents will lack the permissions to write files or run git commands, causing them to fail silently.
+
+Create `.claude/settings.local.json` manually with the following content:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "Write(**)",
+      "Edit(**)",
+      "Glob(**)",
+      "Grep(**)",
+      "Bash(git:*)",
+      "Bash(node*)"
+    ]
+  }
+}
+```
+
 ## Language
 Always respond to the user in English. Exceptions: code, commands, and file paths.
 
