@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.4.0] - 2026-04-08
+
+### Features
+- **Parallel development** — The planner can now define `parallel_groups` in plan-report YAML frontmatter to split work across independent agent groups. `agent-developer` detects parallel groups, launches multiple `worktree-developer` agents in background (each in an isolated Git worktree), and automatically triggers the merger when all groups complete.
+- **`worktree-developer` agent** — New background-only agent that enters a dedicated worktree via `EnterWorktree`, implements the assigned group's tasks with file-ownership enforcement, and exits with a branch name for the merger.
+- **`merger` agent** — New agent that merges all worktree branches into the base branch after parallel development. Detects conflicts and guides the user through resolution with `AskUserQuestion`.
+- **File ownership enforcement** — New `check-group-isolation.js` hook (defined in `worktree-developer` frontmatter hooks) blocks `Write`, `Edit`, and `Bash rm` operations that target files outside the group's assigned scope, preventing cross-group interference.
+
+### Bug Fixes
+- **Fix approval flow in background sub-agents** — `code-reviewer` and `security-reviewer` sub-agents were using `AskUserQuestion` directly, but background sub-agents cannot display dialogs. Approval flow has been moved to the parent Claude (`agent-code-reviewer` / `agent-security-reviewer` commands).
+- **Rename `reviewer.md` → `code-reviewer.md`** — Agent file renamed for consistency with the command name and report naming convention.
+- **Milestone orchestration moved to parent Claude** — Milestone progress confirmation and tester coordination were removed from the `developer` agent (incompatible with background execution) and consolidated into the `agent-developer` command.
+
+### Upgrade
+
+Re-run the setup script on your existing project to apply the changes:
+
+**English (Windows):**
+```powershell
+.\setup_en.ps1 -ProjectPath "C:\path\to\your\project"
+```
+
+**English (macOS/Linux):**
+```bash
+./setup_en.sh /path/to/your/project
+```
+
+**Japanese (Windows):**
+```powershell
+.\setup.ps1 -ProjectPath "C:\path\to\your\project"
+```
+
+**Japanese (macOS/Linux):**
+```bash
+./setup.sh /path/to/your/project
+```
+
+---
+
 ## [v1.3.3] - 2026-04-07
 
 ### Bug Fixes

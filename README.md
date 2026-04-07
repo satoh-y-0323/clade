@@ -1,6 +1,6 @@
 # Clade
 
-[![version](https://img.shields.io/badge/version-1.3.3-blue)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-1.4.0-blue)](CHANGELOG.md)
 
 [日本語版はこちら](README.ja.md)
 
@@ -17,6 +17,7 @@ It organizes specialized agents by role — interviewer, architect, planner, dev
 - **Role-based agents** — Each agent has a clearly defined responsibility and rule set
 - **Structured workflow** — Phases from requirements → design → planning → implementation → testing → review
 - **Human-in-the-loop** — Every phase produces a report that requires your approval before moving on
+- **Parallel development** — The planner can split work into independent groups. The developer command launches multiple agents in parallel worktrees and merges automatically when all groups complete
 - **Project-contained by default** — All configuration lives inside `.claude/` and travels with the project. Nothing leaks into your global environment without your explicit intent
 - **Promote when ready** — Skills, rules, and MCP servers that prove useful across multiple projects can be elevated to global scope with `/promote`, on your terms
 - **Fully customizable** — Tailor agents, rules, and skills to your team's conventions
@@ -137,6 +138,8 @@ Phase 2: Planning
 Phase 3: Implementation & Testing (TDD)
   /agent-tester       →  write failing tests (Red)
   /agent-developer    →  implement (Green → Refactor)
+    [parallel mode]   →  launches worktree-developer agents per group
+                          merger merges all branches when done
   /agent-tester       →  verify & test-report
 
 Phase 4: Review
