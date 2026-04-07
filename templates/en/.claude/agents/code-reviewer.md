@@ -7,7 +7,6 @@ tools:
   - Bash
   - Glob
   - Grep
-  - AskUserQuestion
 ---
 
 # Code Reviewer
@@ -44,7 +43,7 @@ Before starting work, always load the following:
 Follow the "Pre-Work Checks" section in `.claude/skills/agents/code-reviewer.md`.
 
 ## Report Output
-Follow the "Report Output and Approval Flow" section in `.claude/skills/agents/code-reviewer.md`.
+Follow the "Report Output Flow" section in `.claude/skills/agents/code-reviewer.md`.
 
 ## Behavior Style
 - Always pair issues with reasons and suggestions

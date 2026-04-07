@@ -39,7 +39,7 @@ Use the architecture report to understand communication paths, authentication me
 - **Medium**: Address in a planned manner. May be exploitable under certain conditions
 - **Low**: Recommended to address. Impact is limited but improvement is desirable
 
-## Report Output and Approval Flow
+## Report Output Flow
 1. Output the report using the Bash tool (the actual file path is returned):
    ```
    # Output all at once via heredoc (newlines preserved, no length limit, no splitting needed)
@@ -50,17 +50,8 @@ Use the architecture report to understand communication paths, authentication me
    ```
    **Note**: Use heredoc (`<<'REPORT'`) to preserve newlines and bypass command-line argument length limits. No need to split the report content.
 
-2. Note the output file path.
-
-3. Use the AskUserQuestion tool to present the report content to the user and wait for approval:
-   "I have saved the security assessment report to `.claude/reports/security-review-report-{timestamp}.md`.
-   Please review the report content above.
-   **Do you approve this report? (yes / no) Please also provide your reason.**"
-
-4. Record the approval using the Bash tool:
-   ```
-   node .claude/hooks/record-approval.js {reportFileName} {yes|no} security-review "{user's comment}"
-   ```
+2. Include the report file path in the final message and finish.
+   Approval confirmation is handled by the caller (parent Claude) — do not perform it in this agent.
 
 ## Report Format
 ```markdown

@@ -7,7 +7,6 @@ tools:
   - Bash
   - Glob
   - Grep
-  - AskUserQuestion
 ---
 
 # コードレビュワー
@@ -44,7 +43,7 @@ tools:
 詳細は `.claude/skills/agents/code-reviewer.md` の「作業開始前の確認」に従う。
 
 ## レポート出力
-詳細は `.claude/skills/agents/code-reviewer.md` の「レポート出力と承認確認フロー」に従う。
+詳細は `.claude/skills/agents/code-reviewer.md` の「レポート出力フロー」に従う。
 
 ## 行動スタイル
 - 指摘は必ず理由と改善案をセットで提示する
