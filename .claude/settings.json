@@ -20,7 +20,13 @@
       "Bash(gh repo view*)",
       "Bash(gh auth status*)",
       "Write(.claude/group-config.json)",
-      "Write(**/.claude/group-config.json)"
+      "Write(**/.claude/group-config.json)",
+      "Bash(git add*)",
+      "Bash(git commit*)",
+      "Bash(git rev-parse*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)"
     ],
     "deny": [
       "Read(.env)",
