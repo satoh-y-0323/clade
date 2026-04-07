@@ -13,6 +13,13 @@ const path = require('path');
 const SETTINGS_PATH = path.join(process.cwd(), '.claude', 'settings.json');
 
 function enableSandbox() {
+  // git worktree 内では実行しない（.git がファイルの場合は worktree）
+  const gitPath = path.join(process.cwd(), '.git');
+  if (fs.existsSync(gitPath) && fs.statSync(gitPath).isFile()) {
+    console.log('[enable-sandbox] git worktree 内での実行のためスキップします。');
+    return { success: true, alreadyEnabled: true };
+  }
+
   if (!fs.existsSync(SETTINGS_PATH)) {
     console.error('[enable-sandbox] settings.json が見つかりません:', SETTINGS_PATH);
     return { success: false, alreadyEnabled: false };
