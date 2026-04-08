@@ -5,10 +5,7 @@
 - `.claude/skills/project/review-checklist`（存在する場合）
 
 ## 作業開始前の確認
-以下を順番に確認してからレビューを開始する（**存在するファイルのみ読み込む**）:
-1. Glob で `.claude/reports/requirements-report-*.md` を検索 → 存在すれば最新を Read（ユーザーの要望・完了条件を把握）
-2. Glob で `.claude/reports/architecture-report-*.md` を検索 → 存在すれば最新を Read（設計の意図・インターフェース仕様を把握）
-3. Glob で `.claude/reports/plan-report-*.md` を検索 → 存在すれば最新を Read（担当タスクと完了条件を確認）
+まず `.claude/skills/agents/reviewer-common.md` を Read して共通手順を実行すること。
 ※ いずれのレポートも存在しない場合は、ソースコードを直接読んでレビューを開始する
 
 ## レビュー対象
@@ -59,7 +56,7 @@
    REPORT
    → 出力例: [write-report] .claude/reports/code-review-report-20260401-143022.md
    ```
-   **注意**: ヒアドキュメント（`<<'REPORT'`）で渡すことで改行が保持され、コマンドライン引数の文字数制限も回避できる。レポート内容を分割する必要はない。
+   （注意事項は reviewer-common.md の「レポート出力の注意事項」参照）
 
 2. 出力されたレポートファイルパスを最終メッセージに含めて終了する。
    承認確認は呼び出し元（親Claude）が行うため、このエージェントでは実施しない。

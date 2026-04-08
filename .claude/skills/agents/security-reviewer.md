@@ -4,10 +4,7 @@
 - `.claude/skills/project/security-scan`（存在する場合）
 
 ## 作業開始前の確認
-以下を順番に確認してから診断を開始する（**存在するファイルのみ読み込む**）:
-1. Glob で `.claude/reports/requirements-report-*.md` を検索 → 存在すれば最新を Read（ユーザーの要望・扱うデータの種類を把握）
-2. Glob で `.claude/reports/architecture-report-*.md` を検索 → 存在すれば最新を Read（システム構成・通信経路・認証設計を把握）
-3. Glob で `.claude/reports/plan-report-*.md` を検索 → 存在すれば最新を Read（担当タスクと完了条件を確認）
+まず `.claude/skills/agents/reviewer-common.md` を Read して共通手順を実行すること。
 ※ いずれのレポートも存在しない場合は、ソースコードを直接読んでセキュリティ診断を開始する
 
 要件定義レポートで「扱うデータの種類・ユーザー種別・外部連携」を把握し、セキュリティリスクの優先度判断に活用する。
@@ -48,7 +45,7 @@
    REPORT
    → 出力例: [write-report] .claude/reports/security-review-report-20260401-143022.md
    ```
-   **注意**: ヒアドキュメント（`<<'REPORT'`）で渡すことで改行が保持され、コマンドライン引数の文字数制限も回避できる。レポート内容を分割する必要はない。
+   （注意事項は reviewer-common.md の「レポート出力の注意事項」参照）
 
 2. 出力されたレポートファイルパスを最終メッセージに含めて終了する。
    承認確認は呼び出し元（親Claude）が行うため、このエージェントでは実施しない。
