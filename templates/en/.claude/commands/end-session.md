@@ -29,9 +29,10 @@ DURATION: {estimated work time}
 - [ ] {task 3} (priority: low)
 ```
 
-3. Write to the file using the Write tool:
-   Path: `.claude/memory/sessions/{YYYYMMDD}.tmp`
-   Content: Content generated from the template above
+3. Write to the file:
+   - **If the file does not exist**: Use the Write tool to write the full template as-is
+   - **If the file already exists**: Read the existing content with the Read tool, then use the Edit tool to **append** to each section. Do not duplicate section headings — add new items to the end of the existing bullet list in each section.
+     Example: If `## Approaches That Worked (with evidence)` already exists, add new approaches to the end of that section (do not create a second heading).
 4. Report completion
 
 ## Notes
