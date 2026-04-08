@@ -46,9 +46,9 @@ Normal behavior. Do not show any environment check message.
 | Event | Script | Purpose |
 |---|---|---|
 | SessionStart | `.claude/hooks/session-start.js` | Restore previous session, memory, and instincts |
-| PreToolUse | `.claude/hooks/pre-tool.js` | Guard dangerous commands + record tool execution |
-| PostToolUse | `.claude/hooks/post-tool.js` | Record tool results |
-| Stop | `.claude/hooks/stop.js` | Save session + launch pattern extraction |
+| PreToolUse | `.claude/hooks/pre-tool.js` | Guard dangerous commands |
+| PostToolUse | `.claude/hooks/post-tool.js` | Record Bash command results to bash-log.jsonl |
+| Stop | `.claude/hooks/stop.js` | Create session file template |
 | PreCompact | `.claude/hooks/pre-compact.js` | Save session state before compaction |
 
 ## Settings Files
