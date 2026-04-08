@@ -1,6 +1,6 @@
 # Clade
 
-[![version](https://img.shields.io/badge/version-1.6.0-blue)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-1.7.0-blue)](CHANGELOG.md)
 
 [日本語版はこちら](README.ja.md)
 
@@ -263,6 +263,7 @@ When you return to the project the next day:
 | `/agent-security-reviewer` | Security vulnerability review |
 | `/agent-project-setup` | Coding conventions setup |
 | `/agent-mcp-setup` | MCP server configuration |
+| `/agent-workflow-builder` | Auto-generate agents from business workflow interviews |
 
 ---
 

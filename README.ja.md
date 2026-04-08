@@ -1,6 +1,6 @@
 # Clade
 
-[![version](https://img.shields.io/badge/version-1.6.0-blue)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-1.7.0-blue)](CHANGELOG.md)
 
 > **読み方：** クレイド  
 > **由来：** *Claude* ＋ *made*（作られた）の造語。生物学では **clade（クレード）** は「共通の祖先を持つグループ」を意味し、Claude から生まれたエージェントたちがチームとして協働するイメージを込めています。
@@ -261,6 +261,7 @@ requirements-report-20260404-103012.md を読み込み中...
 | `/agent-security-reviewer` | セキュリティ脆弱性診断 |
 | `/agent-project-setup` | コーディング規約の設定 |
 | `/agent-mcp-setup` | MCP サーバの設定 |
+| `/agent-workflow-builder` | 業務ヒアリングからエージェント群を自動生成 |
 
 ---
 
