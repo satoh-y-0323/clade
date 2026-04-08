@@ -5,7 +5,7 @@
 
 ## 実行手順
 
-1. Read ツールで `.claude/settings.json` を読み込む
+1. Read ツールで `.claude/settings.local.json` を読み込む
 2. `statusLine` キーの有無で分岐する:
 
 ### `statusLine` が存在する場合（→ 無効化）
