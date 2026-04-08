@@ -7,6 +7,99 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.6.0] - 2026-04-08
+
+### Apology
+
+v1.5 以前の Clade をお使いの方へ、まずお詫び申し上げます。
+
+`pre-tool.js` / `post-tool.js` フックが **全ツール実行を `observations.jsonl` に逐次記録し続けていました**。この仕組みは「実行パターンから自動学習する」という意図で設計されましたが、実際に生成されたデータは "Read → Edit → Bash のような当たり前のシーケンス" の羅列にすぎず、スキルやルールに昇格する意味のある知見は何も得られませんでした。意図せず `.claude/instincts/raw/` にゴミファイルを蓄積させてしまい、申し訳ありませんでした。
+
+v1.6 では観察システムを根本から見直し、本当に役立つデータだけを収集するよう改設計しました。
+
+### New: Cleanup Scripts
+
+過去バージョンで蓄積されたゴミデータを削除するスクリプトを追加しました。
+
+**日本語版（Windows）:**
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\cleanup.ps1 -ProjectPath "C:\path\to\your\project"
+```
+
+**日本語版（macOS/Linux）:**
+```bash
+chmod +x cleanup.sh
+./cleanup.sh /path/to/your/project
+```
+
+**英語版（Windows）:**
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\cleanup_en.ps1 -ProjectPath "C:\path\to\your\project"
+```
+
+**英語版（macOS/Linux）:**
+```bash
+chmod +x cleanup_en.sh
+./cleanup_en.sh /path/to/your/project
+```
+
+スクリプトは以下を削除します（存在しない場合は自動スキップ）:
+- `.claude/instincts/raw/observations.jsonl`
+- `.claude/instincts/raw/patterns_*.json`
+- `.claude/hooks/extract-patterns.js`
+
+### Changed: Observation System Redesign
+
+観察システムを以下のように再設計しました:
+
+| | v1.5 以前 | v1.6 |
+|---|---|---|
+| 記録対象 | 全ツール実行（Read・Edit・Bash・Glob 等） | Bash コマンドのみ |
+| 記録先 | `observations.jsonl` | `bash-log.jsonl` |
+| 自動パターン抽出 | あり（`extract-patterns.js`） | なし（廃止） |
+| `/cluster-promote` の分析元 | `patterns_*.json`（ツール連鎖のみ） | `bash-log.jsonl` の失敗記録 + セッション `.tmp` ファイルの振り返り |
+
+**v1.6 の `/cluster-promote` が分析するもの:**
+- `bash-log.jsonl` — Bash コマンドの失敗記録（コマンド内容・エラー出力）→ **ルール候補**
+- `memory/sessions/*.tmp` — セッション終了時に手書きした「うまくいったこと・失敗したこと」→ **スキル候補・ルール候補**
+
+### Removed
+- `extract-patterns.js` — 自動パターン抽出スクリプトを廃止
+- `stop.js` から観察データ件数の集計・`extract-patterns.js` 呼び出しを削除
+- `pre-tool.js` から全ツール記録処理を削除
+
+### Upgrade
+
+**ステップ 1: ゴミデータを削除する（上記クリーンアップスクリプトを実行）**
+
+**ステップ 2: フックファイルを更新する（セットアップスクリプトを再実行）**
+
+**日本語版（Windows）:**
+```powershell
+.\setup.ps1 -ProjectPath "C:\path\to\your\project"
+```
+
+**日本語版（macOS/Linux）:**
+```bash
+./setup.sh /path/to/your/project
+```
+
+**英語版（Windows）:**
+```powershell
+.\setup_en.ps1 -ProjectPath "C:\path\to\your\project"
+```
+
+**英語版（macOS/Linux）:**
+```bash
+./setup_en.sh /path/to/your/project
+```
+
+> **Note:** セットアップスクリプトは既存の `.claude/` を検出した場合に上書き確認を行います。`y` を入力すると新しいフックファイルが配置されます。
+
+---
+
 ## [v1.5.0] - 2026-04-08
 
 ### Features
