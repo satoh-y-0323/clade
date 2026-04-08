@@ -19,6 +19,7 @@ __pycache__/
 .claude/memory/sessions/*.tmp
 
 # Claude Code - 観察データ（蓄積データ・アーカイブ）
+.claude/instincts/raw/bash-log.jsonl
 .claude/instincts/raw/observations.jsonl
 .claude/instincts/raw/observations_*_archived.jsonl
 .claude/instincts/raw/patterns_*.json
