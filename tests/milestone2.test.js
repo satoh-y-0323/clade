@@ -200,24 +200,24 @@ describe('--check mode (normal)', () => {
     assert.doesNotThrow(() => JSON.parse(stdout));
   });
 
-  it('E-4: --check の JSON に current フィールドがセマンティックバージョン形式で含まれること', { skip: !NETWORK_AVAILABLE }, () => {
+  it('E-4: --check の JSON に current_version フィールドがセマンティックバージョン形式で含まれること', { skip: !NETWORK_AVAILABLE }, () => {
     const { stdout } = runCladeUpdate(['--check']);
     const result = JSON.parse(stdout);
-    assert.ok(result.current, 'current フィールドが存在すること');
-    assert.match(result.current, /^\d+\.\d+\.\d+$/);
+    assert.ok(result.current_version, 'current_version フィールドが存在すること');
+    assert.match(result.current_version, /^\d+\.\d+\.\d+$/);
   });
 
-  it('E-5: --check の JSON に latest フィールドがセマンティックバージョン形式で含まれること', { skip: !NETWORK_AVAILABLE }, () => {
+  it('E-5: --check の JSON に latest_version フィールドがセマンティックバージョン形式で含まれること', { skip: !NETWORK_AVAILABLE }, () => {
     const { stdout } = runCladeUpdate(['--check']);
     const result = JSON.parse(stdout);
-    assert.ok(result.latest, 'latest フィールドが存在すること');
-    assert.match(result.latest, /^\d+\.\d+\.\d+$/);
+    assert.ok(result.latest_version, 'latest_version フィールドが存在すること');
+    assert.match(result.latest_version, /^\d+\.\d+\.\d+$/);
   });
 
-  it('E-6: --check の JSON に hasUpdate フィールドが boolean で含まれること', { skip: !NETWORK_AVAILABLE }, () => {
+  it('E-6: --check の JSON に has_update フィールドが boolean で含まれること', { skip: !NETWORK_AVAILABLE }, () => {
     const { stdout } = runCladeUpdate(['--check']);
     const result = JSON.parse(stdout);
-    assert.equal(typeof result.hasUpdate, 'boolean');
+    assert.equal(typeof result.has_update, 'boolean');
   });
 
   it('E-7: --check の JSON に changelog フィールドが文字列で含まれること', { skip: !NETWORK_AVAILABLE }, () => {
@@ -226,11 +226,11 @@ describe('--check mode (normal)', () => {
     assert.equal(typeof result.changelog, 'string');
   });
 
-  it('E-8: VERSION と latest が等しい場合 hasUpdate が false であること', { skip: !NETWORK_AVAILABLE }, () => {
+  it('E-8: VERSION と latest_version が等しい場合 has_update が false であること', { skip: !NETWORK_AVAILABLE }, () => {
     // 最新バージョンを先に取得してからテスト
     const { stdout: checkStdout } = runCladeUpdate(['--check']);
     const checkResult = JSON.parse(checkStdout);
-    const latestVersion = checkResult.latest;
+    const latestVersion = checkResult.latest_version;
 
     // 一時 VERSION ファイルに最新バージョンを書いて確認
     const tempVersionFile = path.join(os.tmpdir(), `VERSION-test-${Date.now()}`);
@@ -239,7 +239,7 @@ describe('--check mode (normal)', () => {
     try {
       const { stdout } = runCladeUpdate(['--check', '--version-file', tempVersionFile]);
       const result = JSON.parse(stdout);
-      assert.equal(result.hasUpdate, false);
+      assert.equal(result.has_update, false);
     } finally {
       fs.unlinkSync(tempVersionFile);
     }
@@ -258,7 +258,7 @@ describe('--check mode (error/boundary)', () => {
     assert.ok(stderr.length > 0, 'stderr にエラーメッセージが出力されること');
   });
 
-  it('F-2: ネットワーク到達不可時 exit code 1 でエラー出力されること', () => {
+  it('F-2: VERSION ファイルパスが無効の場合も exit code 1 が返ること（バリエーション確認）', () => {
     // 存在しないバージョンファイルを使って（ネットワーク到達前にエラー）
     // あるいは実装側でカバーされていることを確認
     // ネットワーク不可を直接シミュレートするのは難しいが、
@@ -269,13 +269,14 @@ describe('--check mode (error/boundary)', () => {
     assert.ok(stderr.length > 0);
   });
 
-  it('F-3: --check の JSON 出力に必須フィールド4件が必ず含まれること', { skip: !NETWORK_AVAILABLE }, () => {
+  it('F-3: --check の JSON 出力に必須フィールド5件が必ず含まれること', { skip: !NETWORK_AVAILABLE }, () => {
     const { stdout } = runCladeUpdate(['--check']);
     const result = JSON.parse(stdout);
-    assert.ok('current' in result, 'current フィールドが存在すること');
-    assert.ok('latest' in result, 'latest フィールドが存在すること');
-    assert.ok('hasUpdate' in result, 'hasUpdate フィールドが存在すること');
+    assert.ok('current_version' in result, 'current_version フィールドが存在すること');
+    assert.ok('latest_version' in result, 'latest_version フィールドが存在すること');
+    assert.ok('has_update' in result, 'has_update フィールドが存在すること');
     assert.ok('changelog' in result, 'changelog フィールドが存在すること');
+    assert.ok('changes' in result, 'changes フィールドが存在すること');
   });
 });
 
@@ -332,7 +333,7 @@ describe('--apply mode (normal)', { skip: !NETWORK_AVAILABLE }, () => {
   it('G-4: --apply 後に .claude/VERSION が最新バージョンに更新されること', () => {
     // 最新バージョンを事前に取得
     const { stdout: checkStdout } = runCladeUpdate(['--check']);
-    const { latest } = JSON.parse(checkStdout);
+    const { latest_version } = JSON.parse(checkStdout);
 
     spawnSync(
       'node',
@@ -343,7 +344,7 @@ describe('--apply mode (normal)', { skip: !NETWORK_AVAILABLE }, () => {
     const versionContent = fs
       .readFileSync(path.join(tempRepo.dir, '.claude', 'VERSION'), 'utf8')
       .trim();
-    assert.equal(versionContent, latest);
+    assert.equal(versionContent, latest_version);
   });
 
   it('G-5: --apply 後にマニフェスト記載の hooks ファイルがコピーされること', () => {

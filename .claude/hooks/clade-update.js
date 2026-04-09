@@ -107,6 +107,8 @@ function httpsGet(host, urlPath, extraHeaders = {}) {
  * @returns {Promise<Buffer>}
  */
 function httpsDownload(url, extraHeaders = {}) {
+  const ALLOWED_HOSTS = ['api.github.com', 'codeload.github.com', 'objects.githubusercontent.com'];
+
   return new Promise((resolve, reject) => {
     const parsedUrl = new URL(url);
     const options = {
@@ -121,7 +123,13 @@ function httpsDownload(url, extraHeaders = {}) {
 
     const req = https.request(options, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        httpsDownload(res.headers.location, extraHeaders).then(resolve).catch(reject);
+        const redirectUrl = new URL(res.headers.location);
+        const safeHeaders = ALLOWED_HOSTS.includes(redirectUrl.hostname)
+          ? extraHeaders
+          : Object.fromEntries(
+              Object.entries(extraHeaders).filter(([k]) => k.toLowerCase() !== 'authorization')
+            );
+        httpsDownload(res.headers.location, safeHeaders).then(resolve).catch(reject);
         return;
       }
 
@@ -244,7 +252,7 @@ function hasUncommittedChanges(cwd) {
  * @returns {boolean}
  */
 function isBackupCommitMessage(message) {
-  return message.includes('backup') || message.includes('clade');
+  return message.startsWith(BACKUP_COMMIT_PREFIX);
 }
 
 /**
@@ -273,6 +281,11 @@ async function fetchLatestRelease() {
   const release = JSON.parse(responseText);
 
   const tagName = (release.tag_name || '').replace(/^v/, '');
+
+  if (!tagName || !/^[\w.\-]+$/.test(tagName)) {
+    throw new Error(`不正なバージョン文字列です: ${tagName}`);
+  }
+
   const changelog = release.body || '';
   const zipballUrl = release.zipball_url || '';
 
@@ -298,12 +311,14 @@ async function extractZip(zipBuffer, destDir) {
 
   // PowerShell の Expand-Archive を使用（Windows 環境向け）
   // 展開先ディレクトリ内に zip を展開する
+  const escapedZipPath = zipPath.replace(/'/g, "''");
+  const escapedDestDir = destDir.replace(/'/g, "''");
   const result = spawnSync(
     'powershell',
     [
       '-NoProfile',
       '-Command',
-      `Expand-Archive -Force -Path '${zipPath}' -DestinationPath '${destDir}'`,
+      `Expand-Archive -Force -Path '${escapedZipPath}' -DestinationPath '${escapedDestDir}'`,
     ],
     { encoding: 'utf8' }
   );
@@ -327,7 +342,7 @@ async function extractZip(zipBuffer, destDir) {
  * @param {string} extractDir
  * @returns {string}
  */
-function findReleasDir(extractDir) {
+function findReleaseDir(extractDir) {
   const entries = fs.readdirSync(extractDir);
   const dirs = entries.filter((e) => {
     const stat = fs.statSync(path.join(extractDir, e));
@@ -528,10 +543,14 @@ async function runCheckMode(options = {}) {
 
   // 4. 結果を JSON で stdout に出力
   const result = {
-    current: currentVersion,
-    latest: latestVersion,
-    hasUpdate,
+    current_version: currentVersion,
+    latest_version: latestVersion,
+    has_update: hasUpdate,
     changelog,
+    changes: {
+      ja: { added: [], updated: [], removed: [] },
+      en: { added: [], updated: [], removed: [] },
+    },
   };
 
   process.stdout.write(JSON.stringify(result) + '\n');
@@ -553,6 +572,7 @@ async function runApplyMode() {
   const { tagName: latestVersion, zipballUrl } = await fetchLatestRelease();
 
   // 2. バックアップコミット
+  let backupCommitCreated = false;
   const backupMessage = `${BACKUP_COMMIT_PREFIX} ${latestVersion}`;
   const addResult = runGit(['add', '-A']);
   if (addResult.status !== 0) {
@@ -569,11 +589,12 @@ async function runApplyMode() {
       process.stderr.write(`バックアップコミットに失敗しました: ${commitResult.stderr}\n`);
       process.exit(1);
     }
+  } else {
+    backupCommitCreated = true;
   }
 
   // 3. リリースアセットをダウンロードして展開
-  const temporaryDir = path.join(os.tmpdir(), `clade-update-${Date.now()}`);
-  ensureDirectory(temporaryDir);
+  const temporaryDir = fs.mkdtempSync(path.join(os.tmpdir(), 'clade-update-'));
 
   let markerMissing = false;
 
@@ -581,7 +602,7 @@ async function runApplyMode() {
     const zipBuffer = await httpsDownload(zipballUrl, extraHeaders);
     await extractZip(zipBuffer, temporaryDir);
 
-    const releaseDir = findReleasDir(temporaryDir);
+    const releaseDir = findReleaseDir(temporaryDir);
 
     // 4. マニフェストを読む
     const manifestPath = path.join(projectRoot, '.claude', 'clade-manifest.json');
@@ -645,17 +666,21 @@ async function runApplyMode() {
 
     process.stdout.write(`clade を ${latestVersion} に更新しました\n`);
   } catch (error) {
-    // エラー時はロールバック
+    // エラー時はロールバック（バックアップコミットが作成された場合のみ）
     process.stderr.write(`更新中にエラーが発生しました: ${error.message}\n`);
-    process.stderr.write('バックアップコミットに戻しています...\n');
-    runGit(['reset', '--hard', 'HEAD']);
+    if (backupCommitCreated) {
+      process.stderr.write('バックアップコミットに戻しています...\n');
+      runGit(['reset', '--hard', 'HEAD~1']);
+    }
     process.exit(1);
   } finally {
     // 一時ディレクトリを削除
     try {
       fs.rmSync(temporaryDir, { recursive: true, force: true });
-    } catch (_) {
-      // クリーンアップ失敗は無視
+    } catch (cleanupError) {
+      process.stderr.write(
+        `警告: 一時ディレクトリの削除に失敗しました: ${temporaryDir}\n手動で削除してください。\n`
+      );
     }
   }
 }
@@ -678,24 +703,11 @@ function runRollbackMode() {
     process.exit(1);
   }
 
-  // 2. バックアップコミットの存在確認
+  // 2. バックアップコミットの存在確認（直近コミットがバックアップコミットかどうかのみを判定）
   const latestMessage = getLatestCommitMessage();
   if (!isBackupCommitMessage(latestMessage)) {
-    // より詳細: git log を確認して backup/clade キーワードを探す
-    const logResult = runGit(['log', '--format=%s', '-10']);
-    const messages = logResult.stdout.trim().split('\n');
-    const hasBackup = messages.some((msg) => isBackupCommitMessage(msg));
-
-    if (!hasBackup) {
-      process.stderr.write(
-        'バックアップコミットが見つかりません。--apply を先に実行してください\n'
-      );
-      process.exit(1);
-    }
-
-    // 直近がバックアップでない場合もエラー（直前コミットがバックアップであることが必要）
     process.stderr.write(
-      'バックアップコミットが見つかりません。--apply を先に実行してください\n'
+      '直近コミットがバックアップコミットではありません。--apply を先に実行してください\n'
     );
     process.exit(1);
   }
