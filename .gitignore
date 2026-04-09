@@ -8,6 +8,10 @@ Desktop.ini
 # Node/Java/Python などは必要に応じて追加
 node_modules/
 dist/
+
+# VitePress ビルド出力
+docs/.vitepress/dist
+docs/.vitepress/cache
 *.class
 __pycache__/
 *.py[cod]
