@@ -6,20 +6,18 @@
 'use strict';
 const fs   = require('fs');
 const path = require('path');
+const { readHookInput } = require('./hook-utils');
 
-let hookInput = {};
-try {
-  const stdinData = fs.readFileSync(0, 'utf8');
-  hookInput = JSON.parse(stdinData);
-} catch (_) {}
+const hookInput = readHookInput();
 
 // Bash 以外は記録しない
 if ((hookInput.tool_name || '') !== 'Bash') process.exit(0);
 
 const input        = hookInput.tool_input || {};
 const toolResponse = hookInput.tool_response || {};
-const ts           = new Date().toISOString();
-const session      = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+const now          = new Date();
+const ts           = now.toISOString();
+const session      = now.toISOString().slice(0, 10).replace(/-/g, '');
 
 const cmd = (input.command || '').slice(0, 300);
 

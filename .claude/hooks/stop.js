@@ -6,6 +6,7 @@
 'use strict';
 const fs   = require('fs');
 const path = require('path');
+const { createSessionTemplate } = require('./hook-utils');
 
 const cwd         = process.cwd();
 const sessionDir  = path.join(cwd, '.claude', 'memory', 'sessions');
@@ -17,23 +18,7 @@ if (!fs.existsSync(sessionDir)) fs.mkdirSync(sessionDir, { recursive: true });
 
 // セッションファイルが未作成なら雛形を生成
 if (!fs.existsSync(sessionFile)) {
-  const template = [
-    `SESSION: ${dateStr}`,
-    'AGENT: (未設定)',
-    '',
-    '## うまくいったアプローチ（証拠付き）',
-    '（/end-session コマンドで記入してください）',
-    '',
-    '## 試みたが失敗したアプローチ',
-    '（未記入）',
-    '',
-    '## まだ試していないアプローチ',
-    '（未記入）',
-    '',
-    '## 残タスク',
-    '（未記入）',
-  ].join('\n');
-  fs.writeFileSync(sessionFile, template, 'utf8');
+  fs.writeFileSync(sessionFile, createSessionTemplate(dateStr), 'utf8');
   process.stderr.write(`[Stop] セッションファイルを作成しました: ${sessionFile}\n`);
 }
 

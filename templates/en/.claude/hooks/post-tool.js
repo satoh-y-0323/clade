@@ -1,33 +1,31 @@
 #!/usr/bin/env node
 // post-tool.js
 // Claude Code hook: PostToolUse
-// Records Bash command results to bash-log.jsonl
+// Bash コマンドの実行結果を bash-log.jsonl に記録する
 
 'use strict';
 const fs   = require('fs');
 const path = require('path');
+const { readHookInput } = require('./hook-utils');
 
-let hookInput = {};
-try {
-  const stdinData = fs.readFileSync(0, 'utf8');
-  hookInput = JSON.parse(stdinData);
-} catch (_) {}
+const hookInput = readHookInput();
 
-// Only record Bash tool calls
+// Bash 以外は記録しない
 if ((hookInput.tool_name || '') !== 'Bash') process.exit(0);
 
 const input        = hookInput.tool_input || {};
 const toolResponse = hookInput.tool_response || {};
-const ts           = new Date().toISOString();
-const session      = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+const now          = new Date();
+const ts           = now.toISOString();
+const session      = now.toISOString().slice(0, 10).replace(/-/g, '');
 
 const cmd = (input.command || '').slice(0, 300);
 
-// Determine if this is an error
+// is_error の判定
 const isError = toolResponse.is_error === true ||
                (typeof toolResponse.error === 'string' && toolResponse.error.length > 0);
 
-// Get output text (max 800 chars, newlines replaced with ↵ for single-line storage)
+// 出力テキストの取得（最大 800 文字、改行を↵に変換して1行に収める）
 const responseStr = typeof toolResponse === 'string'
   ? toolResponse
   : (toolResponse.output || JSON.stringify(toolResponse));

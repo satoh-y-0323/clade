@@ -16,10 +16,9 @@
  *   {追記内容}
  *   EOF
  *
- * 後方互換: コマンドライン引数でも渡せる（文字数制限・改行消失に注意）
+ * 引数でもコンテンツを渡せる（文字数制限・改行消失に注意）
  *   node .claude/hooks/write-report.js <baseName> new "<content>"
  *   node .claude/hooks/write-report.js <baseName> append <targetFileName> "<content>"
- *   node .claude/hooks/write-report.js <baseName> "<content>"
  *
  * 出力:
  *   実際に書き出したファイルパスを標準出力に表示する。
@@ -32,7 +31,7 @@ const path = require('path');
 
 const [, , baseName, modeOrContent, ...rest] = process.argv;
 
-if (!baseName) {
+if (!baseName || (modeOrContent !== 'new' && modeOrContent !== 'append')) {
   console.error('[write-report] 使い方:');
   console.error('  新規(stdin): node write-report.js <baseName> new <<\'EOF\'');
   console.error('  追記(stdin): node write-report.js <baseName> append <targetFile> <<\'EOF\'');
@@ -111,15 +110,4 @@ if (isNew) {
   const relativePath = path.relative(process.cwd(), targetPath).replace(/\\/g, '/');
   console.log(`[write-report] ${relativePath} (appended)`);
 
-} else {
-  // 後方互換モード: node write-report.js <baseName> "<content>"
-  // 第2引数が new/append でない場合は従来通り新規出力として扱う
-  const content    = [modeOrContent, ...rest].join(' ');
-  const timestamp  = generateTimestamp();
-  const outputPath = resolveNewPath(baseName, timestamp);
-
-  fs.writeFileSync(outputPath, content, 'utf-8');
-
-  const relativePath = path.relative(process.cwd(), outputPath).replace(/\\/g, '/');
-  console.log(`[write-report] ${relativePath}`);
 }

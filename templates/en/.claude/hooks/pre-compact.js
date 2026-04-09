@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 // pre-compact.js
 // Claude Code hook: PreCompact
-// Records a checkpoint in the session file before context compaction
+// コンテキスト圧縮前にセッションファイルへチェックポイントを記録
 
 'use strict';
 const fs   = require('fs');
 const path = require('path');
+const { createSessionTemplate } = require('./hook-utils');
 
 const cwd         = process.cwd();
 const sessionDir  = path.join(cwd, '.claude', 'memory', 'sessions');
@@ -16,34 +17,18 @@ const ts          = now.toISOString();
 
 if (!fs.existsSync(sessionDir)) fs.mkdirSync(sessionDir, { recursive: true });
 
-// Create a template if the session file does not exist
+// セッションファイルが存在しない場合は雛形を作成
 if (!fs.existsSync(sessionFile)) {
-  const template = [
-    `SESSION: ${dateStr}`,
-    'AGENT: (not set)',
-    '',
-    '## Approaches That Worked (with evidence)',
-    '(Please fill in with the /end-session command)',
-    '',
-    '## Approaches That Were Tried but Failed',
-    '(Not filled in)',
-    '',
-    '## Approaches Not Yet Tried',
-    '(Not filled in)',
-    '',
-    '## Remaining Tasks',
-    '(Not filled in)',
-  ].join('\n');
-  fs.writeFileSync(sessionFile, template, 'utf8');
+  fs.writeFileSync(sessionFile, createSessionTemplate(dateStr), 'utf8');
 }
 
-// Append the PreCompact checkpoint
+// PreCompact チェックポイントを追記
 const checkpoint = [
   '',
   `## [PreCompact checkpoint: ${ts}]`,
-  'Context window compaction occurred.',
-  'Detailed context before this point has been lost.',
+  'コンテキストウィンドウ圧縮が発生しました。',
+  'このポイント以前の詳細な文脈は失われています。',
 ].join('\n');
 
 fs.appendFileSync(sessionFile, checkpoint + '\n', 'utf8');
-process.stderr.write(`[PreCompact] Session state saved to ${sessionFile}\n`);
+process.stderr.write(`[PreCompact] セッション状態を ${sessionFile} に保存しました\n`);

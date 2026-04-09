@@ -6,13 +6,10 @@
 'use strict';
 const fs   = require('fs');
 const path = require('path');
+const { readHookInput } = require('./hook-utils');
 
 // ===== 入力読み込み =====
-let hookInput = {};
-try {
-  const stdinData = fs.readFileSync(0, 'utf8');
-  hookInput = JSON.parse(stdinData);
-} catch (_) {}
+const hookInput = readHookInput();
 
 const toolName  = hookInput.tool_name || '';
 const toolInput = hookInput.tool_input || {};

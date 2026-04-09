@@ -1,29 +1,28 @@
 #!/usr/bin/env node
 /**
  * write-report.js
- * Common script for writing timestamped report files in Windows native environments.
- * Called from tester / code-reviewer / security-reviewer.
+ * タイムスタンプ付きレポートファイルを Windows ネイティブ環境で書き出す共通スクリプト。
+ * tester / code-reviewer / security-reviewer から呼び出される。
  *
- * Recommended: Pass content via heredoc (stdin) — no length limit, newlines preserved
+ * 推奨: ヒアドキュメント（stdin）でコンテンツを渡す（文字数制限なし・改行保持）
  *
- *   # New output (heredoc recommended)
+ *   # 新規出力（ヒアドキュメント推奨）
  *   node .claude/hooks/write-report.js <baseName> new <<'EOF'
- *   {full report content}
+ *   {レポート内容の全て}
  *   EOF
  *
- *   # Append output (heredoc recommended)
+ *   # 追記出力（ヒアドキュメント推奨）
  *   node .claude/hooks/write-report.js <baseName> append <targetFileName> <<'EOF'
- *   {content to append}
+ *   {追記内容}
  *   EOF
  *
- * Backward compatible: content can also be passed as CLI args (beware length limits & lost newlines)
+ * 引数でもコンテンツを渡せる（文字数制限・改行消失に注意）
  *   node .claude/hooks/write-report.js <baseName> new "<content>"
  *   node .claude/hooks/write-report.js <baseName> append <targetFileName> "<content>"
- *   node .claude/hooks/write-report.js <baseName> "<content>"
  *
- * Output:
- *   Displays the actual written file path to stdout.
- *   Example: [write-report] .claude/reports/test-report-20260401-143022.md
+ * 出力:
+ *   実際に書き出したファイルパスを標準出力に表示する。
+ *   例: [write-report] .claude/reports/test-report-20260401-143022.md
  */
 
 'use strict';
@@ -32,16 +31,16 @@ const path = require('path');
 
 const [, , baseName, modeOrContent, ...rest] = process.argv;
 
-if (!baseName) {
-  console.error('[write-report] Usage:');
-  console.error('  New (stdin):    node write-report.js <baseName> new <<\'EOF\'');
-  console.error('  Append (stdin): node write-report.js <baseName> append <targetFile> <<\'EOF\'');
-  console.error('  New (arg):      node write-report.js <baseName> new "<content>"');
-  console.error('  Append (arg):   node write-report.js <baseName> append <targetFile> "<content>"');
+if (!baseName || (modeOrContent !== 'new' && modeOrContent !== 'append')) {
+  console.error('[write-report] 使い方:');
+  console.error('  新規(stdin): node write-report.js <baseName> new <<\'EOF\'');
+  console.error('  追記(stdin): node write-report.js <baseName> append <targetFile> <<\'EOF\'');
+  console.error('  新規(引数): node write-report.js <baseName> new "<content>"');
+  console.error('  追記(引数): node write-report.js <baseName> append <targetFile> "<content>"');
   process.exit(1);
 }
 
-// Read content from stdin (when passed via heredoc)
+// stdin からコンテンツを読み込む（ヒアドキュメントで渡された場合）
 function readStdin() {
   return fs.readFileSync(0, 'utf-8');
 }
@@ -49,7 +48,7 @@ function readStdin() {
 const reportsDir = path.join(process.cwd(), '.claude', 'reports');
 fs.mkdirSync(reportsDir, { recursive: true });
 
-// Generate timestamp (YYYYMMDD-HHmmss)
+// タイムスタンプ生成（YYYYMMDD-HHmmss）
 function generateTimestamp() {
   const now = new Date();
   const pad = (n) => String(n).padStart(2, '0');
@@ -58,7 +57,7 @@ function generateTimestamp() {
   return `${date}-${time}`;
 }
 
-// Generate a non-conflicting file path
+// 衝突しないファイルパスを生成
 function resolveNewPath(baseNameArg, timestamp) {
   const base = path.join(reportsDir, `${baseNameArg}-${timestamp}.md`);
   if (!fs.existsSync(base)) return base;
@@ -71,13 +70,13 @@ function resolveNewPath(baseNameArg, timestamp) {
   }
 }
 
-// Determine mode
+// モード判定
 const isNew    = modeOrContent === 'new';
 const isAppend = modeOrContent === 'append';
 
 if (isNew) {
-  // New output mode
-  // Prefer stdin (heredoc); fall back to CLI args
+  // 新規出力モード
+  // stdin（ヒアドキュメント）優先、なければコマンドライン引数を使用
   const content    = rest.length > 0 ? rest.join(' ') : readStdin();
   const timestamp  = generateTimestamp();
   const outputPath = resolveNewPath(baseName, timestamp);
@@ -88,13 +87,13 @@ if (isNew) {
   console.log(`[write-report] ${relativePath}`);
 
 } else if (isAppend) {
-  // Append output mode
-  // File name is required. Content: prefer stdin (heredoc); fall back to CLI args
+  // 追記出力モード
+  // ファイル名は必須。コンテンツは stdin（ヒアドキュメント）優先、なければコマンドライン引数を使用
   const [targetFileName, ...contentParts] = rest;
 
   if (!targetFileName) {
-    console.error('[write-report] append mode requires a target file name.');
-    console.error('  Example: node write-report.js test-report append test-report-20260401-143022.md <<\'EOF\'');
+    console.error('[write-report] append モードには追記先ファイル名が必要です。');
+    console.error('  例: node write-report.js test-report append test-report-20260401-143022.md <<\'EOF\'');
     process.exit(1);
   }
 
@@ -102,7 +101,7 @@ if (isNew) {
   const targetPath = path.join(reportsDir, targetFileName);
 
   if (!fs.existsSync(targetPath)) {
-    console.error(`[write-report] Target file not found: ${targetFileName}`);
+    console.error(`[write-report] 追記先ファイルが見つかりません: ${targetFileName}`);
     process.exit(1);
   }
 
@@ -111,15 +110,4 @@ if (isNew) {
   const relativePath = path.relative(process.cwd(), targetPath).replace(/\\/g, '/');
   console.log(`[write-report] ${relativePath} (appended)`);
 
-} else {
-  // Backward compatible mode: node write-report.js <baseName> "<content>"
-  // If the 2nd argument is not new/append, treat as new output (legacy behavior)
-  const content    = [modeOrContent, ...rest].join(' ');
-  const timestamp  = generateTimestamp();
-  const outputPath = resolveNewPath(baseName, timestamp);
-
-  fs.writeFileSync(outputPath, content, 'utf-8');
-
-  const relativePath = path.relative(process.cwd(), outputPath).replace(/\\/g, '/');
-  console.log(`[write-report] ${relativePath}`);
 }

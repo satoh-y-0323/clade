@@ -4,21 +4,15 @@
 // 危険コマンドのガード
 
 'use strict';
-const fs = require('fs');
+const { readHookInput } = require('./hook-utils');
 
-let hookInput = {};
-try {
-  const stdinData = fs.readFileSync(0, 'utf8');
-  hookInput = JSON.parse(stdinData);
-} catch (_) {}
-
+const hookInput = readHookInput();
 const tool = hookInput.tool_name || '';
 
 // Bash 以外はガード不要
 if (tool !== 'Bash') process.exit(0);
 
-let cmd = '';
-try { cmd = (hookInput.tool_input || {}).command || ''; } catch {}
+const cmd = (hookInput.tool_input || {}).command || '';
 
 // git force push: 警告（ブロックしない）
 if (/git\s+push\s+(--force|-f)\b/.test(cmd)) {
