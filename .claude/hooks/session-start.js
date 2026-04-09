@@ -13,6 +13,52 @@ const memoryFile  = path.join(cwd, '.claude', 'memory', 'memory.json');
 const clustersDir = path.join(cwd, '.claude', 'instincts', 'clusters');
 const skillsDir   = path.join(cwd, '.claude', 'skills', 'project');
 
+// === セットアップ未実行チェック（既存処理の前に配置） ===
+const setupIndicators = [
+  { target: 'setup.sh',             type: 'file' },
+  { target: 'setup.ps1',            type: 'file' },
+  { target: 'cleanup.sh',           type: 'file' },
+  { target: 'README.md',            type: 'file' },
+  { target: 'templates/en/.claude', type: 'dir'  },
+];
+
+const found = setupIndicators.filter(item => {
+  const fullPath = path.join(cwd, item.target);
+  try {
+    const stat = fs.statSync(fullPath);
+    return item.type === 'dir' ? stat.isDirectory() : stat.isFile();
+  } catch {
+    return false;
+  }
+});
+
+if (found.length > 0) {
+  const warn = [];
+  warn.push('=========================================');
+  warn.push('  セットアップ未実行の警告');
+  warn.push('=========================================');
+  warn.push('');
+  warn.push('このリポジトリはセットアップが完了していません。');
+  warn.push('Claude Code を正しく利用するには、先にセットアップスクリプトを実行してください。');
+  warn.push('');
+  warn.push('  実行方法:');
+  warn.push('    Linux / macOS : bash setup.sh');
+  warn.push('    Windows       : powershell -File setup.ps1');
+  warn.push('');
+  warn.push('  セットアップを行わない場合の影響:');
+  warn.push('    - settings.local.json が配置されず、並列エージェント（worktree）が動作しません');
+  warn.push('    - テンプレートファイルが残ったままになり、意図しない設定が適用される可能性があります');
+  warn.push('');
+  warn.push('  検出されたファイル:');
+  for (const item of found) {
+    warn.push(`    - ${item.target}`);
+  }
+  warn.push('');
+  warn.push('=========================================');
+  process.stdout.write(warn.join('\n') + '\n');
+  process.exit(1);
+}
+
 const lines = [];
 lines.push('=========================================');
 lines.push('  Claude Code セッション開始');
