@@ -85,6 +85,7 @@ Always respond to the user in English. Exceptions: code, commands, and file path
 ## Global Rules
 @rules/core.md
 
+<!-- CLADE:START -->
 ## Available Agents
 Agents are selected via custom commands:
 - `/agent-interviewer`        → Requirements gathering (outputs requirements-report, no source editing)
@@ -99,6 +100,7 @@ Agents are selected via custom commands:
 - `/agent-project-setup`      → Configure coding conventions, generate coding-conventions.md
 - `/agent-mcp-setup`          → Research, configure, and generate skill files for MCP servers
 - `/agent-workflow-builder`   → Meta-agent that auto-generates a set of agents from business workflow interviews
+<!-- CLADE:END -->
 
 ## Project Context
 Project-specific skills are automatically applied if they exist:

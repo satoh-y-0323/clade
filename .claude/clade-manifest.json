@@ -1,0 +1,54 @@
+{
+  "version": "1.7.0",
+  "managed_files": {
+    "commands": [
+      "agent-architect.md",
+      "agent-code-reviewer.md",
+      "agent-developer.md",
+      "agent-interviewer.md",
+      "agent-mcp-setup.md",
+      "agent-planner.md",
+      "agent-project-setup.md",
+      "agent-security-reviewer.md",
+      "agent-tester.md",
+      "agent-workflow-builder.md",
+      "clear-file-history.md",
+      "cluster-promote.md",
+      "enable-sandbox.md",
+      "end-session.md",
+      "init-session.md",
+      "playwright-add-origin.md",
+      "playwright-list-origins.md",
+      "playwright-remove-origin.md",
+      "promote.md",
+      "status.md"
+    ],
+    "hooks": [
+      "check-group-isolation.js",
+      "clear-file-history.js",
+      "enable-sandbox.js",
+      "hook-utils.js",
+      "manage-playwright-origins.js",
+      "post-tool.js",
+      "pre-compact.js",
+      "pre-tool.js",
+      "record-approval.js",
+      "session-start.js",
+      "statusline.js",
+      "stop.js",
+      "write-report.js"
+    ],
+    "rules": [
+      "core.md"
+    ],
+    "other": [
+      "CLAUDE.md",
+      "clade-manifest.json",
+      "VERSION"
+    ],
+    "ja_only": [
+      "commands/context-gauge.md"
+    ],
+    "en_only": []
+  }
+}
