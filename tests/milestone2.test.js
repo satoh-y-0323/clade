@@ -5,16 +5,15 @@
  * 実行コマンド: node --test tests/milestone2.test.js
  */
 
-import { describe, it, before, after, beforeEach, afterEach } from 'node:test';
-import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import path from 'node:path';
-import os from 'node:os';
-import { spawnSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+'use strict';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const { describe, it, before, after, beforeEach, afterEach } = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const os = require('node:os');
+const { spawnSync } = require('node:child_process');
+
 const ROOT = path.resolve(__dirname, '..');
 
 const CLADE_UPDATE_SCRIPT = path.join(ROOT, '.claude', 'hooks', 'clade-update.js');
@@ -51,21 +50,14 @@ function runCladeUpdate(args, options = {}) {
  * @returns {boolean}
  */
 function checkNetworkAccess() {
-  const result = spawnSync(
-    'node',
-    [
-      '--input-type=module',
-      '--eval',
-      `
-import https from 'node:https';
-const req = https.request({ hostname: '${GITHUB_API_HOST}', path: '${GITHUB_RELEASES_PATH}', method: 'GET', headers: { 'User-Agent': 'test', Accept: 'application/vnd.github+json' } }, (res) => { process.exit(res.statusCode < 500 ? 0 : 1); });
+  const code = `
+const https = require('https');
+const req = https.request({ hostname: 'api.github.com', path: '/repos/satoh-y-0323/clade/releases/latest', method: 'GET', headers: { 'User-Agent': 'test', Accept: 'application/vnd.github+json' } }, (res) => { process.exit(res.statusCode < 500 ? 0 : 1); });
 req.on('error', () => process.exit(1));
 req.setTimeout(5000, () => { req.destroy(); process.exit(1); });
 req.end();
-`,
-    ],
-    { timeout: 10000, encoding: 'utf8' }
-  );
+`;
+  const result = spawnSync('node', ['--eval', code], { timeout: 10000, encoding: 'utf8' });
   return result.status === 0;
 }
 

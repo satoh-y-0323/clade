@@ -9,15 +9,13 @@
  *   node .claude/hooks/clade-update.js --rollback
  */
 
-import https from 'node:https';
-import fs from 'node:fs';
-import path from 'node:path';
-import os from 'node:os';
-import { execSync, spawnSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+'use strict';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const https = require('node:https');
+const fs = require('node:fs');
+const path = require('node:path');
+const os = require('node:os');
+const { spawnSync } = require('node:child_process');
 
 // ============================================================
 // Constants
