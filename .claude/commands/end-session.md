@@ -38,3 +38,43 @@ DURATION: {作業時間の概算}
 ## 注意
 セッションファイルは次回の `/init-session` で自動的に読み込まれる。
 残タスクは具体的に書くこと（「実装する」ではなく「UserServiceのcreateメソッドを実装する」）。
+
+## ステップ5: 昇格候補の提示（インライン）
+
+セッションファイル保存完了後、以下を実行する:
+
+1. `.claude/memory/pending-promotions.json` を Read する（存在しない場合はスキップ）
+2. 以下のコマンドで当日の候補を取得する:
+   ```
+   node .claude/hooks/cluster-promote-core.js scan --since today --json
+   ```
+3. pending-promotions.json の候補と今日の候補をマージする
+4. 候補が0件の場合はスキップして完了報告へ進む
+5. 候補がある場合は AskUserQuestion で以下を提示する:
+   「本日のセッションから昇格候補が見つかりました。
+   （候補一覧を番号付きで表示）
+   保存しますか？
+     [yes] 番号を指定して保存（例: 1,3）または all
+     [no]  保存しない（pending があれば削除）
+     [later] 次回 /end-session 時に再提示する」
+
+6-a. yes の場合:
+   - 選択した候補ごとに:
+     - ルール: Write で `.claude/rules/{name}.md` に保存
+     - スキル: Write で `.claude/skills/project/{name}.md` に保存
+     - ルールの場合: `node .claude/hooks/update-clade-section.js add-rule {name}` を実行
+   - `.claude/memory/pending-promotions.json` を削除（存在すれば）
+     ```
+     Bash: rm .claude/memory/pending-promotions.json
+     ```
+
+6-b. later の場合:
+   - 未処理候補を `.claude/memory/pending-promotions.json` に Write で保存
+   - スキーマ: `{ "savedAt": "YYYY-MM-DD", "candidates": [...] }`
+
+6-c. no の場合:
+   - `.claude/memory/pending-promotions.json` が存在すれば削除
+     ```
+     Bash: rm .claude/memory/pending-promotions.json
+     ```
+   - ※ 削除は Bash の rm コマンドを使用可
