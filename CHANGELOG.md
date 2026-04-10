@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.8.1] - 2026-04-10
+
+### Fix
+
+- セットアップ未実行検出の対象から `README.md` を除外。一般的なプロジェクトに `README.md` が存在することが多く、誤検知の原因となっていたため
+
+---
+
 ## [v1.8.0] - 2026-04-10
 
 ### New: `/update` コマンド

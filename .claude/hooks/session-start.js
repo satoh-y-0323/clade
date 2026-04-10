@@ -19,8 +19,7 @@ const setupIndicators = [
   { target: 'setup.sh',             type: 'file' },
   { target: 'setup.ps1',            type: 'file' },
   { target: 'cleanup.sh',           type: 'file' },
-  { target: 'README.md',            type: 'file' },
-  { target: 'templates/en/.claude', type: 'dir'  },
+{ target: 'templates/en/.claude', type: 'dir'  },
 ];
 
 const found = setupIndicators.filter(item => {
