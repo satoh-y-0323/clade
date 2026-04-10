@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.9.0] - 2026-04-10
+
+### New / Fix
+
+- セットアップ未実行警告を Claude コンテキスト経由でユーザーに表示するよう `CLAUDE.md` と `/init-session` コマンドに指示を追加
+- 英語版テンプレートの同期: `agents/planner.md` にマイルストーン計画セクションを追加、`session-start.js` にセットアップ検出を追加、`write-report.js` に `--file` オプションを追加、`statusline.js` / `clade-update.js` を新規追加
+- 英語版 `clade-update.js` を EN 専用ロジックに刷新。リリースの `templates/en/.claude/` を参照して `.claude/` を更新するよう変更（従来は JA ファイルで上書きしていたバグを修正）
+- ドキュメント: `/update` コマンドの説明をセッション管理ページに追加
+
+---
+
 ## [v1.8.3] - 2026-04-10
 
 ### Fix
