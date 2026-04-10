@@ -48,4 +48,8 @@ __pycache__/
 
 # このリポジトリ固有のローカルルール・スキル（GitHub 非公開）
 .claude/rules/local.md
+.claude/rules/en-sync-js-hooks.md
 .claude/skills/project/release.md
+.claude/skills/project/local-rules-design.md
+.claude/skills/project/en-template-sync.md
+.claude/skills/project/en-js-translation.md
