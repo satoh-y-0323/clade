@@ -1,5 +1,14 @@
 # 変更履歴
 
+## [v1.10.1] - 2026-04-11
+
+### Fix
+
+- `/cluster-promote` で昇格したルールが Global Rules に追記されていた問題を修正。正しく User Rules セクションに追記されるよう改善
+- `.claude/instincts/raw/` ディレクトリを `.gitignore` に追加。個人データが誤って GitHub に公開されるのを防止
+
+---
+
 ## [v1.10.0] - 2026-04-11
 
 ### New: 育てる動線の強化

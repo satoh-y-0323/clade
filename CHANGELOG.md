@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.10.1] - 2026-04-11
+
+### Fix
+
+- `/cluster-promote` で昇格したルールが `## Global Rules (Clade 管理)` に追記されていた問題を修正。正しく `## User Rules` セクションに追記されるよう `update-clade-section.js`（JA・EN版）を修正
+- `.claude/instincts/raw/` ディレクトリ全体を `.gitignore` に追加。アーカイブファイルが誤って GitHub に公開されるのを防止
+
+---
+
 ## [v1.10.0] - 2026-04-11
 
 ### New: 育てる動線の強化
