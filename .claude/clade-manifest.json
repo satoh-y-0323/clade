@@ -21,10 +21,12 @@
       "playwright-list-origins.md",
       "playwright-remove-origin.md",
       "promote.md",
-      "status.md"
+      "status.md",
+      "update.md"
     ],
     "hooks": [
       "check-group-isolation.js",
+      "clade-update.js",
       "clear-file-history.js",
       "enable-sandbox.js",
       "hook-utils.js",

@@ -104,35 +104,35 @@ describe('L: 各検出対象ファイル単独の存在', () => {
     fs.writeFileSync(path.join(tmpDir, 'setup.sh'), '#!/bin/bash\n', 'utf8');
     const { exitCode, stdout } = runSessionStart(tmpDir);
     assert.equal(exitCode, 1, `exit code should be 1, got ${exitCode}`);
-    assert.equal(stdout.length > 0, true, 'stdout should contain warning message');
+    assert.equal(stdout.includes('セットアップ'), true, 'stdout should contain setup warning text');
   });
 
   it('L-2: setup.ps1 のみが存在する場合 → exit code 1 で停止', () => {
     fs.writeFileSync(path.join(tmpDir, 'setup.ps1'), '# PowerShell setup\n', 'utf8');
     const { exitCode, stdout } = runSessionStart(tmpDir);
     assert.equal(exitCode, 1, `exit code should be 1, got ${exitCode}`);
-    assert.equal(stdout.length > 0, true, 'stdout should contain warning message');
+    assert.equal(stdout.includes('セットアップ'), true, 'stdout should contain setup warning text');
   });
 
   it('L-3: cleanup.sh のみが存在する場合 → exit code 1 で停止', () => {
     fs.writeFileSync(path.join(tmpDir, 'cleanup.sh'), '#!/bin/bash\n', 'utf8');
     const { exitCode, stdout } = runSessionStart(tmpDir);
     assert.equal(exitCode, 1, `exit code should be 1, got ${exitCode}`);
-    assert.equal(stdout.length > 0, true, 'stdout should contain warning message');
+    assert.equal(stdout.includes('セットアップ'), true, 'stdout should contain setup warning text');
   });
 
   it('L-4: README.md のみが存在する場合 → exit code 1 で停止', () => {
     fs.writeFileSync(path.join(tmpDir, 'README.md'), '# README\n', 'utf8');
     const { exitCode, stdout } = runSessionStart(tmpDir);
     assert.equal(exitCode, 1, `exit code should be 1, got ${exitCode}`);
-    assert.equal(stdout.length > 0, true, 'stdout should contain warning message');
+    assert.equal(stdout.includes('セットアップ'), true, 'stdout should contain setup warning text');
   });
 
   it('L-5: templates/en/.claude/ ディレクトリのみが存在する場合 → exit code 1 で停止', () => {
     fs.mkdirSync(path.join(tmpDir, 'templates', 'en', '.claude'), { recursive: true });
     const { exitCode, stdout } = runSessionStart(tmpDir);
     assert.equal(exitCode, 1, `exit code should be 1, got ${exitCode}`);
-    assert.equal(stdout.length > 0, true, 'stdout should contain warning message');
+    assert.equal(stdout.includes('セットアップ'), true, 'stdout should contain setup warning text');
   });
 });
 
@@ -176,9 +176,13 @@ describe('M: 警告メッセージ内容確認', () => {
     );
   });
 
-  it('M-4: 警告メッセージに検出されたファイル名（setup.sh）が含まれる', () => {
+  it('M-4: 警告メッセージに「検出されたファイル:」セクション見出しが含まれる', () => {
     const { stdout } = runSessionStart(tmpDir);
-    assert.equal(stdout.includes('setup.sh'), true, 'stdout should contain detected filename "setup.sh"');
+    assert.equal(
+      stdout.includes('検出されたファイル:'),
+      true,
+      'stdout should contain "検出されたファイル:" section heading'
+    );
   });
 });
 

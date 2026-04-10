@@ -7,6 +7,7 @@
 const fs   = require('fs');
 const path = require('path');
 
+// Claude Code hook は常にプロジェクトルートを cwd として起動するため、このパスは安全
 const cwd         = process.cwd();
 const sessionsDir = path.join(cwd, '.claude', 'memory', 'sessions');
 const memoryFile  = path.join(cwd, '.claude', 'memory', 'memory.json');
@@ -27,7 +28,10 @@ const found = setupIndicators.filter(item => {
   try {
     const stat = fs.statSync(fullPath);
     return item.type === 'dir' ? stat.isDirectory() : stat.isFile();
-  } catch {
+  } catch (e) {
+    if (e.code !== 'ENOENT') {
+      process.stderr.write(`[session-start] 警告: ${fullPath} の確認中にエラーが発生しました (${e.code})\n`);
+    }
     return false;
   }
 });
