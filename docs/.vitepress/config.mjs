@@ -22,7 +22,7 @@ export default defineConfig({
       {
         text: 'v1.9.0',
         items: [
-          { text: 'CHANGELOG', link: 'https://github.com/satoh-y-0323/clade/blob/main/CHANGELOG.md' },
+          { text: '変更履歴', link: '/changelog' },
           { text: 'GitHub', link: 'https://github.com/satoh-y-0323/clade' },
         ]
       }
@@ -34,6 +34,7 @@ export default defineConfig({
         items: [
           { text: 'Clade とは', link: '/' },
           { text: 'はじめ方', link: '/getting-started' },
+          { text: '変更履歴', link: '/changelog' },
           { text: 'トラブルシューティング', link: '/troubleshooting' },
         ]
       },
