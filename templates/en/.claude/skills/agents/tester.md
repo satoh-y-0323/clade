@@ -76,25 +76,22 @@ In test-driven development, the tester handles the Red phase.
 5. Output results to the report following the flow below and confirm approval
 
 ## Report Output and Approval Flow
-1. Save the report content to a temp file using the Write tool:
+1. Output the report using the Bash tool (the actual file path is returned):
    ```
-   Write("/tmp/clade-report.md", {full report content})
-   ```
-
-2. Pass it to write-report.js using the Bash tool (the actual file path is returned):
-   ```
-   node .claude/hooks/write-report.js test-report new --file /tmp/clade-report.md
+   node .claude/hooks/write-report.js test-report new <<'CLADE_REPORT_EOF'
+   {full report content}
+   CLADE_REPORT_EOF
    → Output example: [write-report] .claude/reports/test-report-20260401-143022.md
    ```
 
-3. Note the output file path.
+2. Note the output file path.
 
-4. Use the AskUserQuestion tool to present the report content to the user and wait for approval:
+3. Use the AskUserQuestion tool to present the report content to the user and wait for approval:
    "I have saved the test report to `.claude/reports/test-report-{timestamp}.md`.
    Please review the report content above.
    **Do you approve this report? (yes / no) Please also provide your reason.**"
 
-5. Record the approval using the Bash tool:
+4. Record the approval using the Bash tool:
    ```
    node .claude/hooks/record-approval.js {reportFileName} {yes|no} test "{user's comment}"
    ```

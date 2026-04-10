@@ -52,18 +52,15 @@ test/review レポートはまだ存在しないためスキップする。
 
 ## レポート出力と承認確認フロー
 1. 全レポートを読み込み、タスクリストを組み立てる
-2. Write ツールでレポート内容を一時ファイルに保存する:
+2. Bash ツールでプランレポートを出力する（実際のファイルパスが返る）:
    ```
-   Write("/tmp/clade-report.md", {レポート内容の全て})
-   ```
-
-3. Bash ツールで write-report.js に渡す（実際のファイルパスが返る）:
-   ```
-   node .claude/hooks/write-report.js plan-report new --file /tmp/clade-report.md
+   node .claude/hooks/write-report.js plan-report new <<'CLADE_REPORT_EOF'
+   {レポート内容の全て}
+   CLADE_REPORT_EOF
    → 出力例: [write-report] .claude/reports/plan-report-20260401-143022.md
    ```
 
-4. 出力されたファイルパスをメモしておく。
+3. 出力されたファイルパスをメモしておく。
 
 4. AskUserQuestion ツールを使ってレポートの内容をユーザーに提示し、承認を待つ:
    「作業計画レポートを `.claude/reports/plan-report-{タイムスタンプ}.md` に保存しました。

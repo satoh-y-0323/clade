@@ -9,13 +9,10 @@ Review the following in order before starting work (**read only files that exist
 
 ## Report Output Note
 
-**Recommended: --file option** (eliminates all special character, newline, and length issues)
+Use heredoc (`<<'CLADE_REPORT_EOF'`) to preserve newlines and bypass command-line argument length limits. Special characters such as single quotes and backticks are treated literally. No need to split the report content.
 
-1. Save report content to a temp file using the Write tool (e.g., `/tmp/clade-report.md`)
-2. Pass it to write-report.js via Bash:
-   ```
-   node .claude/hooks/write-report.js <baseName> new --file /tmp/clade-report.md
-   ```
-   → Output example: `[write-report] .claude/reports/<baseName>-20260401-143022.md`
-
-Use a unique filename for the temp file (e.g., `/tmp/clade-report-{yyyymmdd}.md`) to avoid collisions.
+```
+node .claude/hooks/write-report.js <baseName> new <<'CLADE_REPORT_EOF'
+{full report content}
+CLADE_REPORT_EOF
+```

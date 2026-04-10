@@ -9,13 +9,10 @@
 
 ## レポート出力の注意事項
 
-**推奨: --file 方式**（特殊文字・改行・文字数制限をすべて回避）
+ヒアドキュメント（`<<'CLADE_REPORT_EOF'`）で渡すことで改行が保持され、コマンドライン引数の文字数制限も回避できる。シングルクォート・バッククォートなどの特殊文字も verbatim に扱われる。レポート内容を分割する必要はない。
 
-1. Write ツールでレポート内容を一時ファイルに保存する（例: `/tmp/clade-report.md`）
-2. Bash ツールで write-report.js に渡す:
-   ```
-   node .claude/hooks/write-report.js <baseName> new --file /tmp/clade-report.md
-   ```
-   → 出力例: `[write-report] .claude/reports/<baseName>-20260401-143022.md`
-
-一時ファイルのパスは `/tmp/clade-report-{yyyymmdd}.md` など衝突しない名前にすること。
+```
+node .claude/hooks/write-report.js <baseName> new <<'CLADE_REPORT_EOF'
+{レポート内容の全て}
+CLADE_REPORT_EOF
+```

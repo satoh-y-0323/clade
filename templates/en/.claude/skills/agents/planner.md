@@ -52,18 +52,15 @@ Read all reports and update the plan to reflect differences and unresolved items
 
 ## Report Output and Approval Flow
 1. Read all reports and build the task list
-2. Save the report content to a temp file using the Write tool:
+2. Output the plan report using the Bash tool (the actual file path is returned):
    ```
-   Write("/tmp/clade-report.md", {full report content})
-   ```
-
-3. Pass it to write-report.js using the Bash tool (the actual file path is returned):
-   ```
-   node .claude/hooks/write-report.js plan-report new --file /tmp/clade-report.md
+   node .claude/hooks/write-report.js plan-report new <<'CLADE_REPORT_EOF'
+   {full report content}
+   CLADE_REPORT_EOF
    → Output example: [write-report] .claude/reports/plan-report-20260401-143022.md
    ```
 
-4. Note the output file path.
+3. Note the output file path.
 
 4. Use the AskUserQuestion tool to present the report content to the user and wait for approval:
    "I have saved the work plan report to `.claude/reports/plan-report-{timestamp}.md`.

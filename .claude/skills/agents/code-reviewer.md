@@ -48,14 +48,11 @@
 - 個人的な好みによる書き方の違い
 
 ## レポート出力フロー
-1. Write ツールでレポート内容を一時ファイルに保存する:
+1. Bash ツールでレポートを出力する（実際のファイルパスが返る）:
    ```
-   Write("/tmp/clade-report.md", {レポート内容の全て})
-   ```
-
-2. Bash ツールで write-report.js に渡す（実際のファイルパスが返る）:
-   ```
-   node .claude/hooks/write-report.js code-review-report new --file /tmp/clade-report.md
+   node .claude/hooks/write-report.js code-review-report new <<'CLADE_REPORT_EOF'
+   {レポート内容の全て}
+   CLADE_REPORT_EOF
    → 出力例: [write-report] .claude/reports/code-review-report-20260401-143022.md
    ```
    （注意事項は reviewer-common.md の「レポート出力の注意事項」参照）
