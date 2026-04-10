@@ -1,28 +1,30 @@
 #!/usr/bin/env node
 /**
  * write-report.js
- * タイムスタンプ付きレポートファイルを Windows ネイティブ環境で書き出す共通スクリプト。
- * tester / code-reviewer / security-reviewer から呼び出される。
+ * Common script for writing timestamped report files on Windows native environments.
+ * Called from tester / code-reviewer / security-reviewer.
  *
- * 推奨: ヒアドキュメント（stdin）でコンテンツを渡す（文字数制限なし・改行保持）
+ * [Recommended] --file option: save to a temp file with the Write tool, then pass it (zero special-character issues)
  *
- *   # 新規出力（ヒアドキュメント推奨）
- *   node .claude/hooks/write-report.js <baseName> new <<'EOF'
- *   {レポート内容の全て}
- *   EOF
+ *   # New output (--file recommended)
+ *   node .claude/hooks/write-report.js <baseName> new --file /tmp/report.md
  *
- *   # 追記出力（ヒアドキュメント推奨）
- *   node .claude/hooks/write-report.js <baseName> append <targetFileName> <<'EOF'
- *   {追記内容}
- *   EOF
+ *   # Append output (--file recommended)
+ *   node .claude/hooks/write-report.js <baseName> append <targetFileName> --file /tmp/report.md
  *
- * 引数でもコンテンツを渡せる（文字数制限・改行消失に注意）
- *   node .claude/hooks/write-report.js <baseName> new "<content>"
- *   node .claude/hooks/write-report.js <baseName> append <targetFileName> "<content>"
+ * Heredoc (stdin) also works when --file is not available:
  *
- * 出力:
- *   実際に書き出したファイルパスを標準出力に表示する。
- *   例: [write-report] .claude/reports/test-report-20260401-143022.md
+ *   node .claude/hooks/write-report.js <baseName> new <<'CLADE_REPORT_EOF'
+ *   {full report content}
+ *   CLADE_REPORT_EOF
+ *
+ *   node .claude/hooks/write-report.js <baseName> append <targetFileName> <<'CLADE_REPORT_EOF'
+ *   {content to append}
+ *   CLADE_REPORT_EOF
+ *
+ * Output:
+ *   Prints the actual file path written to stdout.
+ *   Example: [write-report] .claude/reports/test-report-20260401-143022.md
  */
 
 'use strict';
@@ -32,15 +34,15 @@ const path = require('path');
 const [, , baseName, modeOrContent, ...rest] = process.argv;
 
 if (!baseName || (modeOrContent !== 'new' && modeOrContent !== 'append')) {
-  console.error('[write-report] 使い方:');
-  console.error('  新規(stdin): node write-report.js <baseName> new <<\'EOF\'');
-  console.error('  追記(stdin): node write-report.js <baseName> append <targetFile> <<\'EOF\'');
-  console.error('  新規(引数): node write-report.js <baseName> new "<content>"');
-  console.error('  追記(引数): node write-report.js <baseName> append <targetFile> "<content>"');
+  console.error('[write-report] Usage:');
+  console.error('  new (--file):    node write-report.js <baseName> new --file <path>');
+  console.error('  append (--file): node write-report.js <baseName> append <targetFile> --file <path>');
+  console.error('  new (stdin):     node write-report.js <baseName> new <<\'CLADE_REPORT_EOF\'');
+  console.error('  append (stdin):  node write-report.js <baseName> append <targetFile> <<\'CLADE_REPORT_EOF\'');
   process.exit(1);
 }
 
-// stdin からコンテンツを読み込む（ヒアドキュメントで渡された場合）
+// Read content from stdin (when passed via heredoc)
 function readStdin() {
   return fs.readFileSync(0, 'utf-8');
 }
@@ -48,7 +50,7 @@ function readStdin() {
 const reportsDir = path.join(process.cwd(), '.claude', 'reports');
 fs.mkdirSync(reportsDir, { recursive: true });
 
-// タイムスタンプ生成（YYYYMMDD-HHmmss）
+// Generate timestamp (YYYYMMDD-HHmmss)
 function generateTimestamp() {
   const now = new Date();
   const pad = (n) => String(n).padStart(2, '0');
@@ -57,7 +59,7 @@ function generateTimestamp() {
   return `${date}-${time}`;
 }
 
-// 衝突しないファイルパスを生成
+// Generate a non-conflicting file path
 function resolveNewPath(baseNameArg, timestamp) {
   const base = path.join(reportsDir, `${baseNameArg}-${timestamp}.md`);
   if (!fs.existsSync(base)) return base;
@@ -70,14 +72,33 @@ function resolveNewPath(baseNameArg, timestamp) {
   }
 }
 
-// モード判定
+// Mode determination
 const isNew    = modeOrContent === 'new';
 const isAppend = modeOrContent === 'append';
 
+/**
+ * Resolve content (priority: --file > stdin)
+ * @param {string[]} args - arguments after mode
+ * @returns {string}
+ */
+function resolveContent(args) {
+  const fileIdx = args.indexOf('--file');
+  if (fileIdx !== -1) {
+    const filePath = args[fileIdx + 1];
+    if (!filePath) {
+      console.error('[write-report] --file option requires a file path.');
+      process.exit(1);
+    }
+    return fs.readFileSync(filePath, 'utf-8');
+  }
+  // No --file: use stdin (heredoc) or inline args
+  const nonFlagArgs = args.filter((a, i) => a !== '--file' && args[i - 1] !== '--file');
+  return nonFlagArgs.length > 0 ? nonFlagArgs.join(' ') : readStdin();
+}
+
 if (isNew) {
-  // 新規出力モード
-  // stdin（ヒアドキュメント）優先、なければコマンドライン引数を使用
-  const content    = rest.length > 0 ? rest.join(' ') : readStdin();
+  // New output mode
+  const content    = resolveContent(rest);
   const timestamp  = generateTimestamp();
   const outputPath = resolveNewPath(baseName, timestamp);
 
@@ -87,21 +108,20 @@ if (isNew) {
   console.log(`[write-report] ${relativePath}`);
 
 } else if (isAppend) {
-  // 追記出力モード
-  // ファイル名は必須。コンテンツは stdin（ヒアドキュメント）優先、なければコマンドライン引数を使用
-  const [targetFileName, ...contentParts] = rest;
+  // Append output mode: first arg is the target filename, rest is --file or inline content
+  const targetFileName = rest[0];
 
-  if (!targetFileName) {
-    console.error('[write-report] append モードには追記先ファイル名が必要です。');
-    console.error('  例: node write-report.js test-report append test-report-20260401-143022.md <<\'EOF\'');
+  if (!targetFileName || targetFileName === '--file') {
+    console.error('[write-report] append mode requires a target filename.');
+    console.error('  Example: node write-report.js test-report append test-report-20260401-143022.md --file /tmp/report.md');
     process.exit(1);
   }
 
-  const content    = contentParts.length > 0 ? contentParts.join(' ') : readStdin();
+  const content    = resolveContent(rest.slice(1));
   const targetPath = path.join(reportsDir, targetFileName);
 
   if (!fs.existsSync(targetPath)) {
-    console.error(`[write-report] 追記先ファイルが見つかりません: ${targetFileName}`);
+    console.error(`[write-report] Target file not found: ${targetFileName}`);
     process.exit(1);
   }
 

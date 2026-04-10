@@ -13,6 +13,52 @@ const memoryFile  = path.join(cwd, '.claude', 'memory', 'memory.json');
 const clustersDir = path.join(cwd, '.claude', 'instincts', 'clusters');
 const skillsDir   = path.join(cwd, '.claude', 'skills', 'project');
 
+// === Setup detection check (placed before existing processing) ===
+const setupIndicators = [
+  { target: 'setup_en.sh',  type: 'file' },
+  { target: 'setup_en.ps1', type: 'file' },
+  { target: 'cleanup_en.sh', type: 'file' },
+];
+
+const found = setupIndicators.filter(item => {
+  const fullPath = path.join(cwd, item.target);
+  try {
+    const stat = fs.statSync(fullPath);
+    return item.type === 'dir' ? stat.isDirectory() : stat.isFile();
+  } catch (e) {
+    if (e.code !== 'ENOENT') {
+      process.stderr.write(`[session-start] Warning: error checking ${fullPath} (${e.code})\n`);
+    }
+    return false;
+  }
+});
+
+if (found.length > 0) {
+  const warn = [];
+  warn.push('=========================================');
+  warn.push('  Setup Not Run — Warning');
+  warn.push('=========================================');
+  warn.push('');
+  warn.push('This repository has not been set up yet.');
+  warn.push('Please run the setup script before using Claude Code.');
+  warn.push('');
+  warn.push('  How to run:');
+  warn.push('    Linux / macOS : bash setup_en.sh');
+  warn.push('    Windows       : powershell -File setup_en.ps1');
+  warn.push('');
+  warn.push('  Without setup:');
+  warn.push('    - settings.local.json will not be created, and parallel agents (worktree) will not work');
+  warn.push('    - Template files will remain, potentially applying unintended settings');
+  warn.push('');
+  warn.push('  Detected files:');
+  for (const item of found) {
+    warn.push(`    - ${item.target}`);
+  }
+  warn.push('');
+  warn.push('=========================================');
+  process.stdout.write(warn.join('\n') + '\n');
+}
+
 const lines = [];
 lines.push('=========================================');
 lines.push('  Claude Code Session Start');
