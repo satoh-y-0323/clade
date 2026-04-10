@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.8.3] - 2026-04-10
+
+### Fix
+
+- セットアップ未実行の警告が Claude に伝わらず「hookエラー」として表示されるだけだった問題を修正。`process.exit(1)` を削除し、警告テキストを Claude のコンテキストに正しく注入するよう変更
+
+---
+
 ## [v1.8.2] - 2026-04-10
 
 ### Fix

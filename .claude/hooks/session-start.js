@@ -59,7 +59,6 @@ if (found.length > 0) {
   warn.push('');
   warn.push('=========================================');
   process.stdout.write(warn.join('\n') + '\n');
-  process.exit(1);
 }
 
 const lines = [];

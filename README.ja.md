@@ -1,6 +1,6 @@
 # Clade
 
-[![version](https://img.shields.io/badge/version-1.8.2-blue)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-1.8.3-blue)](CHANGELOG.md)
 
 > **読み方：** クレイド  
 > **由来：** *Claude* ＋ *made*（作られた）の造語。生物学では **clade（クレード）** は「共通の祖先を持つグループ」を意味し、Claude から生まれたエージェントたちがチームとして協働するイメージを込めています。
