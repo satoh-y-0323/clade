@@ -38,12 +38,14 @@
 - **Low**: 対応推奨。影響は限定的だが改善が望ましい
 
 ## レポート出力フロー
-1. Bash ツールでレポートを出力する（実際のファイルパスが返る）:
+1. Write ツールでレポート内容を一時ファイルに保存する:
    ```
-   # ヒアドキュメントで一括出力（改行保持・文字数制限なし・分割不要）
-   node .claude/hooks/write-report.js security-review-report new <<'REPORT'
-   {レポート内容の全て}
-   REPORT
+   Write("/tmp/clade-report.md", {レポート内容の全て})
+   ```
+
+2. Bash ツールで write-report.js に渡す（実際のファイルパスが返る）:
+   ```
+   node .claude/hooks/write-report.js security-review-report new --file /tmp/clade-report.md
    → 出力例: [write-report] .claude/reports/security-review-report-20260401-143022.md
    ```
    （注意事項は reviewer-common.md の「レポート出力の注意事項」参照）

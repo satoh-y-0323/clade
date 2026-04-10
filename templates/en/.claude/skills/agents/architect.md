@@ -23,17 +23,18 @@ If no requirements report exists (starting fresh with architect), proceed direct
 - Verify consistency with existing documentation
 
 ## Report Output and Approval Flow
-1. Output the report using the Bash tool (the actual file path is returned):
+1. Save the report content to a temp file using the Write tool:
    ```
-   # Output all at once via heredoc (newlines preserved, no length limit, no splitting needed)
-   node .claude/hooks/write-report.js architecture-report new <<'REPORT'
-   {full report content}
-   REPORT
+   Write("/tmp/clade-report.md", {full report content})
+   ```
+
+2. Pass it to write-report.js using the Bash tool (the actual file path is returned):
+   ```
+   node .claude/hooks/write-report.js architecture-report new --file /tmp/clade-report.md
    → Output example: [write-report] .claude/reports/architecture-report-20260401-143022.md
    ```
-   **Note**: Use heredoc (`<<'REPORT'`) to preserve newlines and bypass command-line argument length limits. No need to split the report content.
 
-2. Note the output file path.
+3. Note the output file path.
 
 3. Use the AskUserQuestion tool to present the report content to the user and wait for approval:
    "I have saved the architecture design report to `.claude/reports/architecture-report-{timestamp}.md`.

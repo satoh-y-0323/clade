@@ -38,17 +38,19 @@ Use the architecture report to understand communication paths, authentication me
 - **Low**: Recommended to address. Impact is limited but improvement is desirable
 
 ## Report Output Flow
-1. Output the report using the Bash tool (the actual file path is returned):
+1. Save the report content to a temp file using the Write tool:
    ```
-   # Output all at once via heredoc (newlines preserved, no length limit, no splitting needed)
-   node .claude/hooks/write-report.js security-review-report new <<'REPORT'
-   {full report content}
-   REPORT
+   Write("/tmp/clade-report.md", {full report content})
+   ```
+
+2. Pass it to write-report.js using the Bash tool (the actual file path is returned):
+   ```
+   node .claude/hooks/write-report.js security-review-report new --file /tmp/clade-report.md
    → Output example: [write-report] .claude/reports/security-review-report-20260401-143022.md
    ```
    (See reviewer-common.md "Report Output Note" for details)
 
-2. Include the report file path in the final message and finish.
+3. Include the report file path in the final message and finish.
    Approval confirmation is handled by the caller (parent Claude) — do not perform it in this agent.
 
 ## Report Format

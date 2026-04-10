@@ -76,24 +76,25 @@
 5. 結果を以下のフローでレポートに出力し、承認を確認する
 
 ## レポート出力と承認確認フロー
-1. Bash ツールでレポートを出力する（実際のファイルパスが返る）:
+1. Write ツールでレポート内容を一時ファイルに保存する:
    ```
-   # ヒアドキュメントで一括出力（改行保持・文字数制限なし・分割不要）
-   node .claude/hooks/write-report.js test-report new <<'REPORT'
-   {レポート内容の全て}
-   REPORT
+   Write("/tmp/clade-report.md", {レポート内容の全て})
+   ```
+
+2. Bash ツールで write-report.js に渡す（実際のファイルパスが返る）:
+   ```
+   node .claude/hooks/write-report.js test-report new --file /tmp/clade-report.md
    → 出力例: [write-report] .claude/reports/test-report-20260401-143022.md
    ```
-   **注意**: ヒアドキュメント（`<<'REPORT'`）で渡すことで改行が保持され、コマンドライン引数の文字数制限も回避できる。レポート内容を分割する必要はない。
 
-2. 出力されたファイルパスをメモしておく。
+3. 出力されたファイルパスをメモしておく。
 
-3. AskUserQuestion ツールを使ってレポートの内容をユーザーに提示し、承認を待つ:
+4. AskUserQuestion ツールを使ってレポートの内容をユーザーに提示し、承認を待つ:
    「テストレポートを `.claude/reports/test-report-{タイムスタンプ}.md` に保存しました。
    上記のレポート内容を確認してください。
    **このレポートを承認しますか？（yes / no）理由もお知らせください。**」
 
-4. ユーザーの回答を受けて、Bash ツールで承認を記録する:
+5. ユーザーの回答を受けて、Bash ツールで承認を記録する:
    ```
    node .claude/hooks/record-approval.js {reportFileName} {yes|no} test "{ユーザーのコメント}"
    ```

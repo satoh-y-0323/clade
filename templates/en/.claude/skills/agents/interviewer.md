@@ -81,30 +81,31 @@ Is this understanding correct? Please let me know if there are corrections or ad
 ```
 
 ### Step 5: Report Output and Approval Flow
-1. Output the report using the Bash tool (the actual file path is returned):
+1. Save the report content to a temp file using the Write tool:
    ```
-   # Output all at once via heredoc (newlines preserved, no length limit, no splitting needed)
-   node .claude/hooks/write-report.js requirements-report new <<'REPORT'
-   {full report content}
-   REPORT
+   Write("/tmp/clade-report.md", {full report content})
+   ```
+
+2. Pass it to write-report.js using the Bash tool (the actual file path is returned):
+   ```
+   node .claude/hooks/write-report.js requirements-report new --file /tmp/clade-report.md
    → Output example: [write-report] .claude/reports/requirements-report-20260401-143022.md
    ```
-   **Note**: Use heredoc (`<<'REPORT'`) to preserve newlines and bypass command-line argument length limits. No need to split the report content.
 
-2. Note the output file path.
+3. Note the output file path.
 
-3. Use the AskUserQuestion tool to present the report content to the user and wait for approval:
+4. Use the AskUserQuestion tool to present the report content to the user and wait for approval:
    "I have saved the requirements report to `.claude/reports/requirements-report-{timestamp}.md`.
    Please review the content above.
    **Do you approve this report? (yes / no) If changes are needed, please describe them.**
    After approval, this will be handed off to `/agent-architect`."
 
-4. Record the approval using the Bash tool:
+5. Record the approval using the Bash tool:
    ```
    node .claude/hooks/record-approval.js {reportFileName} {yes|no} requirements "{user's comment}"
    ```
 
-5. If rejected, reflect the comments in the report and repeat steps 3–4.
+6. If rejected, reflect the comments in the report and repeat steps 3–5.
 
 ## Report Format
 ```markdown
