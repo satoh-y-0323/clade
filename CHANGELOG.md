@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.10.0] - 2026-04-11
+
+### New: 育てる動線の強化
+
+- `/end-session` に昇格候補の提示機能を統合。セッション終了時に `/cluster-promote` が検出したルール・スキル候補を一覧表示し、その場で保存・保留・スキップを選択できるようになりました
+- セッション終了時に使用エージェント・作業時間などのメタ情報をセッションファイルに自動記録するよう改善
+- ルール昇格時に CLAUDE.md の `User Rules` セクションへの自動追記（`update-clade-section.js`）に対応
+
+### New: ドキュメント
+
+- 変更履歴ページ（`/changelog`）を GitHub Pages に追加
+- トップページに「最近の更新」セクションを追加（最新3バージョンの概要を表示）
+
+### Fix
+
+- エージェントスキルファイルの heredoc 構文を修正
+
+---
+
 ## [v1.9.0] - 2026-04-10
 
 ### New / Fix

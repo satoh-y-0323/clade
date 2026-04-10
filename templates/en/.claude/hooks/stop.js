@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // stop.js
 // Claude Code hook: Stop
-// セッション雛形を作成する
+// Creates the session file template.
 
 'use strict';
 const fs   = require('fs');
@@ -16,21 +16,21 @@ const sessionFile = path.join(sessionDir, `${dateStr}.tmp`);
 
 if (!fs.existsSync(sessionDir)) fs.mkdirSync(sessionDir, { recursive: true });
 
-// セッションファイルが未作成なら雛形を生成
+// Create session file template if it does not exist yet
 if (!fs.existsSync(sessionFile)) {
   fs.writeFileSync(sessionFile, createSessionTemplate(dateStr), 'utf8');
-  process.stderr.write(`[Stop] セッションファイルを作成しました: ${sessionFile}\n`);
+  process.stderr.write(`[Stop] Session file created: ${sessionFile}\n`);
 }
 
-process.stderr.write('[Stop] セッション終了処理が完了しました\n');
-process.stderr.write('[Stop] /end-session コマンドで詳細を記録することをお勧めします\n');
+process.stderr.write('[Stop] Stop hook completed.\n');
+process.stderr.write('[Stop] Run /end-session to record session details.\n');
 
-// 機械的事実をセッション tmp に記録する
+// Record mechanical facts to session tmp
 try {
   const bashLogFile = path.join(cwd, '.claude', 'instincts', 'raw', 'bash-log.jsonl');
 
-  let bashCount   = 0;
-  let errCount    = 0;
+  let bashCount    = 0;
+  let errCount     = 0;
   let recentErrors = [];
 
   if (fs.existsSync(bashLogFile)) {
@@ -49,27 +49,26 @@ try {
           errorLines.push(entry);
         }
       } catch (_) {
-        // パース失敗行はスキップ
+        // Skip lines that fail to parse
       }
     }
 
-    // 直近5件のエラーコマンドを取得
+    // Get up to 5 most recent error commands
     recentErrors = errorLines
       .slice(-5)
-      .map(entry => entry.cmd || '(不明)');
+      .map(entry => entry.cmd || '(unknown)');
   }
 
-  // 記録時刻を JST で YYYY-MM-DD HH:mm:ss 形式に変換
+  // Convert recorded time to local YYYY-MM-DD HH:mm:ss format
   const pad = n => String(n).padStart(2, '0');
-  const jst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
   const recordedAt = [
-    jst.getUTCFullYear(),
-    pad(jst.getUTCMonth() + 1),
-    pad(jst.getUTCDate()),
+    now.getFullYear(),
+    pad(now.getMonth() + 1),
+    pad(now.getDate()),
   ].join('-') + ' ' + [
-    pad(jst.getUTCHours()),
-    pad(jst.getUTCMinutes()),
-    pad(jst.getUTCSeconds()),
+    pad(now.getHours()),
+    pad(now.getMinutes()),
+    pad(now.getSeconds()),
   ].join(':');
 
   const factsObj = { recordedAt, bashCount, errCount, recentErrors };
@@ -79,8 +78,8 @@ try {
   const updatedContent = upsertFactsSection(currentContent, factsSection);
   fs.writeFileSync(sessionFile, updatedContent, 'utf8');
 
-  process.stderr.write(`[Stop] 事実ログを記録しました (Bash実行数: ${bashCount}, エラー数: ${errCount})\n`);
+  process.stderr.write(`[Stop] Facts log recorded (Bash commands: ${bashCount}, Errors: ${errCount})\n`);
 } catch (err) {
-  process.stderr.write(`[Stop] 事実ログの記録中にエラーが発生しました: ${err.message}\n`);
+  process.stderr.write(`[Stop] Error recording facts log: ${err.message}\n`);
   process.exit(0);
 }
