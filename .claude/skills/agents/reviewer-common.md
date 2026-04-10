@@ -16,3 +16,7 @@ node .claude/hooks/write-report.js <baseName> new <<'CLADE_REPORT_EOF'
 {レポート内容の全て}
 CLADE_REPORT_EOF
 ```
+
+> **構文の注意**: `CLADE_REPORT_EOF` は**行頭から書くこと（インデント禁止）**。
+> 本文中に `CLADE_REPORT_EOF` が単独行で現れると途中終了するため、terminator と同じ文字列を本文に含めないこと。
+> シングルクォート付き `<<'CLADE_REPORT_EOF'` のため、本文中の特殊文字（`` ` ``・`$`・`'` 等）はそのまま書いて問題ない。
