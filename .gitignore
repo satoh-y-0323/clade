@@ -45,3 +45,7 @@ __pycache__/
 # Clade - セッション記録
 # Clade - 観察データ
 # Clade - クラスタデータ
+
+# このリポジトリ固有のローカルルール・スキル（GitHub 非公開）
+.claude/rules/local.md
+.claude/skills/project/release.md
