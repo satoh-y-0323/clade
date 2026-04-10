@@ -54,3 +54,8 @@ __pycache__/
 .claude/skills/project/local-rules-design.md
 .claude/skills/project/en-template-sync.md
 .claude/skills/project/en-js-translation.md
+
+# /cluster-promote で昇格したプロジェクト固有ルール（GitHub 非公開）
+.claude/rules/agent-model-shorthand.md
+.claude/rules/winget-install-flags.md
+.claude/rules/no-worktree-in-this-repo.md

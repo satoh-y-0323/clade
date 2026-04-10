@@ -24,6 +24,7 @@ const path = require('path');
 const CLADE_START_MARKER = '<!-- CLADE:START -->';
 const CLADE_END_MARKER = '<!-- CLADE:END -->';
 const GLOBAL_RULES_HEADING = '## Global Rules (Clade 管理)';
+const USER_RULES_MARKER = '<!-- /cluster-promote によって自動追記される -->';
 
 // ---------------------------------------------------------------------------
 // ユーティリティ
@@ -83,55 +84,56 @@ function findCladeSection(content) {
 }
 
 /**
- * CLADE 区間内の "## Global Rules (Clade 管理)" サブセクションを検出し、
- * @rules/NAME.md を冪等追記する。
+ * User Rules セクション（<!-- /cluster-promote によって自動追記される --> 以降、
+ * <!-- CLADE:START --> の直前）に @rules/NAME.md を冪等追記する。
  *
  * @param {string} content    - CLAUDE.md 全文
  * @param {string} ruleName   - 追記するルール名（拡張子なし）
  * @returns {{ newContent: string, alreadyExists: boolean, markerNotFound: boolean }}
  */
 function addRuleToContent(content, ruleName) {
-  const section = findCladeSection(content);
-  if (!section) {
-    return { newContent: content, alreadyExists: false, markerNotFound: true };
-  }
-
-  const cladeInner = content.slice(section.innerStart, section.innerEnd);
   const ruleEntry = '@rules/' + ruleName + '.md';
 
-  // 既存エントリチェック（CLADE区間内のみを対象）
-  if (cladeInner.includes(ruleEntry)) {
+  // 既存エントリチェック（ファイル全体を対象）
+  if (content.includes(ruleEntry)) {
     return { newContent: content, alreadyExists: true, markerNotFound: false };
   }
 
-  // "## Global Rules (Clade 管理)" 見出しを CLADE 区間内から探す
-  const headingIdx = cladeInner.indexOf(GLOBAL_RULES_HEADING);
-  if (headingIdx === -1) {
-    log('Warning: "' + GLOBAL_RULES_HEADING + '" not found inside CLADE section. Appending before CLADE:END.');
-    // 見出しが見つからない場合はCLADE:END直前に挿入
-    const insertPos = section.innerEnd;
-    const before = content.slice(0, insertPos);
-    const after = content.slice(insertPos);
-    // 末尾の改行を考慮してエントリを挿入
-    const prefix = before.endsWith('\n') ? '' : '\n';
-    const newContent = before + prefix + ruleEntry + '\n' + after;
-    return { newContent, alreadyExists: false, markerNotFound: false };
+  // User Rules マーカーを探す
+  const markerIdx = content.indexOf(USER_RULES_MARKER);
+  if (markerIdx === -1) {
+    return { newContent: content, alreadyExists: false, markerNotFound: true };
   }
 
-  // 見出し行の末尾を見つけ、その次の行以降にエントリを追加
-  const headingAbsIdx = section.innerStart + headingIdx;
-  const headingLineEnd = content.indexOf('\n', headingAbsIdx);
+  // CLADE:START マーカーの位置を探す（User Rules の終端）
+  const cladeStartIdx = content.indexOf(CLADE_START_MARKER, markerIdx);
 
-  if (headingLineEnd === -1) {
-    // 見出しがファイル末尾にある（異常ケース）
-    const newContent = content + '\n' + ruleEntry + '\n';
-    return { newContent, alreadyExists: false, markerNotFound: false };
+  // 挿入位置: CLADE:START の直前（空行を挟む）
+  // CLADE:START より前の最後の @rules/ 行を見つけ、その直後に挿入
+  const userRulesBlock = cladeStartIdx === -1
+    ? content.slice(markerIdx)
+    : content.slice(markerIdx, cladeStartIdx);
+
+  // User Rules ブロック内の最後の @rules/ 行を探す
+  const lines = userRulesBlock.split('\n');
+  let lastRulesLineOffset = -1;
+  let offset = 0;
+  for (const line of lines) {
+    if (line.startsWith('@rules/')) {
+      lastRulesLineOffset = markerIdx + offset + line.length;
+    }
+    offset += line.length + 1; // +1 for '\n'
   }
 
-  // 見出し直後のブロック（次の ## 見出しまで or CLADE:END まで）を特定し、
-  // そのブロックの末尾に追記する
-  // 簡易実装: 見出し行の直後に挿入する
-  const insertPos = headingLineEnd + 1;
+  let insertPos;
+  if (lastRulesLineOffset !== -1) {
+    // 最後の @rules/ 行の末尾（改行の直後）に挿入
+    insertPos = content.indexOf('\n', lastRulesLineOffset) + 1;
+  } else {
+    // @rules/ 行がない場合はマーカー行の直後に挿入
+    insertPos = content.indexOf('\n', markerIdx) + 1;
+  }
+
   const before = content.slice(0, insertPos);
   const after = content.slice(insertPos);
   const newContent = before + ruleEntry + '\n' + after;
@@ -186,11 +188,11 @@ function commandAddRule(args) {
   }
 
   if (result.alreadyExists) {
-    log('@rules/' + ruleName + '.md already exists in CLADE section. No-op.');
+    log('@rules/' + ruleName + '.md already exists. No-op.');
     process.exit(2);
   }
 
-  log('Adding @rules/' + ruleName + '.md to CLADE section in ' + claudeMdPath);
+  log('Adding @rules/' + ruleName + '.md to User Rules section in ' + claudeMdPath);
 
   if (isDryRun) {
     log('[dry-run] Would write the following content:');
@@ -211,7 +213,7 @@ function commandAddRule(args) {
   // ファイル書き込み
   try {
     fs.writeFileSync(claudeMdPath, result.newContent, 'utf8');
-    log('Successfully added @rules/' + ruleName + '.md to CLADE section.');
+    log('Successfully added @rules/' + ruleName + '.md to User Rules section.');
   } catch (err) {
     log('Error: failed to write ' + claudeMdPath + ': ' + err.message);
     process.exit(1);
