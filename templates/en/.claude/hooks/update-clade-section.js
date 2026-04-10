@@ -3,14 +3,14 @@
 /**
  * update-clade-section.js
  *
- * Idempotently appends @rules/NAME.md to the "## Global Rules (Clade Managed)"
- * subsection inside the <!-- CLADE:START --> ~ <!-- CLADE:END --> region of CLAUDE.md.
+ * Idempotently appends @rules/NAME.md to the User Rules section of CLAUDE.md,
+ * just before the <!-- CLADE:START --> marker.
  *
  * Usage:
  *   node .claude/hooks/update-clade-section.js add-rule NAME [--dry-run]
  *
  * Exit codes:
- *   0 - success (appended, or CLADE markers not found — no-op)
+ *   0 - success (appended, or marker not found — no-op)
  *   2 - no-op (entry already exists)
  *   1 - error (file read/write failure, etc.)
  */
@@ -24,6 +24,7 @@ const path = require('path');
 const CLADE_START_MARKER   = '<!-- CLADE:START -->';
 const CLADE_END_MARKER     = '<!-- CLADE:END -->';
 const GLOBAL_RULES_HEADING = '## Global Rules (Clade Managed)';
+const USER_RULES_MARKER    = '<!-- /cluster-promote auto-appends here -->';
 
 // ---------------------------------------------------------------------------
 // Utilities
@@ -81,51 +82,54 @@ function findCladeSection(content) {
 }
 
 /**
- * Locates the "## Global Rules (Clade Managed)" subsection within the CLADE region
- * and idempotently appends @rules/NAME.md.
+ * Locates the User Rules section (after <!-- /cluster-promote appends here -->
+ * and before <!-- CLADE:START -->) and idempotently appends @rules/NAME.md.
  *
  * @param {string} content    - full CLAUDE.md content
  * @param {string} ruleName   - rule name without extension
  * @returns {{ newContent: string, alreadyExists: boolean, markerNotFound: boolean }}
  */
 function addRuleToContent(content, ruleName) {
-  const section = findCladeSection(content);
-  if (!section) {
-    return { newContent: content, alreadyExists: false, markerNotFound: true };
-  }
-
-  const cladeInner = content.slice(section.innerStart, section.innerEnd);
   const ruleEntry = '@rules/' + ruleName + '.md';
 
-  // Check for duplicate (within CLADE region only)
-  if (cladeInner.includes(ruleEntry)) {
+  // Check for duplicate (entire file)
+  if (content.includes(ruleEntry)) {
     return { newContent: content, alreadyExists: true, markerNotFound: false };
   }
 
-  // Find "## Global Rules (Clade Managed)" heading inside the CLADE region
-  const headingIdx = cladeInner.indexOf(GLOBAL_RULES_HEADING);
-  if (headingIdx === -1) {
-    log('Warning: "' + GLOBAL_RULES_HEADING + '" not found inside CLADE section. Appending before CLADE:END.');
-    // Insert just before CLADE:END
-    const insertPos = section.innerEnd;
-    const before = content.slice(0, insertPos);
-    const after = content.slice(insertPos);
-    const prefix = before.endsWith('\n') ? '' : '\n';
-    const newContent = before + prefix + ruleEntry + '\n' + after;
-    return { newContent, alreadyExists: false, markerNotFound: false };
+  // Find the User Rules marker
+  const markerIdx = content.indexOf(USER_RULES_MARKER);
+  if (markerIdx === -1) {
+    return { newContent: content, alreadyExists: false, markerNotFound: true };
   }
 
-  // Insert on the line immediately after the heading line
-  const headingAbsIdx = section.innerStart + headingIdx;
-  const headingLineEnd = content.indexOf('\n', headingAbsIdx);
+  // Find CLADE:START (end boundary of User Rules block)
+  const cladeStartIdx = content.indexOf(CLADE_START_MARKER, markerIdx);
 
-  if (headingLineEnd === -1) {
-    // Heading is at the very end of the file (edge case)
-    const newContent = content + '\n' + ruleEntry + '\n';
-    return { newContent, alreadyExists: false, markerNotFound: false };
+  // Scan the User Rules block for the last @rules/ line
+  const userRulesBlock = cladeStartIdx === -1
+    ? content.slice(markerIdx)
+    : content.slice(markerIdx, cladeStartIdx);
+
+  const lines = userRulesBlock.split('\n');
+  let lastRulesLineOffset = -1;
+  let offset = 0;
+  for (const line of lines) {
+    if (line.startsWith('@rules/')) {
+      lastRulesLineOffset = markerIdx + offset + line.length;
+    }
+    offset += line.length + 1; // +1 for '\n'
   }
 
-  const insertPos = headingLineEnd + 1;
+  let insertPos;
+  if (lastRulesLineOffset !== -1) {
+    // Insert after the last @rules/ line
+    insertPos = content.indexOf('\n', lastRulesLineOffset) + 1;
+  } else {
+    // No @rules/ lines yet — insert after the marker line
+    insertPos = content.indexOf('\n', markerIdx) + 1;
+  }
+
   const before = content.slice(0, insertPos);
   const after = content.slice(insertPos);
   const newContent = before + ruleEntry + '\n' + after;
@@ -180,11 +184,11 @@ function commandAddRule(args) {
   }
 
   if (result.alreadyExists) {
-    log('@rules/' + ruleName + '.md already exists in CLADE section. No-op.');
+    log('@rules/' + ruleName + '.md already exists. No-op.');
     process.exit(2);
   }
 
-  log('Adding @rules/' + ruleName + '.md to CLADE section in ' + claudeMdPath);
+  log('Adding @rules/' + ruleName + '.md to User Rules section in ' + claudeMdPath);
 
   if (isDryRun) {
     log('[dry-run] Would write the following content:');
@@ -204,7 +208,7 @@ function commandAddRule(args) {
   // Write file
   try {
     fs.writeFileSync(claudeMdPath, result.newContent, 'utf8');
-    log('Successfully added @rules/' + ruleName + '.md to CLADE section.');
+    log('Successfully added @rules/' + ruleName + '.md to User Rules section.');
   } catch (err) {
     log('Error: failed to write ' + claudeMdPath + ': ' + err.message);
     process.exit(1);
