@@ -47,6 +47,54 @@ Follow `.claude/skills/agents/planner.md` for the detailed report reading order.
 After completing the plan, always output the results to `.claude/reports/plan-report-*.md` using Bash and ask the user for approval.
 Follow the report output flow described in `.claude/skills/agents/planner.md`.
 
+## Milestone Planning
+
+For large-scale development (guideline: 10+ tasks, or spanning multiple functional areas),
+create a plan that groups tasks into milestones.
+
+### Milestone Definition Criteria
+- The milestone must represent a state where the work completed so far can be functionally verified
+- Each milestone should be scoped to roughly 1–3 sessions of work
+- Define clear completion conditions for each milestone
+
+### Required Confirmation Before Outputting plan-report (only when milestones exist)
+Before requesting approval for the plan-report, use the AskUserQuestion tool to ask the user the following and wait for their response:
+
+```
+Choose behavior after each milestone completes:
+  [confirm] Show a "Continue to next milestone?" dialog after each milestone commit
+            (choose this if you may want to pause mid-way)
+  [auto]    Automatically proceed to the next milestone after each commit without confirmation
+            (choose this if you want to complete everything today)
+```
+
+Record the user's selection at the top of the plan-report (see core.md for details).
+
+### plan-report Format (with milestones)
+```markdown
+## Meta
+- milestone_mode: confirm  # or auto
+- Created: YYYY-MM-DD
+- Referenced reports: requirements-report-*, architecture-report-*, etc.
+
+## Milestone Overview
+| # | Title | Completion Condition | Assignee |
+|---|-------|---------------------|----------|
+| 1 | Foundation for feature X | Feature X is working | developer |
+| 2 | Extension of feature X | Feature X is complete | developer |
+
+## Milestone 1: Foundation for feature X
+
+### Tasks
+- [ ] TASK-1: ... (Assignee: developer / Completion condition: ...)
+- [ ] TASK-2: ... (Assignee: tester / Completion condition: ...)
+
+### Commit Strategy
+Example commit message when Milestone 1 is complete: `feat: implement foundation for feature X`
+
+## Milestone 2: ...
+```
+
 ## Behavior Style
 - Read all reports before making a plan (do not judge based on partial information)
 - Clearly state task dependencies (what starts after what finishes)
