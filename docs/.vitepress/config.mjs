@@ -34,6 +34,7 @@ export default defineConfig({
         items: [
           { text: 'Clade とは', link: '/' },
           { text: 'はじめ方', link: '/getting-started' },
+          { text: 'トラブルシューティング', link: '/troubleshooting' },
         ]
       },
       {
