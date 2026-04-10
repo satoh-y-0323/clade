@@ -4,9 +4,10 @@
 セッション開始時に自動実行されること:
 1. `.claude/hooks/session-start.js` が SessionStart hook として自動実行される
    → 前回セッション・memory.json・インスティンクト・スキル一覧がコンテキストに注入される
-2. **実行環境を確認する（下記「実行環境チェック」を参照）**
-3. 前回の残タスクをユーザーに提示する
-4. エージェントを選択する: `/agent-developer` / `/agent-architect` / `/agent-code-reviewer` / `/agent-security-reviewer`
+2. **セットアップ警告を確認する**: system-reminder に「セットアップ未実行の警告」が含まれている場合は、その内容をそのままユーザーに表示する
+3. **実行環境を確認する（下記「実行環境チェック」を参照）**
+4. 前回の残タスクをユーザーに提示する
+5. エージェントを選択する: `/agent-developer` / `/agent-architect` / `/agent-code-reviewer` / `/agent-security-reviewer`
 
 手動実行が必要な場合: `/init-session`
 

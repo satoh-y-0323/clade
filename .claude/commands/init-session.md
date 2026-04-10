@@ -5,16 +5,17 @@ SessionStart hookでも自動実行されるが、手動でも呼び出せる。
 
 ## 実行手順
 1. 本日の日付を確認する
-2. Bash ツールを **2回に分けて** 以下を別々に実行する（`&&` で結合しないこと・セキュリティ対策）:
+2. system-reminder に「セットアップ未実行の警告」が含まれている場合は、その内容をそのままユーザーに表示する
+3. Bash ツールを **2回に分けて** 以下を別々に実行する（`&&` で結合しないこと・セキュリティ対策）:
    - 1回目: `node .claude/hooks/clear-file-history.js`
    - 2回目: `node .claude/hooks/enable-sandbox.js`
-3. 最新セッションファイルを読み込む:
+4. 最新セッションファイルを読み込む:
    Glob ツールで `.claude/memory/sessions/*.tmp` を検索し、
    ファイル名（YYYYMMDD）が最大のものを選択して Read ツールで読み込む。
-4. `.claude/memory/memory.json` を Read ツールで読み込む（存在する場合）
-5. `.claude/instincts/clusters/` の全JSONファイルを Glob ツールで検索し、
+5. `.claude/memory/memory.json` を Read ツールで読み込む（存在する場合）
+6. `.claude/instincts/clusters/` の全JSONファイルを Glob ツールで検索し、
    存在する場合は Read ツールで読み込む
-6. 以下の形式でサマリを表示する:
+7. 以下の形式でサマリを表示する:
 
 ---
 ## セッション再開 ({今日の日付})

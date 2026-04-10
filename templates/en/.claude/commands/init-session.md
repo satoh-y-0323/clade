@@ -5,16 +5,17 @@ Also runs automatically via the SessionStart hook, but can be called manually.
 
 ## Execution Steps
 1. Check today's date
-2. Run the following as **two separate** Bash tool calls (do NOT combine with `&&` — security measures):
+2. If the system-reminder contains a "setup not run" warning, display its content to the user as-is
+3. Run the following as **two separate** Bash tool calls (do NOT combine with `&&` — security measures):
    - 1st call: `node .claude/hooks/clear-file-history.js`
    - 2nd call: `node .claude/hooks/enable-sandbox.js`
-3. Load the latest session file:
+4. Load the latest session file:
    Search for `.claude/memory/sessions/*.tmp` with the Glob tool,
    select the one with the largest filename (YYYYMMDD), and load it with the Read tool.
-4. Load `.claude/memory/memory.json` with the Read tool (if it exists)
-5. Search for all JSON files in `.claude/instincts/clusters/` with the Glob tool,
+5. Load `.claude/memory/memory.json` with the Read tool (if it exists)
+6. Search for all JSON files in `.claude/instincts/clusters/` with the Glob tool,
    and load them with the Read tool if they exist
-6. Display a summary in the following format:
+7. Display a summary in the following format:
 
 ---
 ## Session Resumed ({today's date})
