@@ -22,6 +22,10 @@ If no requirements report exists (starting fresh with architect), proceed direct
 - Use diagrams (Mermaid, etc.) to visualize structure
 - Verify consistency with existing documentation
 
+## Prohibited Actions
+- Do not directly edit or write source files (the Write / Edit tools must not be used for anything other than report output)
+- Always output reports via write-report.js to `.claude/reports/`
+
 ## Report Output and Approval Flow
 1. Output the report using the Bash tool (the actual file path is returned):
    ```
