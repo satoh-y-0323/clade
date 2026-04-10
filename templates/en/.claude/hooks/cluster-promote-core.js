@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
  * cluster-promote-core.js
- * 昇格候補を抽出して JSON または人間が読める形式で出力する CLI ツール。
+ * CLI tool to extract promotion candidates and output them as JSON or human-readable format.
  *
- * 使い方:
+ * Usage:
  *   node .claude/hooks/cluster-promote-core.js scan [--since today] [--json]
  */
 
@@ -12,15 +12,19 @@
 const fs = require('fs');
 const path = require('path');
 
-// ---- 定数 ----------------------------------------------------------------
+// ---- Constants ---------------------------------------------------------------
 
 const SESSIONS_DIR = path.join(__dirname, '..', 'memory', 'sessions');
 const BASH_LOG_PATH = path.join(__dirname, '..', 'instincts', 'raw', 'bash-log.jsonl');
 
-// ---- 日付ユーティリティ --------------------------------------------------
+// Section headings used in .tmp session files (English edition)
+const SECTION_FAILED    = '## Approaches That Were Tried but Failed';
+const SECTION_SUCCEEDED = '## Approaches That Worked (with evidence)';
+
+// ---- Date utilities ----------------------------------------------------------
 
 /**
- * 今日の日付を YYYYMMDD 形式で返す。
+ * Returns today's date as a YYYYMMDD string.
  * @returns {string}
  */
 function getTodayStr() {
@@ -32,7 +36,7 @@ function getTodayStr() {
 }
 
 /**
- * 現在日時を "YYYY-MM-DD HH:mm:ss" 形式で返す。
+ * Returns the current datetime as "YYYY-MM-DD HH:mm:ss".
  * @returns {string}
  */
 function getScannedAt() {
@@ -46,11 +50,11 @@ function getScannedAt() {
   return `${yyyy}-${mm}-${dd} ${hh}:${min}:${sec}`;
 }
 
-// ---- ファイル読み込みユーティリティ --------------------------------------
+// ---- File reading utilities --------------------------------------------------
 
 /**
- * sessions ディレクトリから対象の .tmp ファイルパス一覧を返す。
- * @param {boolean} sinceToday - true の場合は当日ファイルのみ
+ * Returns the list of .tmp file paths to process from the sessions directory.
+ * @param {boolean} sinceToday - if true, only include today's file
  * @returns {string[]}
  */
 function resolveTmpFilePaths(sinceToday) {
@@ -69,10 +73,10 @@ function resolveTmpFilePaths(sinceToday) {
 }
 
 /**
- * .tmp ファイルの内容から指定セクション（## 見出し）のテキストを抽出する。
- * @param {string} content - ファイル内容
- * @param {string} sectionTitle - 例: "## 試みたが失敗したアプローチ"
- * @returns {string} セクション本文（次の ## の直前まで、または末尾まで）
+ * Extracts the text of a named section (## heading) from a .tmp file's content.
+ * @param {string} content - file content
+ * @param {string} sectionTitle - e.g. "## Approaches That Were Tried but Failed"
+ * @returns {string} section body (up to the next ## heading, or end of file)
  */
 function extractSection(content, sectionTitle) {
   const lines = content.split(/\r?\n/);
@@ -80,7 +84,7 @@ function extractSection(content, sectionTitle) {
   const collected = [];
   for (const line of lines) {
     if (line.startsWith('## ')) {
-      if (inSection) break; // 次のセクション開始 → 終了
+      if (inSection) break; // next section starts — stop collecting
       if (line.trim() === sectionTitle.trim()) {
         inSection = true;
         continue;
@@ -93,10 +97,10 @@ function extractSection(content, sectionTitle) {
   return collected.join('\n').trim();
 }
 
-// ---- 候補抽出ロジック ----------------------------------------------------
+// ---- Candidate extraction logic ---------------------------------------------
 
 /**
- * .tmp ファイル群を解析してルール候補とスキル候補を抽出する。
+ * Parses a set of .tmp files and extracts rule and skill candidates.
  * @param {string[]} filePaths
  * @returns {{ rules: CandidateRule[], skills: CandidateSkill[] }}
  */
@@ -104,7 +108,7 @@ function extractFromTmpFiles(filePaths) {
   const rules = [];
   const skills = [];
 
-  // スキル候補の信頼度カウント用マップ: title → { candidate, count }
+  // Map for skill confidence counting: title -> { candidate, count }
   const skillMap = new Map();
 
   for (const filePath of filePaths) {
@@ -118,26 +122,26 @@ function extractFromTmpFiles(filePaths) {
 
     const sessionName = path.basename(filePath, '.tmp');
 
-    // ルール候補: 試みたが失敗したアプローチ
-    const failedSection = extractSection(content, '## 試みたが失敗したアプローチ');
-    if (failedSection && failedSection !== '（未記入）') {
+    // Rule candidates: from "Approaches That Were Tried but Failed"
+    const failedSection = extractSection(content, SECTION_FAILED);
+    if (failedSection && failedSection !== '(not filled in)') {
       const items = parseListItems(failedSection);
       for (const item of items) {
         rules.push({
           type: 'rule',
-          title: item.title || `失敗アプローチ (${sessionName})`,
+          title: item.title || `Failed approach (${sessionName})`,
           summary: item.body || failedSection,
           source: 'session-tmp',
         });
       }
     }
 
-    // スキル候補: うまくいったアプローチ（複数セッションで言及されているものを優先）
-    const successSection = extractSection(content, '## うまくいったアプローチ（証拠付き）');
-    if (successSection && successSection !== '（/end-session コマンドで記入してください）') {
+    // Skill candidates: from "Approaches That Worked" (prioritize items mentioned across sessions)
+    const successSection = extractSection(content, SECTION_SUCCEEDED);
+    if (successSection && successSection !== '(fill in with the /end-session command)') {
       const items = parseListItems(successSection);
       for (const item of items) {
-        const title = item.title || `成功アプローチ (${sessionName})`;
+        const title = item.title || `Successful approach (${sessionName})`;
         if (skillMap.has(title)) {
           const entry = skillMap.get(title);
           entry.count += 1;
@@ -156,13 +160,13 @@ function extractFromTmpFiles(filePaths) {
     }
   }
 
-  // 複数セッションで言及されているスキル候補を優先（1件でも収録するが、複数件は先頭に）
+  // Sort by mention count (descending); include single-mention items too
   const skillEntries = Array.from(skillMap.values());
   skillEntries.sort((a, b) => b.count - a.count);
   for (const entry of skillEntries) {
     const candidate = { ...entry.candidate };
     if (entry.count > 1) {
-      candidate.summary = `(${entry.count}セッションで言及) ${candidate.summary}`;
+      candidate.summary = `(mentioned in ${entry.count} sessions) ${candidate.summary}`;
     }
     skills.push(candidate);
   }
@@ -171,7 +175,7 @@ function extractFromTmpFiles(filePaths) {
 }
 
 /**
- * Markdown のリスト形式テキストを { title, body } オブジェクトに変換する。
+ * Parses Markdown list-format text into { title, body } objects.
  * @param {string} text
  * @returns {{ title: string, body: string }[]}
  */
@@ -202,7 +206,7 @@ function parseListItems(text) {
 }
 
 /**
- * bash-log.jsonl を解析してルール候補を抽出する。
+ * Parses bash-log.jsonl and extracts rule candidates from error records.
  * @returns {CandidateRule[]}
  */
 function extractFromBashLog() {
@@ -230,10 +234,10 @@ function extractFromBashLog() {
     }
 
     if (record.err === true) {
-      const cmd = record.cmd || record.command || '(不明なコマンド)';
+      const cmd = record.cmd || record.command || '(unknown command)';
       const errDetail = record.stderr || record.out || '';
-      const title = `コマンドエラー: ${String(cmd).slice(0, 60)}`;
-      const summary = errDetail ? String(errDetail).slice(0, 200) : 'エラー詳細なし';
+      const title = `Command error: ${String(cmd).slice(0, 60)}`;
+      const summary = errDetail ? String(errDetail).slice(0, 200) : '(no error detail)';
       rules.push({
         type: 'rule',
         title,
@@ -246,10 +250,10 @@ function extractFromBashLog() {
   return rules;
 }
 
-// ---- メイン処理 ----------------------------------------------------------
+// ---- Main logic --------------------------------------------------------------
 
 /**
- * scan サブコマンドのエントリポイント。
+ * Entry point for the scan subcommand.
  * @param {boolean} sinceToday
  * @param {boolean} outputJson
  */
@@ -257,12 +261,12 @@ function runScan(sinceToday, outputJson) {
   const tmpFilePaths = resolveTmpFilePaths(sinceToday);
   const { rules: tmpRules, skills } = extractFromTmpFiles(tmpFilePaths);
 
-  // bash-log は --since today でも全体を対象（当日の失敗ログは bash-log 全体に含まれる前提）
+  // bash-log covers all entries even with --since today
   const bashLogRules = extractFromBashLog();
 
   const allRules = [...tmpRules, ...bashLogRules];
 
-  // 連番 id を付与
+  // Assign sequential IDs
   let idCounter = 1;
   const rulesWithId = allRules.map(r => ({ id: idCounter++, ...r }));
   const skillsWithId = skills.map(s => ({ id: idCounter++, ...s }));
@@ -281,38 +285,38 @@ function runScan(sinceToday, outputJson) {
     return;
   }
 
-  // 人間が読める形式
+  // Human-readable format
   const totalCount = rulesWithId.length + skillsWithId.length;
-  process.stdout.write(`スキャン日時: ${scannedAt}\n`);
-  process.stdout.write(`候補総数: ${totalCount} 件\n\n`);
+  process.stdout.write(`Scanned at: ${scannedAt}\n`);
+  process.stdout.write(`Total candidates: ${totalCount}\n\n`);
 
   if (rulesWithId.length === 0 && skillsWithId.length === 0) {
-    process.stdout.write('昇格候補は見つかりませんでした。\n');
+    process.stdout.write('No promotion candidates found.\n');
     return;
   }
 
   if (rulesWithId.length > 0) {
-    process.stdout.write('=== ルール候補 ===\n');
+    process.stdout.write('=== Rule Candidates ===\n');
     for (const r of rulesWithId) {
-      process.stdout.write(`[${r.id}] ${r.title}\n    ${r.summary}\n    ソース: ${r.source}\n\n`);
+      process.stdout.write(`[${r.id}] ${r.title}\n    ${r.summary}\n    Source: ${r.source}\n\n`);
     }
   }
 
   if (skillsWithId.length > 0) {
-    process.stdout.write('=== スキル候補 ===\n');
+    process.stdout.write('=== Skill Candidates ===\n');
     for (const s of skillsWithId) {
-      process.stdout.write(`[${s.id}] ${s.title}\n    ${s.summary}\n    ソース: ${s.source}\n\n`);
+      process.stdout.write(`[${s.id}] ${s.title}\n    ${s.summary}\n    Source: ${s.source}\n\n`);
     }
   }
 }
 
-// ---- CLI パース ----------------------------------------------------------
+// ---- CLI parsing -------------------------------------------------------------
 
 const args = process.argv.slice(2);
 const subcommand = args[0];
 
 if (subcommand !== 'scan') {
-  process.stderr.write(`使い方: node cluster-promote-core.js scan [--since today] [--json]\n`);
+  process.stderr.write(`Usage: node cluster-promote-core.js scan [--since today] [--json]\n`);
   process.exit(1);
 }
 
@@ -323,6 +327,6 @@ try {
   runScan(sinceToday, outputJson);
   process.exit(0);
 } catch (err) {
-  process.stderr.write(`[cluster-promote-core] 予期せぬエラー: ${err.message}\n${err.stack}\n`);
+  process.stderr.write(`[cluster-promote-core] Unexpected error: ${err.message}\n${err.stack}\n`);
   process.exit(1);
 }

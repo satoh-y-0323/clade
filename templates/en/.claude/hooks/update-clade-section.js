@@ -3,34 +3,34 @@
 /**
  * update-clade-section.js
  *
- * CLAUDE.md の <!-- CLADE:START --> ~ <!-- CLADE:END --> 区間内の
- * "## Global Rules (Clade 管理)" サブセクションに @rules/NAME.md を冪等追記する。
+ * Idempotently appends @rules/NAME.md to the "## Global Rules (Clade Managed)"
+ * subsection inside the <!-- CLADE:START --> ~ <!-- CLADE:END --> region of CLAUDE.md.
  *
  * Usage:
  *   node .claude/hooks/update-clade-section.js add-rule NAME [--dry-run]
  *
  * Exit codes:
- *   0 - 正常終了 (追記済み or CLADEマーカーが見つからない場合も0)
- *   2 - no-op (既に同一エントリが存在するため追記不要)
- *   1 - エラー (ファイル読み書き失敗など)
+ *   0 - success (appended, or CLADE markers not found — no-op)
+ *   2 - no-op (entry already exists)
+ *   1 - error (file read/write failure, etc.)
  */
 
 const fs = require('fs');
 const path = require('path');
 
 // ---------------------------------------------------------------------------
-// 定数
+// Constants
 // ---------------------------------------------------------------------------
-const CLADE_START_MARKER = '<!-- CLADE:START -->';
-const CLADE_END_MARKER = '<!-- CLADE:END -->';
-const GLOBAL_RULES_HEADING = '## Global Rules (Clade 管理)';
+const CLADE_START_MARKER   = '<!-- CLADE:START -->';
+const CLADE_END_MARKER     = '<!-- CLADE:END -->';
+const GLOBAL_RULES_HEADING = '## Global Rules (Clade Managed)';
 
 // ---------------------------------------------------------------------------
-// ユーティリティ
+// Utilities
 // ---------------------------------------------------------------------------
 
 /**
- * stderr にログを出力する
+ * Writes a log message to stderr.
  * @param {string} message
  */
 function log(message) {
@@ -38,7 +38,7 @@ function log(message) {
 }
 
 /**
- * プロジェクトルートを返す（このスクリプトが .claude/hooks/ に置かれている前提）
+ * Returns the project root (assumes this script lives in .claude/hooks/).
  * @returns {string}
  */
 function getProjectRoot() {
@@ -46,7 +46,7 @@ function getProjectRoot() {
 }
 
 /**
- * CLAUDE.md のパスを返す
+ * Returns the path to CLAUDE.md.
  * @returns {string}
  */
 function getClaudeMdPath() {
@@ -54,18 +54,16 @@ function getClaudeMdPath() {
 }
 
 // ---------------------------------------------------------------------------
-// コア処理
+// Core logic
 // ---------------------------------------------------------------------------
 
 /**
- * CLADE:START ~ CLADE:END 区間の開始・終了インデックスを検出する。
- * CRLF / LF 両対応。
+ * Finds the start and end indices of the CLADE:START ~ CLADE:END region.
+ * Handles both CRLF and LF line endings.
  *
- * @param {string} content - ファイル全文
- * @returns {{ startIdx: number, endIdx: number } | null}
- *   startIdx: CLADE:START マーカー行の先頭インデックス
- *   endIdx:   CLADE:END マーカー行の末尾インデックス（\n含む）
- *   null:     マーカーが見つからない場合
+ * @param {string} content - full file content
+ * @returns {{ startIdx: number, sectionEnd: number, innerStart: number, innerEnd: number } | null}
+ *   null if markers are not found
  */
 function findCladeSection(content) {
   const startIdx = content.indexOf(CLADE_START_MARKER);
@@ -74,7 +72,7 @@ function findCladeSection(content) {
   const endIdx = content.indexOf(CLADE_END_MARKER, startIdx);
   if (endIdx === -1) return null;
 
-  // CLADE:END マーカー行の末尾まで含める（改行文字も含む）
+  // Include through the end of the CLADE:END marker line (including newline)
   const afterEnd = endIdx + CLADE_END_MARKER.length;
   const nextNewline = content.indexOf('\n', afterEnd);
   const sectionEnd = nextNewline === -1 ? content.length : nextNewline + 1;
@@ -83,11 +81,11 @@ function findCladeSection(content) {
 }
 
 /**
- * CLADE 区間内の "## Global Rules (Clade 管理)" サブセクションを検出し、
- * @rules/NAME.md を冪等追記する。
+ * Locates the "## Global Rules (Clade Managed)" subsection within the CLADE region
+ * and idempotently appends @rules/NAME.md.
  *
- * @param {string} content    - CLAUDE.md 全文
- * @param {string} ruleName   - 追記するルール名（拡張子なし）
+ * @param {string} content    - full CLAUDE.md content
+ * @param {string} ruleName   - rule name without extension
  * @returns {{ newContent: string, alreadyExists: boolean, markerNotFound: boolean }}
  */
 function addRuleToContent(content, ruleName) {
@@ -99,38 +97,34 @@ function addRuleToContent(content, ruleName) {
   const cladeInner = content.slice(section.innerStart, section.innerEnd);
   const ruleEntry = '@rules/' + ruleName + '.md';
 
-  // 既存エントリチェック（CLADE区間内のみを対象）
+  // Check for duplicate (within CLADE region only)
   if (cladeInner.includes(ruleEntry)) {
     return { newContent: content, alreadyExists: true, markerNotFound: false };
   }
 
-  // "## Global Rules (Clade 管理)" 見出しを CLADE 区間内から探す
+  // Find "## Global Rules (Clade Managed)" heading inside the CLADE region
   const headingIdx = cladeInner.indexOf(GLOBAL_RULES_HEADING);
   if (headingIdx === -1) {
     log('Warning: "' + GLOBAL_RULES_HEADING + '" not found inside CLADE section. Appending before CLADE:END.');
-    // 見出しが見つからない場合はCLADE:END直前に挿入
+    // Insert just before CLADE:END
     const insertPos = section.innerEnd;
     const before = content.slice(0, insertPos);
     const after = content.slice(insertPos);
-    // 末尾の改行を考慮してエントリを挿入
     const prefix = before.endsWith('\n') ? '' : '\n';
     const newContent = before + prefix + ruleEntry + '\n' + after;
     return { newContent, alreadyExists: false, markerNotFound: false };
   }
 
-  // 見出し行の末尾を見つけ、その次の行以降にエントリを追加
+  // Insert on the line immediately after the heading line
   const headingAbsIdx = section.innerStart + headingIdx;
   const headingLineEnd = content.indexOf('\n', headingAbsIdx);
 
   if (headingLineEnd === -1) {
-    // 見出しがファイル末尾にある（異常ケース）
+    // Heading is at the very end of the file (edge case)
     const newContent = content + '\n' + ruleEntry + '\n';
     return { newContent, alreadyExists: false, markerNotFound: false };
   }
 
-  // 見出し直後のブロック（次の ## 見出しまで or CLADE:END まで）を特定し、
-  // そのブロックの末尾に追記する
-  // 簡易実装: 見出し行の直後に挿入する
   const insertPos = headingLineEnd + 1;
   const before = content.slice(0, insertPos);
   const after = content.slice(insertPos);
@@ -140,18 +134,18 @@ function addRuleToContent(content, ruleName) {
 }
 
 // ---------------------------------------------------------------------------
-// サブコマンド: add-rule
+// Subcommand: add-rule
 // ---------------------------------------------------------------------------
 
 /**
- * add-rule サブコマンドのエントリポイント
- * @param {string[]} args - サブコマンド以降の引数
+ * Entry point for the add-rule subcommand.
+ * @param {string[]} args - arguments after the subcommand name
  */
 function commandAddRule(args) {
   const dryRunIdx = args.indexOf('--dry-run');
   const isDryRun = dryRunIdx !== -1;
 
-  // --dry-run フラグを除いた引数リスト
+  // Remove --dry-run from positional args
   const positional = args.filter((a, i) => i !== dryRunIdx);
   const ruleName = positional[0];
 
@@ -160,7 +154,7 @@ function commandAddRule(args) {
     process.exit(1);
   }
 
-  // ルール名のバリデーション（パストラバーサル防止）
+  // Validate rule name (prevent path traversal)
   if (ruleName.includes('/') || ruleName.includes('\\') || ruleName.includes('..')) {
     log('Error: invalid rule name "' + ruleName + '"');
     process.exit(1);
@@ -168,7 +162,7 @@ function commandAddRule(args) {
 
   const claudeMdPath = getClaudeMdPath();
 
-  // ファイル読み込み
+  // Read file
   let content;
   try {
     content = fs.readFileSync(claudeMdPath, 'utf8');
@@ -177,7 +171,7 @@ function commandAddRule(args) {
     process.exit(1);
   }
 
-  // 追記処理
+  // Apply changes
   const result = addRuleToContent(content, ruleName);
 
   if (result.markerNotFound) {
@@ -195,7 +189,6 @@ function commandAddRule(args) {
   if (isDryRun) {
     log('[dry-run] Would write the following content:');
     process.stderr.write('--- diff ---\n');
-    // dry-run では変更後の内容を stderr に出力して終了
     const lines = result.newContent.split('\n');
     const originalLines = content.split('\n');
     for (let i = 0; i < Math.max(lines.length, originalLines.length); i++) {
@@ -208,7 +201,7 @@ function commandAddRule(args) {
     process.exit(0);
   }
 
-  // ファイル書き込み
+  // Write file
   try {
     fs.writeFileSync(claudeMdPath, result.newContent, 'utf8');
     log('Successfully added @rules/' + ruleName + '.md to CLADE section.');
@@ -221,7 +214,7 @@ function commandAddRule(args) {
 }
 
 // ---------------------------------------------------------------------------
-// メインエントリポイント
+// Main entry point
 // ---------------------------------------------------------------------------
 
 function main() {
