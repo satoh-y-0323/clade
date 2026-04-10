@@ -101,3 +101,10 @@ Example commit message when Milestone 1 is complete: `feat: implement foundation
 - Specify priority, assigned agent, and completion conditions for every task
 - Always cite the reports that served as the basis for the plan
 - Consider approval/rejection trends from approvals.jsonl and reflect them in the plan
+
+## Loading Project-Specific Skills
+
+At the start of work, do the following:
+1. Search for `.claude/skills/project/*.md` with Glob
+2. If any files exist, Read all of them
+3. If none exist, skip and start work

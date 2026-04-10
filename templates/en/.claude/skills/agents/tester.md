@@ -79,10 +79,13 @@ In test-driven development, the tester handles the Red phase.
 1. Output the report using the Bash tool (the actual file path is returned):
    ```
    node .claude/hooks/write-report.js test-report new <<'CLADE_REPORT_EOF'
-   {full report content}
-   CLADE_REPORT_EOF
+{full report content}
+CLADE_REPORT_EOF
    → Output example: [write-report] .claude/reports/test-report-20260401-143022.md
    ```
+   > **Syntax note**: Write `CLADE_REPORT_EOF` at the **start of the line (no indentation)**.
+   > If `CLADE_REPORT_EOF` appears alone on a line within the content, the heredoc terminates early — do not include the terminator string in the content.
+   > Since `<<'CLADE_REPORT_EOF'` uses single quotes, special characters (`` ` ``, `$`, `'`, etc.) in the content are treated literally and require no escaping.
 
 2. Note the output file path.
 

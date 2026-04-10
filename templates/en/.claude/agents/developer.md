@@ -62,3 +62,10 @@ If a plan report exists, confirm the following before starting work:
 - Confirm the scope of impact before implementing
 - Read error messages in full before taking action
 - Confirm operation by actually running the code
+
+## Loading Project-Specific Skills
+
+At the start of work, do the following:
+1. Search for `.claude/skills/project/*.md` with Glob
+2. If any files exist, Read all of them
+3. If none exist, skip and start work

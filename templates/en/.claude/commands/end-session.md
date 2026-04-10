@@ -38,3 +38,43 @@ DURATION: {estimated work time}
 ## Notes
 The session file is automatically loaded by the next `/init-session`.
 Write remaining tasks specifically (not "implement it" but "implement the create method in UserService").
+
+## Step 5: Present Promotion Candidates (Inline)
+
+After saving the session file, do the following:
+
+1. Read `.claude/memory/pending-promotions.json` (skip if it does not exist)
+2. Run the following command to get today's candidates:
+   ```
+   node .claude/hooks/cluster-promote-core.js scan --since today --json
+   ```
+3. Merge the pending-promotions.json candidates with today's candidates
+4. If there are 0 candidates, skip and proceed to the completion report
+5. If candidates exist, use AskUserQuestion to present the following:
+   "Promotion candidates were found from today's session.
+   (Display the candidate list with numbers)
+   Would you like to save them?
+     [yes] Specify by number to save (e.g., 1,3) or 'all'
+     [no]  Do not save (delete pending if it exists)
+     [later] Re-present at the next /end-session"
+
+6-a. If yes:
+   - For each selected candidate:
+     - Rule: Write to `.claude/rules/{name}.md` using the Write tool
+     - Skill: Write to `.claude/skills/project/{name}.md` using the Write tool
+     - For rules: run `node .claude/hooks/update-clade-section.js add-rule {name}`
+   - Delete `.claude/memory/pending-promotions.json` (if it exists):
+     ```
+     Bash: rm .claude/memory/pending-promotions.json
+     ```
+
+6-b. If later:
+   - Save unprocessed candidates to `.claude/memory/pending-promotions.json` using the Write tool
+   - Schema: `{ "savedAt": "YYYY-MM-DD", "candidates": [...] }`
+
+6-c. If no:
+   - Delete `.claude/memory/pending-promotions.json` if it exists:
+     ```
+     Bash: rm .claude/memory/pending-promotions.json
+     ```
+   - Note: Use the Bash `rm` command for deletion

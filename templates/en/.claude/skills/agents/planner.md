@@ -55,10 +55,13 @@ Read all reports and update the plan to reflect differences and unresolved items
 2. Output the plan report using the Bash tool (the actual file path is returned):
    ```
    node .claude/hooks/write-report.js plan-report new <<'CLADE_REPORT_EOF'
-   {full report content}
-   CLADE_REPORT_EOF
+{full report content}
+CLADE_REPORT_EOF
    → Output example: [write-report] .claude/reports/plan-report-20260401-143022.md
    ```
+   > **Heredoc syntax note**: Write `CLADE_REPORT_EOF` at the **start of the line (no indentation)**.
+   > If `CLADE_REPORT_EOF` appears alone on a line within the content, the heredoc terminates early — do not include the terminator string in the content.
+   > Since `<<'CLADE_REPORT_EOF'` uses single quotes, special characters (`` ` ``, `$`, `'`, etc.) in the content are treated literally and require no escaping.
 
 3. Note the output file path.
 

@@ -48,3 +48,10 @@ Follow the "Report Output and Approval Flow" section in `.claude/skills/agents/a
 - Propose recording decision rationale as ADRs
 - Prioritize current requirements over future extensibility (YAGNI)
 - Present multiple options before letting the user decide
+
+## Loading Project-Specific Skills
+
+At the start of work, do the following:
+1. Search for `.claude/skills/project/*.md` with Glob
+2. If any files exist, Read all of them
+3. If none exist, skip and start work

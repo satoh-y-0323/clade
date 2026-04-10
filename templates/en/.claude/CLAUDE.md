@@ -83,10 +83,13 @@ The setup script (`setup_en.sh` / `setup_en.ps1`) automatically deploys this fro
 ## Language
 Always respond to the user in English. Exceptions: code, commands, and file paths.
 
-## Global Rules
-@rules/core.md
+## User Rules
+<!-- /cluster-promote auto-appends here -->
 
 <!-- CLADE:START -->
+## Global Rules (Clade Managed)
+@rules/core.md
+
 ## Available Agents
 Agents are selected via custom commands:
 - `/agent-interviewer`        → Requirements gathering (outputs requirements-report, no source editing)
@@ -104,7 +107,7 @@ Agents are selected via custom commands:
 <!-- CLADE:END -->
 
 ## Project Context
-Project-specific skills are automatically applied if they exist:
+Project-specific skills, when present, are loaded by each agent at startup via Glob:
 - Files under `.claude/skills/project/`
 
 ## Notes

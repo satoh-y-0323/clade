@@ -5,34 +5,18 @@ project-specific skills or rules.
 
 ## Execution Steps
 
-### Step 1: Collect Data
+### Step 1: Extract Candidates
 
-Read the following files:
-1. `.claude/instincts/raw/bash-log.jsonl` — Read only if it exists
-2. Search for `.claude/memory/sessions/*.tmp` with Glob and Read all files
+Run the following to get the candidate JSON:
+```
+Bash: node .claude/hooks/cluster-promote-core.js scan --json
+```
 
-### Step 2: Analysis
+If the script exits with code 1, display the stderr content to the user and stop.
 
-#### A. Extract Rule Candidates from Bash Log
+### Step 2: Present Candidates to User
 
-Analyze each record in bash-log.jsonl to identify failures:
-- Records with `err: true`
-- Records where `out` contains failure keywords:
-  `error`, `Error`, `failed`, `FAILED`, `denied`, `not found`, `No such file`,
-  `cannot`, `invalid`, `refused`, `timed out`, `command not found`, etc.
-
-Group similar errors into rule candidates.
-Example: "Arguments too long → use heredoc instead"
-
-#### B. Extract Skill/Rule Candidates from Session Retrospectives
-
-Read the following sections in each `.tmp` file:
-- `## Approaches That Worked` → Skill candidates (repeatedly successful procedures)
-- `## Approaches That Were Tried but Failed` → Rule candidates (things to avoid)
-
-Items mentioned across multiple sessions are treated as high-confidence candidates.
-
-### Step 3: Present Candidates to User
+Format the JSON output and present it as follows:
 
 ```
 ## Promotion Candidates
@@ -52,7 +36,7 @@ Items mentioned across multiple sessions are treated as high-confidence candidat
 Please select items to promote by number (e.g., 1,3) / all / none
 ```
 
-### Step 4: Save Approved Items
+### Step 3: Save Approved Items
 
 **Skills** → Write to `.claude/skills/project/{name}.md`:
 - No frontmatter, Markdown format describing the procedure
@@ -61,6 +45,14 @@ Please select items to promote by number (e.g., 1,3) / all / none
 **Rules** → Write to `.claude/rules/{name}.md`:
 - Format: "Do not...", "When X, do Y"
 - Include the impact of violating the rule
+
+**After saving a rule, always run the following:**
+```
+Bash: node .claude/hooks/update-clade-section.js add-rule {name}
+```
+- exit 0: Successfully appended (or CLADE marker not found — no-op)
+- exit 2: Already exists in CLAUDE.md — no-op (this is fine)
+- exit 1: Write error → warn the user and instruct them to manually add `@rules/{name}.md` to the `## Global Rules (Clade Managed)` section in `.claude/CLAUDE.md`
 
 **Cluster info** → Write to `.claude/instincts/clusters/{YYYYMMDD}-{name}.json`:
 ```json
@@ -73,7 +65,7 @@ Please select items to promote by number (e.g., 1,3) / all / none
 }
 ```
 
-### Step 5: Archive bash-log.jsonl
+### Step 4: Archive bash-log.jsonl
 
 Only if bash-log.jsonl exists and has content:
 1. Read the contents

@@ -51,3 +51,10 @@ Follow the "Report Output Flow" section in `.claude/skills/agents/code-reviewer.
 - Always mention at least one positive point
 - Particularly emphasize breaking changes
 - Include the assigned task ID in the report so the planner can track it
+
+## Loading Project-Specific Skills
+
+At the start of work, do the following:
+1. Search for `.claude/skills/project/*.md` with Glob
+2. If any files exist, Read all of them
+3. If none exist, skip and start work

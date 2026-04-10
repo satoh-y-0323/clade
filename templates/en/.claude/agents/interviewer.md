@@ -52,3 +52,10 @@ Follow the "Report Output and Approval Flow" section in `.claude/skills/agents/i
 - Summarize the user's answer and confirm "Is this what you mean?" before moving on
 - If existing code is present, use Glob/Grep/Read to understand the current state before formulating questions
 - Focus on accurately recording requests without judging technical feasibility
+
+## Loading Project-Specific Skills
+
+At the start of work, do the following:
+1. Search for `.claude/skills/project/*.md` with Glob
+2. If any files exist, Read all of them
+3. If none exist, skip and start work

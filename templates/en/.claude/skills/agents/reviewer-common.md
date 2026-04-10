@@ -16,3 +16,7 @@ node .claude/hooks/write-report.js <baseName> new <<'CLADE_REPORT_EOF'
 {full report content}
 CLADE_REPORT_EOF
 ```
+
+> **Syntax note**: Write `CLADE_REPORT_EOF` at the **start of the line (no indentation)**.
+> If `CLADE_REPORT_EOF` appears alone on a line within the content, the heredoc terminates early — do not include the terminator string in the content.
+> Since `<<'CLADE_REPORT_EOF'` uses single quotes, special characters (`` ` ``, `$`, `'`, etc.) in the content are treated literally and require no escaping.
