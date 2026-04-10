@@ -614,14 +614,20 @@ async function runApplyMode() {
     // 5. 日本語版ファイルのコピー
     copyFilesFromManifest(manifest, releaseDir, projectRoot, false);
 
-    // 6. 英語版ファイルのコピー
-    copyFilesFromManifest(manifest, releaseDir, projectRoot, true);
+    // 6. 英語版ファイルのコピー（templates/en/.claude が存在する場合のみ）
+    const enTemplateDir = path.join(projectRoot, 'templates', 'en', '.claude');
+    const hasEnTemplate = fs.existsSync(enTemplateDir);
+    if (hasEnTemplate) {
+      copyFilesFromManifest(manifest, releaseDir, projectRoot, true);
+    }
 
     // 7. ja_only ファイルのコピー
     copyJaOnlyFiles(manifest, releaseDir, projectRoot);
 
-    // 8. en_only ファイルのコピー
-    copyEnOnlyFiles(manifest, releaseDir, projectRoot);
+    // 8. en_only ファイルのコピー（templates/en/.claude が存在する場合のみ）
+    if (hasEnTemplate) {
+      copyEnOnlyFiles(manifest, releaseDir, projectRoot);
+    }
 
     // 9. CLAUDE.md のマーカー区間更新（日本語版）
     const localClaudeMdPath = path.join(projectRoot, '.claude', 'CLAUDE.md');
@@ -631,18 +637,20 @@ async function runApplyMode() {
       markerMissing = true;
     }
 
-    // 10. CLAUDE.md のマーカー区間更新（英語版）
-    const localEnClaudeMdPath = path.join(projectRoot, 'templates', 'en', '.claude', 'CLAUDE.md');
-    const releaseEnClaudeMdPath = path.join(
-      releaseDir,
-      'templates',
-      'en',
-      '.claude',
-      'CLAUDE.md'
-    );
-    const enResult = updateClaudeMdMarkerSection(localEnClaudeMdPath, releaseEnClaudeMdPath);
-    if (enResult.markerMissing) {
-      markerMissing = true;
+    // 10. CLAUDE.md のマーカー区間更新（英語版、templates/en/.claude が存在する場合のみ）
+    if (hasEnTemplate) {
+      const localEnClaudeMdPath = path.join(projectRoot, 'templates', 'en', '.claude', 'CLAUDE.md');
+      const releaseEnClaudeMdPath = path.join(
+        releaseDir,
+        'templates',
+        'en',
+        '.claude',
+        'CLAUDE.md'
+      );
+      const enResult = updateClaudeMdMarkerSection(localEnClaudeMdPath, releaseEnClaudeMdPath);
+      if (enResult.markerMissing) {
+        markerMissing = true;
+      }
     }
 
     // 11. VERSION ファイルを更新

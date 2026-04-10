@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.8.2] - 2026-04-10
+
+### Fix
+
+- `/update` コマンド実行時に `templates/en/.claude` がユーザープロジェクトに作成されてしまう問題を修正。英語版テンプレートの更新処理はそのディレクトリが既に存在する場合のみ実行するよう変更
+
+---
+
 ## [v1.8.1] - 2026-04-10
 
 ### Fix

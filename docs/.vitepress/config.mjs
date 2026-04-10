@@ -20,7 +20,7 @@ export default defineConfig({
       { text: 'ワークフロー', link: '/workflow' },
       { text: 'カスタマイズ', link: '/customization' },
       {
-        text: 'v1.8.1',
+        text: 'v1.8.2',
         items: [
           { text: 'CHANGELOG', link: 'https://github.com/satoh-y-0323/clade/blob/main/CHANGELOG.md' },
           { text: 'GitHub', link: 'https://github.com/satoh-y-0323/clade' },
