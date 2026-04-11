@@ -99,7 +99,12 @@ yes の場合: 対象の clusters JSON ファイルを Bash で削除する。
 
 ### ステップ7: コミット
 
-変更があった場合のみコミットする。コミットメッセージ形式:
+ルールファイルまたは CLAUDE.md に変更があった場合のみコミットする。
+
+> **注意:** clusters JSON の削除のみの場合はコミット不要。
+> `.claude/instincts/clusters/` は `.gitignore` 対象のため git 管理外。
+
+コミットメッセージ形式:
 
 ```
 chore: prune-rules - {操作の概要}

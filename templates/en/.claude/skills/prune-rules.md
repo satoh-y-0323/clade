@@ -99,7 +99,12 @@ Apply this content?
 
 ### Step 7: Commit
 
-Commit only if changes were made. Commit message format:
+Commit only if rule files or CLAUDE.md were changed.
+
+> **Note:** No commit needed if only clusters JSON files were deleted.
+> `.claude/instincts/clusters/` is listed in `.gitignore` and is not tracked by git.
+
+Commit message format:
 
 ```
 chore: prune-rules - {summary of actions}
