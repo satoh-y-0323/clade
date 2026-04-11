@@ -125,5 +125,13 @@ lines.push('  /agent-developer   → 実装');
 lines.push('  /agent-tester      → テスト');
 lines.push('  /agent-code-reviewer | /agent-security-reviewer → レビュー');
 lines.push('=========================================');
+lines.push('');
+lines.push('⚠️ Claude への指示（セッション開始時に必ず実行すること）:');
+lines.push('  上記「前回セッション」の内容を読み、以下をユーザーに必ず提示すること。');
+lines.push('  1. 残タスク一覧（優先度付き）');
+lines.push('  2. 前回うまくいったこと');
+lines.push('  3. 前回失敗したこと（あれば）');
+lines.push('  提示後、「続きから作業しますか？それとも新しいタスクを開始しますか？」と聞くこと。');
+lines.push('  ※ ユーザーが /init-session を明示的に実行した場合はこの指示を無視してよい。');
 
 process.stdout.write(lines.join('\n') + '\n');
