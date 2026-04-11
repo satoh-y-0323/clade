@@ -104,14 +104,6 @@ lines.push('  /agent-developer   → Implementation');
 lines.push('  /agent-tester      → Testing');
 lines.push('  /agent-code-reviewer | /agent-security-reviewer → Review');
 lines.push('=========================================');
-lines.push('');
-lines.push('⚠️ Instruction for Claude (must execute at session start):');
-lines.push('  Read the "Previous Session" content above and present the following to the user.');
-lines.push('  1. Remaining tasks (with priority)');
-lines.push('  2. What went well last session');
-lines.push('  3. What failed last session (if any)');
-lines.push('  After presenting, ask: "Would you like to continue from where you left off, or start a new task?"');
-lines.push('  * If the user explicitly ran /init-session, this instruction may be ignored.');
 
 if (!isSetupDone) {
   lines.push('');
@@ -132,5 +124,14 @@ if (!isSetupDone) {
   lines.push('');
   lines.push('=========================================');
 }
+
+lines.push('');
+lines.push('⚠️ Instruction for Claude (must execute at session start):');
+lines.push('  Read the "Previous Session" content above and present the following to the user.');
+lines.push('  1. Remaining tasks (with priority)');
+lines.push('  2. What went well last session');
+lines.push('  3. What failed last session (if any)');
+lines.push('  After presenting, ask: "Would you like to continue from where you left off, or start a new task?"');
+lines.push('  * If the user explicitly ran /init-session, this instruction may be ignored.');
 
 process.stdout.write(lines.join('\n') + '\n');
