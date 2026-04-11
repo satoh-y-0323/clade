@@ -15,27 +15,10 @@ const clustersDir = path.join(cwd, '.claude', 'instincts', 'clusters');
 const skillsDir   = path.join(cwd, '.claude', 'skills', 'project');
 
 // === セットアップ未実行チェック（既存処理の前に配置） ===
-const setupIndicators = [
-  { target: 'setup.sh',             type: 'file' },
-  { target: 'setup.ps1',            type: 'file' },
-  { target: 'cleanup.sh',           type: 'file' },
-{ target: 'templates/en/.claude', type: 'dir'  },
-];
+const settingsLocalPath = path.join(cwd, '.claude', 'settings.local.json');
+const isSetupDone = fs.existsSync(settingsLocalPath);
 
-const found = setupIndicators.filter(item => {
-  const fullPath = path.join(cwd, item.target);
-  try {
-    const stat = fs.statSync(fullPath);
-    return item.type === 'dir' ? stat.isDirectory() : stat.isFile();
-  } catch (e) {
-    if (e.code !== 'ENOENT') {
-      process.stderr.write(`[session-start] 警告: ${fullPath} の確認中にエラーが発生しました (${e.code})\n`);
-    }
-    return false;
-  }
-});
-
-if (found.length > 0) {
+if (!isSetupDone) {
   const warn = [];
   warn.push('=========================================');
   warn.push('  セットアップ未実行の警告');
@@ -51,11 +34,6 @@ if (found.length > 0) {
   warn.push('  セットアップを行わない場合の影響:');
   warn.push('    - settings.local.json が配置されず、並列エージェント（worktree）が動作しません');
   warn.push('    - テンプレートファイルが残ったままになり、意図しない設定が適用される可能性があります');
-  warn.push('');
-  warn.push('  検出されたファイル:');
-  for (const item of found) {
-    warn.push(`    - ${item.target}`);
-  }
   warn.push('');
   warn.push('=========================================');
   process.stdout.write(warn.join('\n') + '\n');
