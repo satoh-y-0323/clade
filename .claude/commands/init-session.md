@@ -5,7 +5,21 @@ SessionStart hookでも自動実行されるが、手動でも呼び出せる。
 
 ## 実行手順
 1. 本日の日付を確認する
-2. system-reminder に「セットアップ未実行の警告」が含まれている場合は、その内容をそのままユーザーに表示する
+2. Glob ツールで `.claude/settings.local.json` を検索し、ファイルが存在しない場合は以下の警告をユーザーに表示する:
+
+   > ⚠️ セットアップ未実行の警告
+   >
+   > このリポジトリはセットアップが完了していません。
+   > Claude Code を正しく利用するには、先にセットアップスクリプトを実行してください。
+   >
+   > 実行方法:
+   >   Linux / macOS : bash setup.sh
+   >   Windows       : powershell -File setup.ps1
+   >
+   > セットアップを行わない場合の影響:
+   >   - settings.local.json が配置されず、並列エージェント（worktree）が動作しません
+   >   - テンプレートファイルが残ったままになり、意図しない設定が適用される可能性があります
+
 3. Bash ツールを **2回に分けて** 以下を別々に実行する（`&&` で結合しないこと・セキュリティ対策）:
    - 1回目: `node .claude/hooks/clear-file-history.js`
    - 2回目: `node .claude/hooks/enable-sandbox.js`

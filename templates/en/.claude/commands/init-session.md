@@ -5,7 +5,21 @@ Also runs automatically via the SessionStart hook, but can be called manually.
 
 ## Execution Steps
 1. Check today's date
-2. If the system-reminder contains a "setup not run" warning, display its content to the user as-is
+2. Search for `.claude/settings.local.json` with the Glob tool. If the file does not exist, display the following warning to the user:
+
+   > ⚠️ Setup Not Run — Warning
+   >
+   > This repository has not been set up yet.
+   > Please run the setup script before using Claude Code.
+   >
+   > How to run:
+   >   Linux / macOS : bash setup_en.sh
+   >   Windows       : powershell -File setup_en.ps1
+   >
+   > Without setup:
+   >   - settings.local.json will not be created, and parallel agents (worktree) will not work
+   >   - Template files will remain, potentially applying unintended settings
+
 3. Run the following as **two separate** Bash tool calls (do NOT combine with `&&` — security measures):
    - 1st call: `node .claude/hooks/clear-file-history.js`
    - 2nd call: `node .claude/hooks/enable-sandbox.js`

@@ -3,11 +3,10 @@
 ## Startup Protocol
 Automatically executed at session start:
 1. `.claude/hooks/session-start.js` runs automatically as a SessionStart hook
-   → Previous session, memory.json, instincts, and skill list are injected into context
-2. **Check for setup warning**: If the system-reminder contains a "setup not run" warning, display its content to the user as-is
+   → Instructs Claude to run `/init-session`
+2. **Run `/init-session`**: Handles setup warning check, previous session loading, and remaining task display
 3. **Check the execution environment (see "Environment Check" below)**
-4. Present remaining tasks from the previous session to the user
-5. Select an agent: `/agent-developer` / `/agent-architect` / `/agent-code-reviewer` / `/agent-security-reviewer`
+4. Select an agent: `/agent-developer` / `/agent-architect` / `/agent-code-reviewer` / `/agent-security-reviewer`
 
 For manual execution: `/init-session`
 
