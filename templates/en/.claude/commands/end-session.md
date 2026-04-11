@@ -2,6 +2,12 @@
 
 Records the session's achievements, failures, and remaining tasks in a session file and saves it.
 
+## Usage
+```
+/end-session              # Normal execution (with promotion candidate suggestions)
+/end-session --no-promote # Skip Step 5 (promotion suggestions) and finish immediately
+```
+
 ## Execution Steps
 1. Determine the session file path for today:
    `.claude/memory/sessions/{YYYYMMDD}.tmp`
@@ -66,6 +72,8 @@ The session file is automatically loaded by the next `/init-session`.
 Write remaining tasks specifically (not "implement it" but "implement the create method in UserService").
 
 ## Step 5: Present Promotion Candidates (Inline)
+
+> **Note:** If invoked as `/end-session --no-promote`, skip this entire step and proceed directly to the completion report.
 
 After saving the session file, do the following:
 
