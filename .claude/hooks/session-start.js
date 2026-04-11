@@ -9,6 +9,21 @@ const path = require('path');
 
 // Claude Code hook は常にプロジェクトルートを cwd として起動するため、このパスは安全
 const cwd         = process.cwd();
+
+/**
+ * .tmp ファイルの内容から CLADE:SESSION:JSON ブロックを除去する。
+ * JSON ブロックは cluster-promote-core.js 向けのデータであり、
+ * session-start の system-reminder に含める必要はない（テキスト部分と重複）。
+ * @param {string} content
+ * @returns {string}
+ */
+function stripSessionJsonBlock(content) {
+  const start = content.indexOf('<!-- CLADE:SESSION:JSON');
+  if (start === -1) return content;
+  const end = content.indexOf('-->', start);
+  if (end === -1) return content;
+  return content.slice(0, start).trimEnd();
+}
 const sessionsDir = path.join(cwd, '.claude', 'memory', 'sessions');
 const memoryFile  = path.join(cwd, '.claude', 'memory', 'memory.json');
 const clustersDir = path.join(cwd, '.claude', 'instincts', 'clusters');
@@ -54,7 +69,7 @@ if (fs.existsSync(sessionsDir)) {
   if (files.length > 0) {
     lines.push('');
     lines.push(`--- 前回セッション: ${files[0]} ---`);
-    lines.push(fs.readFileSync(path.join(sessionsDir, files[0]), 'utf8'));
+    lines.push(stripSessionJsonBlock(fs.readFileSync(path.join(sessionsDir, files[0]), 'utf8')));
   } else {
     lines.push('');
     lines.push('（前回セッションなし — 初回起動）');

@@ -8,6 +8,22 @@ const fs   = require('fs');
 const path = require('path');
 
 const cwd         = process.cwd();
+
+/**
+ * Strip the CLADE:SESSION:JSON block from .tmp file content.
+ * The JSON block is intended for cluster-promote-core.js parsing and
+ * does not need to appear in the session-start system-reminder (it duplicates the text sections).
+ * @param {string} content
+ * @returns {string}
+ */
+function stripSessionJsonBlock(content) {
+  const start = content.indexOf('<!-- CLADE:SESSION:JSON');
+  if (start === -1) return content;
+  const end = content.indexOf('-->', start);
+  if (end === -1) return content;
+  return content.slice(0, start).trimEnd();
+}
+
 const sessionsDir = path.join(cwd, '.claude', 'memory', 'sessions');
 const memoryFile  = path.join(cwd, '.claude', 'memory', 'memory.json');
 const clustersDir = path.join(cwd, '.claude', 'instincts', 'clusters');
@@ -53,7 +69,7 @@ if (fs.existsSync(sessionsDir)) {
   if (files.length > 0) {
     lines.push('');
     lines.push(`--- Previous Session: ${files[0]} ---`);
-    lines.push(fs.readFileSync(path.join(sessionsDir, files[0]), 'utf8'));
+    lines.push(stripSessionJsonBlock(fs.readFileSync(path.join(sessionsDir, files[0]), 'utf8')));
   } else {
     lines.push('');
     lines.push('(No previous session — first launch)');
