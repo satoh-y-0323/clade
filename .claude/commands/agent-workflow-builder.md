@@ -9,7 +9,7 @@
 1. **Phase 1: ヒアリング** — 業務・繰り返し作業・IN/OUT を 5〜6 問で聴取
 2. **Phase 2: ワークフロー設計** — Step ごとにエージェントを提案してユーザー確認
 3. **Phase 3: エージェントファイル生成** — 各 Step の `.md` ファイルを生成
-4. **Phase 4: CLAUDE.md 更新** — `## Available Agents` セクションに追記
+4. **Phase 4: CLAUDE.md 更新** — `## User Agents` セクションに追記
 
 ---
 
