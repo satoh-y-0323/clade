@@ -29,30 +29,9 @@ const memoryFile  = path.join(cwd, '.claude', 'memory', 'memory.json');
 const clustersDir = path.join(cwd, '.claude', 'instincts', 'clusters');
 const skillsDir   = path.join(cwd, '.claude', 'skills', 'project');
 
-// === Setup detection check (placed before existing processing) ===
+// === Setup detection check ===
 const settingsLocalPath = path.join(cwd, '.claude', 'settings.local.json');
 const isSetupDone = fs.existsSync(settingsLocalPath);
-
-if (!isSetupDone) {
-  const warn = [];
-  warn.push('=========================================');
-  warn.push('  Setup Not Run — Warning');
-  warn.push('=========================================');
-  warn.push('');
-  warn.push('This repository has not been set up yet.');
-  warn.push('Please run the setup script before using Claude Code.');
-  warn.push('');
-  warn.push('  How to run:');
-  warn.push('    Linux / macOS : bash setup_en.sh');
-  warn.push('    Windows       : powershell -File setup_en.ps1');
-  warn.push('');
-  warn.push('  Without setup:');
-  warn.push('    - settings.local.json will not be created, and parallel agents (worktree) will not work');
-  warn.push('    - Template files will remain, potentially applying unintended settings');
-  warn.push('');
-  warn.push('=========================================');
-  process.stdout.write(warn.join('\n') + '\n');
-}
 
 const lines = [];
 lines.push('=========================================');
@@ -133,5 +112,25 @@ lines.push('  2. What went well last session');
 lines.push('  3. What failed last session (if any)');
 lines.push('  After presenting, ask: "Would you like to continue from where you left off, or start a new task?"');
 lines.push('  * If the user explicitly ran /init-session, this instruction may be ignored.');
+
+if (!isSetupDone) {
+  lines.push('');
+  lines.push('=========================================');
+  lines.push('  Setup Not Run — Warning');
+  lines.push('=========================================');
+  lines.push('');
+  lines.push('This repository has not been set up yet.');
+  lines.push('Please run the setup script before using Claude Code.');
+  lines.push('');
+  lines.push('  How to run:');
+  lines.push('    Linux / macOS : bash setup_en.sh');
+  lines.push('    Windows       : powershell -File setup_en.ps1');
+  lines.push('');
+  lines.push('  Without setup:');
+  lines.push('    - settings.local.json will not be created, and parallel agents (worktree) will not work');
+  lines.push('    - Template files will remain, potentially applying unintended settings');
+  lines.push('');
+  lines.push('=========================================');
+}
 
 process.stdout.write(lines.join('\n') + '\n');

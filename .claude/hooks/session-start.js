@@ -29,30 +29,9 @@ const memoryFile  = path.join(cwd, '.claude', 'memory', 'memory.json');
 const clustersDir = path.join(cwd, '.claude', 'instincts', 'clusters');
 const skillsDir   = path.join(cwd, '.claude', 'skills', 'project');
 
-// === セットアップ未実行チェック（既存処理の前に配置） ===
+// === セットアップ未実行チェック ===
 const settingsLocalPath = path.join(cwd, '.claude', 'settings.local.json');
 const isSetupDone = fs.existsSync(settingsLocalPath);
-
-if (!isSetupDone) {
-  const warn = [];
-  warn.push('=========================================');
-  warn.push('  セットアップ未実行の警告');
-  warn.push('=========================================');
-  warn.push('');
-  warn.push('このリポジトリはセットアップが完了していません。');
-  warn.push('Claude Code を正しく利用するには、先にセットアップスクリプトを実行してください。');
-  warn.push('');
-  warn.push('  実行方法:');
-  warn.push('    Linux / macOS : bash setup.sh');
-  warn.push('    Windows       : powershell -File setup.ps1');
-  warn.push('');
-  warn.push('  セットアップを行わない場合の影響:');
-  warn.push('    - settings.local.json が配置されず、並列エージェント（worktree）が動作しません');
-  warn.push('    - テンプレートファイルが残ったままになり、意図しない設定が適用される可能性があります');
-  warn.push('');
-  warn.push('=========================================');
-  process.stdout.write(warn.join('\n') + '\n');
-}
 
 const lines = [];
 lines.push('=========================================');
@@ -133,5 +112,25 @@ lines.push('  2. 前回うまくいったこと');
 lines.push('  3. 前回失敗したこと（あれば）');
 lines.push('  提示後、「続きから作業しますか？それとも新しいタスクを開始しますか？」と聞くこと。');
 lines.push('  ※ ユーザーが /init-session を明示的に実行した場合はこの指示を無視してよい。');
+
+if (!isSetupDone) {
+  lines.push('');
+  lines.push('=========================================');
+  lines.push('  セットアップ未実行の警告');
+  lines.push('=========================================');
+  lines.push('');
+  lines.push('このリポジトリはセットアップが完了していません。');
+  lines.push('Claude Code を正しく利用するには、先にセットアップスクリプトを実行してください。');
+  lines.push('');
+  lines.push('  実行方法:');
+  lines.push('    Linux / macOS : bash setup.sh');
+  lines.push('    Windows       : powershell -File setup.ps1');
+  lines.push('');
+  lines.push('  セットアップを行わない場合の影響:');
+  lines.push('    - settings.local.json が配置されず、並列エージェント（worktree）が動作しません');
+  lines.push('    - テンプレートファイルが残ったままになり、意図しない設定が適用される可能性があります');
+  lines.push('');
+  lines.push('=========================================');
+}
 
 process.stdout.write(lines.join('\n') + '\n');
