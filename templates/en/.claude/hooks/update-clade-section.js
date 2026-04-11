@@ -8,10 +8,11 @@
  *
  * Usage:
  *   node .claude/hooks/update-clade-section.js add-rule NAME [--dry-run]
+ *   node .claude/hooks/update-clade-section.js remove-rule NAME [--dry-run]
  *
  * Exit codes:
- *   0 - success (appended, or marker not found — no-op)
- *   2 - no-op (entry already exists)
+ *   0 - success (appended/removed, or marker not found — no-op)
+ *   2 - no-op (entry already exists / entry not found for removal)
  *   1 - error (file read/write failure, etc.)
  */
 
@@ -137,6 +138,29 @@ function addRuleToContent(content, ruleName) {
   return { newContent, alreadyExists: false, markerNotFound: false };
 }
 
+/**
+ * Removes the @rules/NAME.md line from CLAUDE.md.
+ *
+ * @param {string} content    - full CLAUDE.md content
+ * @param {string} ruleName   - rule name without extension
+ * @returns {{ newContent: string, notFound: boolean }}
+ */
+function removeRuleFromContent(content, ruleName) {
+  const ruleEntry = '@rules/' + ruleName + '.md';
+
+  // Check if the entry exists
+  if (!content.includes(ruleEntry)) {
+    return { newContent: content, notFound: true };
+  }
+
+  // Remove the matching line (including its newline), handling both CRLF and LF
+  const newContent = content
+    .replace(ruleEntry + '\r\n', '')
+    .replace(ruleEntry + '\n', '');
+
+  return { newContent, notFound: false };
+}
+
 // ---------------------------------------------------------------------------
 // Subcommand: add-rule
 // ---------------------------------------------------------------------------
@@ -218,6 +242,81 @@ function commandAddRule(args) {
 }
 
 // ---------------------------------------------------------------------------
+// Subcommand: remove-rule
+// ---------------------------------------------------------------------------
+
+/**
+ * Entry point for the remove-rule subcommand.
+ * @param {string[]} args - arguments after the subcommand name
+ */
+function commandRemoveRule(args) {
+  const dryRunIdx = args.indexOf('--dry-run');
+  const isDryRun = dryRunIdx !== -1;
+
+  // Remove --dry-run from positional args
+  const positional = args.filter((a, i) => i !== dryRunIdx);
+  const ruleName = positional[0];
+
+  if (!ruleName) {
+    log('Error: rule name is required. Usage: remove-rule NAME [--dry-run]');
+    process.exit(1);
+  }
+
+  // Validate rule name (prevent path traversal)
+  if (ruleName.includes('/') || ruleName.includes('\\') || ruleName.includes('..')) {
+    log('Error: invalid rule name "' + ruleName + '"');
+    process.exit(1);
+  }
+
+  const claudeMdPath = getClaudeMdPath();
+
+  // Read file
+  let content;
+  try {
+    content = fs.readFileSync(claudeMdPath, 'utf8');
+  } catch (err) {
+    log('Error: failed to read ' + claudeMdPath + ': ' + err.message);
+    process.exit(1);
+  }
+
+  // Apply removal
+  const result = removeRuleFromContent(content, ruleName);
+
+  if (result.notFound) {
+    log('@rules/' + ruleName + '.md not found. No-op.');
+    process.exit(2);
+  }
+
+  log('Removing @rules/' + ruleName + '.md from ' + claudeMdPath);
+
+  if (isDryRun) {
+    log('[dry-run] Would write the following content:');
+    process.stderr.write('--- diff ---\n');
+    const lines = result.newContent.split('\n');
+    const originalLines = content.split('\n');
+    for (let i = 0; i < Math.max(lines.length, originalLines.length); i++) {
+      if (lines[i] !== originalLines[i]) {
+        if (originalLines[i] !== undefined) process.stderr.write('- ' + originalLines[i] + '\n');
+        if (lines[i] !== undefined) process.stderr.write('+ ' + lines[i] + '\n');
+      }
+    }
+    process.stderr.write('--- end diff ---\n');
+    process.exit(0);
+  }
+
+  // Write file
+  try {
+    fs.writeFileSync(claudeMdPath, result.newContent, 'utf8');
+    log('Successfully removed @rules/' + ruleName + '.md.');
+  } catch (err) {
+    log('Error: failed to write ' + claudeMdPath + ': ' + err.message);
+    process.exit(1);
+  }
+
+  process.exit(0);
+}
+
+// ---------------------------------------------------------------------------
 // Main entry point
 // ---------------------------------------------------------------------------
 
@@ -226,7 +325,7 @@ function main() {
   const subcommand = args[0];
 
   if (!subcommand) {
-    log('Error: subcommand required. Available: add-rule');
+    log('Error: subcommand required. Available: add-rule, remove-rule');
     process.exit(1);
   }
 
@@ -234,8 +333,11 @@ function main() {
     case 'add-rule':
       commandAddRule(args.slice(1));
       break;
+    case 'remove-rule':
+      commandRemoveRule(args.slice(1));
+      break;
     default:
-      log('Error: unknown subcommand "' + subcommand + '". Available: add-rule');
+      log('Error: unknown subcommand "' + subcommand + '". Available: add-rule, remove-rule');
       process.exit(1);
   }
 }

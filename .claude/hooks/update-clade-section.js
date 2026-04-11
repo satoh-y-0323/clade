@@ -8,10 +8,11 @@
  *
  * Usage:
  *   node .claude/hooks/update-clade-section.js add-rule NAME [--dry-run]
+ *   node .claude/hooks/update-clade-section.js remove-rule NAME [--dry-run]
  *
  * Exit codes:
  *   0 - 正常終了 (追記済み or CLADEマーカーが見つからない場合も0)
- *   2 - no-op (既に同一エントリが存在するため追記不要)
+ *   2 - no-op (既に同一エントリが存在するため追記不要 / 削除対象が存在しない)
  *   1 - エラー (ファイル読み書き失敗など)
  */
 
@@ -141,6 +142,30 @@ function addRuleToContent(content, ruleName) {
   return { newContent, alreadyExists: false, markerNotFound: false };
 }
 
+/**
+ * CLAUDE.md から @rules/NAME.md の行を削除する。
+ *
+ * @param {string} content    - CLAUDE.md 全文
+ * @param {string} ruleName   - 削除するルール名（拡張子なし）
+ * @returns {{ newContent: string, notFound: boolean }}
+ */
+function removeRuleFromContent(content, ruleName) {
+  const ruleEntry = '@rules/' + ruleName + '.md';
+
+  // エントリが存在するか確認
+  if (!content.includes(ruleEntry)) {
+    return { newContent: content, notFound: true };
+  }
+
+  // 該当行（改行含む）を削除する
+  // CRLF と LF の両方に対応
+  const newContent = content
+    .replace(ruleEntry + '\r\n', '')
+    .replace(ruleEntry + '\n', '');
+
+  return { newContent, notFound: false };
+}
+
 // ---------------------------------------------------------------------------
 // サブコマンド: add-rule
 // ---------------------------------------------------------------------------
@@ -223,6 +248,81 @@ function commandAddRule(args) {
 }
 
 // ---------------------------------------------------------------------------
+// サブコマンド: remove-rule
+// ---------------------------------------------------------------------------
+
+/**
+ * remove-rule サブコマンドのエントリポイント
+ * @param {string[]} args - サブコマンド以降の引数
+ */
+function commandRemoveRule(args) {
+  const dryRunIdx = args.indexOf('--dry-run');
+  const isDryRun = dryRunIdx !== -1;
+
+  // --dry-run フラグを除いた引数リスト
+  const positional = args.filter((a, i) => i !== dryRunIdx);
+  const ruleName = positional[0];
+
+  if (!ruleName) {
+    log('Error: rule name is required. Usage: remove-rule NAME [--dry-run]');
+    process.exit(1);
+  }
+
+  // ルール名のバリデーション（パストラバーサル防止）
+  if (ruleName.includes('/') || ruleName.includes('\\') || ruleName.includes('..')) {
+    log('Error: invalid rule name "' + ruleName + '"');
+    process.exit(1);
+  }
+
+  const claudeMdPath = getClaudeMdPath();
+
+  // ファイル読み込み
+  let content;
+  try {
+    content = fs.readFileSync(claudeMdPath, 'utf8');
+  } catch (err) {
+    log('Error: failed to read ' + claudeMdPath + ': ' + err.message);
+    process.exit(1);
+  }
+
+  // 削除処理
+  const result = removeRuleFromContent(content, ruleName);
+
+  if (result.notFound) {
+    log('@rules/' + ruleName + '.md not found. No-op.');
+    process.exit(2);
+  }
+
+  log('Removing @rules/' + ruleName + '.md from ' + claudeMdPath);
+
+  if (isDryRun) {
+    log('[dry-run] Would write the following content:');
+    process.stderr.write('--- diff ---\n');
+    const lines = result.newContent.split('\n');
+    const originalLines = content.split('\n');
+    for (let i = 0; i < Math.max(lines.length, originalLines.length); i++) {
+      if (lines[i] !== originalLines[i]) {
+        if (originalLines[i] !== undefined) process.stderr.write('- ' + originalLines[i] + '\n');
+        if (lines[i] !== undefined) process.stderr.write('+ ' + lines[i] + '\n');
+      }
+    }
+    process.stderr.write('--- end diff ---\n');
+    process.exit(0);
+  }
+
+  // ファイル書き込み
+  try {
+    fs.writeFileSync(claudeMdPath, result.newContent, 'utf8');
+    log('Successfully removed @rules/' + ruleName + '.md.');
+  } catch (err) {
+    log('Error: failed to write ' + claudeMdPath + ': ' + err.message);
+    process.exit(1);
+  }
+
+  process.exit(0);
+}
+
+// ---------------------------------------------------------------------------
 // メインエントリポイント
 // ---------------------------------------------------------------------------
 
@@ -231,7 +331,7 @@ function main() {
   const subcommand = args[0];
 
   if (!subcommand) {
-    log('Error: subcommand required. Available: add-rule');
+    log('Error: subcommand required. Available: add-rule, remove-rule');
     process.exit(1);
   }
 
@@ -239,8 +339,11 @@ function main() {
     case 'add-rule':
       commandAddRule(args.slice(1));
       break;
+    case 'remove-rule':
+      commandRemoveRule(args.slice(1));
+      break;
     default:
-      log('Error: unknown subcommand "' + subcommand + '". Available: add-rule');
+      log('Error: unknown subcommand "' + subcommand + '". Available: add-rule, remove-rule');
       process.exit(1);
   }
 }
