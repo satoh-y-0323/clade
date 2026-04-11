@@ -74,18 +74,24 @@ function resolveTmpFilePaths(sinceToday) {
 
 /**
  * Extracts the text of a named section (## heading) from a .tmp file's content.
+ * Matching is done by partial match (key phrase before parentheses/brackets),
+ * so slight variations like "## Approaches That Were Tried but Failed (none this time)"
+ * are still matched correctly.
  * @param {string} content - file content
  * @param {string} sectionTitle - e.g. "## Approaches That Were Tried but Failed"
  * @returns {string} section body (up to the next ## heading, or end of file)
  */
 function extractSection(content, sectionTitle) {
+  // Key phrase: strip "## " prefix and take the part before any parentheses/brackets
+  const keyword = sectionTitle.replace(/^##\s*/, '').split(/[（(【「[]/)[0].trim();
+
   const lines = content.split(/\r?\n/);
   let inSection = false;
   const collected = [];
   for (const line of lines) {
     if (line.startsWith('## ')) {
       if (inSection) break; // next section starts — stop collecting
-      if (line.trim() === sectionTitle.trim()) {
+      if (line.includes(keyword)) {
         inSection = true;
         continue;
       }

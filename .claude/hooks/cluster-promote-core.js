@@ -70,18 +70,23 @@ function resolveTmpFilePaths(sinceToday) {
 
 /**
  * .tmp ファイルの内容から指定セクション（## 見出し）のテキストを抽出する。
+ * 見出しの照合は部分一致（括弧・補足を除いたキーフレーズを含む）で行う。
+ * 例: "## 試みたが失敗したアプローチ（今回は特になし）" も抽出対象になる。
  * @param {string} content - ファイル内容
  * @param {string} sectionTitle - 例: "## 試みたが失敗したアプローチ"
  * @returns {string} セクション本文（次の ## の直前まで、または末尾まで）
  */
 function extractSection(content, sectionTitle) {
+  // キーフレーズ: "## " を除き、括弧類より前の部分を照合キーとして使う
+  const keyword = sectionTitle.replace(/^##\s*/, '').split(/[（(【「]/)[0].trim();
+
   const lines = content.split(/\r?\n/);
   let inSection = false;
   const collected = [];
   for (const line of lines) {
     if (line.startsWith('## ')) {
       if (inSection) break; // 次のセクション開始 → 終了
-      if (line.trim() === sectionTitle.trim()) {
+      if (line.includes(keyword)) {
         inSection = true;
         continue;
       }
