@@ -79,17 +79,30 @@ function upsertFactsSection(tmpContent, factsSection) {
   const HEADER = '## 事実ログ（自動生成 / stop.js）';
   const headerIndex = tmpContent.indexOf(HEADER);
   if (headerIndex === -1) {
-    // 末尾に追記
+    // 末尾に追記（JSON ブロックがあればその前に挿入）
+    const jsonIdx = tmpContent.indexOf('\n' + SESSION_JSON_START);
+    if (jsonIdx !== -1) {
+      return tmpContent.slice(0, jsonIdx + 1) + factsSection + '\n\n' + tmpContent.slice(jsonIdx + 1);
+    }
     const separator = tmpContent.endsWith('\n') ? '\n' : '\n\n';
     return tmpContent + separator + factsSection + '\n';
   }
-  // 既存セクションの終端を検出: 次の `## ` ヘッダーまたはファイル末尾
-  const afterHeader = tmpContent.indexOf('\n## ', headerIndex + 1);
-  if (afterHeader === -1) {
+  // 既存セクションの終端を検出: 次の `## ` ヘッダー、JSON ブロック、またはファイル末尾
+  const nextSection = tmpContent.indexOf('\n## ', headerIndex + 1);
+  const jsonBlock  = tmpContent.indexOf('\n' + SESSION_JSON_START, headerIndex + 1);
+
+  let sectionEnd;
+  if (nextSection === -1 && jsonBlock === -1) {
     // このセクションがファイル末尾まで続く
     return tmpContent.slice(0, headerIndex) + factsSection + '\n';
+  } else if (nextSection === -1) {
+    sectionEnd = jsonBlock;
+  } else if (jsonBlock === -1) {
+    sectionEnd = nextSection;
+  } else {
+    sectionEnd = Math.min(nextSection, jsonBlock);
   }
-  return tmpContent.slice(0, headerIndex) + factsSection + '\n' + tmpContent.slice(afterHeader + 1);
+  return tmpContent.slice(0, headerIndex) + factsSection + '\n' + tmpContent.slice(sectionEnd + 1);
 }
 
 // ---------------------------------------------------------------------------

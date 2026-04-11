@@ -79,17 +79,30 @@ function upsertFactsSection(tmpContent, factsSection) {
   const HEADER = '## Facts Log (auto-generated / stop.js)';
   const headerIndex = tmpContent.indexOf(HEADER);
   if (headerIndex === -1) {
-    // Append to end
+    // Append to end, but insert before JSON block if one exists
+    const jsonIdx = tmpContent.indexOf('\n' + SESSION_JSON_START);
+    if (jsonIdx !== -1) {
+      return tmpContent.slice(0, jsonIdx + 1) + factsSection + '\n\n' + tmpContent.slice(jsonIdx + 1);
+    }
     const separator = tmpContent.endsWith('\n') ? '\n' : '\n\n';
     return tmpContent + separator + factsSection + '\n';
   }
-  // Detect end of existing section: next `## ` header or end of file
-  const afterHeader = tmpContent.indexOf('\n## ', headerIndex + 1);
-  if (afterHeader === -1) {
-    // This section continues to end of file
+  // Detect end of section: next `## ` header, JSON block marker, or end of file
+  const nextSection = tmpContent.indexOf('\n## ', headerIndex + 1);
+  const jsonBlock  = tmpContent.indexOf('\n' + SESSION_JSON_START, headerIndex + 1);
+
+  let sectionEnd;
+  if (nextSection === -1 && jsonBlock === -1) {
+    // Section continues to end of file
     return tmpContent.slice(0, headerIndex) + factsSection + '\n';
+  } else if (nextSection === -1) {
+    sectionEnd = jsonBlock;
+  } else if (jsonBlock === -1) {
+    sectionEnd = nextSection;
+  } else {
+    sectionEnd = Math.min(nextSection, jsonBlock);
   }
-  return tmpContent.slice(0, headerIndex) + factsSection + '\n' + tmpContent.slice(afterHeader + 1);
+  return tmpContent.slice(0, headerIndex) + factsSection + '\n' + tmpContent.slice(sectionEnd + 1);
 }
 
 // ---------------------------------------------------------------------------
