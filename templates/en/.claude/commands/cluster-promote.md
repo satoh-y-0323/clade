@@ -52,7 +52,7 @@ Bash: node .claude/hooks/update-clade-section.js add-rule {name}
 ```
 - exit 0: Successfully appended (or CLADE marker not found — no-op)
 - exit 2: Already exists in CLAUDE.md — no-op (this is fine)
-- exit 1: Write error → warn the user and instruct them to manually add `@rules/{name}.md` to the `## Global Rules (Clade Managed)` section in `.claude/CLAUDE.md`
+- exit 1: Write error → warn the user and instruct them to manually add `@rules/{name}.md` to the `## User Rules` section in `.claude/CLAUDE.md`
 
 **Cluster info** → Write to `.claude/instincts/clusters/{YYYYMMDD}-{name}.json`:
 ```json

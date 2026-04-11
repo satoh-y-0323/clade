@@ -3,8 +3,8 @@
 /**
  * update-clade-section.js
  *
- * CLAUDE.md の <!-- CLADE:START --> ~ <!-- CLADE:END --> 区間内の
- * "## Global Rules (Clade 管理)" サブセクションに @rules/NAME.md を冪等追記する。
+ * CLAUDE.md の "## User Rules" セクション（<!-- /cluster-promote によって自動追記される -->
+ * マーカー以降、<!-- CLADE:START --> の直前）に @rules/NAME.md を冪等追記する。
  *
  * Usage:
  *   node .claude/hooks/update-clade-section.js add-rule NAME [--dry-run]

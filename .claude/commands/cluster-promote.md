@@ -52,7 +52,7 @@ Bash: node .claude/hooks/update-clade-section.js add-rule {name}
 ```
 - exit 0: 正常追記（または CLADE マーカーが見つからず no-op）
 - exit 2: 既に CLAUDE.md に存在するため no-op（問題なし）
-- exit 1: 書き込みエラー → ユーザーに警告を表示し、手動で `.claude/CLAUDE.md` の `## Global Rules (Clade 管理)` セクションに `@rules/{name}.md` を追記するよう案内する
+- exit 1: 書き込みエラー → ユーザーに警告を表示し、手動で `.claude/CLAUDE.md` の `## User Rules` セクションに `@rules/{name}.md` を追記するよう案内する
 
 **クラスタ情報** → Write で `.claude/instincts/clusters/{YYYYMMDD}-{name}.json` に保存:
 ```json
