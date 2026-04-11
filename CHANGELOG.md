@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.13.0] - 2026-04-12
+
+### New
+
+- `/end-session` に `--no-promote` フラグを追加（昇格候補提示ステップをスキップ）
+- session-start hook を廃止し `/init-session` 手動実行に統一（system-reminder サイズ制限の回避）
+
+### Fix
+
+- `.tmp` 読み込み時に `CLADE:SESSION:JSON` ブロックを除去してトークン消費を削減
+- `agent-workflow-builder` の追記先を `/update` で消えない `## User Agents` セクションに変更
+- `cluster-promote` エラーメッセージのセクション名を修正（`## Global Rules` → `## User Rules`）
+
+---
+
 ## [v1.12.0] - 2026-04-11
 
 ### New

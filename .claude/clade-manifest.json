@@ -1,5 +1,5 @@
 {
-  "version": "1.12.0",
+  "version": "1.13.0",
   "managed_files": {
     "commands": [
       "agent-architect.md",
@@ -41,7 +41,6 @@
       "pre-compact.js",
       "pre-tool.js",
       "record-approval.js",
-      "session-start.js",
       "statusline.js",
       "stop.js",
       "write-report.js"

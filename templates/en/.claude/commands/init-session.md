@@ -1,7 +1,7 @@
 # /init-session Command
 
 Initializes the session and restores the previous work state.
-Also runs automatically via the SessionStart hook, but can be called manually.
+Run manually by the user at the start of each session.
 
 ## Execution Steps
 1. Check today's date
