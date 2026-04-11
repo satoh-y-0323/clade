@@ -106,6 +106,9 @@ Agents are selected via custom commands:
 - `/agent-workflow-builder`   → Meta-agent that auto-generates a set of agents from business workflow interviews
 <!-- CLADE:END -->
 
+## User Agents
+<!-- /agent-workflow-builder auto-appends here -->
+
 ## Project Context
 Project-specific skills, when present, are loaded by each agent at startup via Glob:
 - Files under `.claude/skills/project/`
