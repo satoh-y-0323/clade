@@ -1,14 +1,10 @@
 # Claude Code Project Configuration
 
 ## Startup Protocol
-Automatically executed at session start:
-1. `.claude/hooks/session-start.js` runs automatically as a SessionStart hook
-   → Instructs Claude to run `/init-session`
-2. **Run `/init-session`**: Handles setup warning check, previous session loading, and remaining task display
-3. **Check the execution environment (see "Environment Check" below)**
-4. Select an agent: `/agent-developer` / `/agent-architect` / `/agent-code-reviewer` / `/agent-security-reviewer`
-
-For manual execution: `/init-session`
+At session start:
+1. **Run `/init-session`**: Handles setup warning check, previous session loading, and remaining task display
+2. **Check the execution environment (see "Environment Check" below)**
+3. Select an agent: `/agent-developer` / `/agent-architect` / `/agent-code-reviewer` / `/agent-security-reviewer`
 
 ## Environment Check
 
@@ -45,7 +41,6 @@ Normal behavior. Do not show any environment check message.
 ## Automatically Executed Hooks
 | Event | Script | Purpose |
 |---|---|---|
-| SessionStart | `.claude/hooks/session-start.js` | Restore previous session, memory, and instincts |
 | PreToolUse | `.claude/hooks/pre-tool.js` | Guard dangerous commands |
 | PostToolUse | `.claude/hooks/post-tool.js` | Record Bash command results to bash-log.jsonl |
 | Stop | `.claude/hooks/stop.js` | Create session file template |
