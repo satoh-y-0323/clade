@@ -92,4 +92,75 @@ function upsertFactsSection(tmpContent, factsSection) {
   return tmpContent.slice(0, headerIndex) + factsSection + '\n' + tmpContent.slice(afterHeader + 1);
 }
 
-module.exports = { readHookInput, createSessionTemplate, buildFactsSection, upsertFactsSection };
+// ---------------------------------------------------------------------------
+// Session JSON block
+// ---------------------------------------------------------------------------
+
+const SESSION_JSON_START = '<!-- CLADE:SESSION:JSON';
+const SESSION_JSON_END   = '-->';
+
+/**
+ * Builds a CLADE:SESSION:JSON block string from session data.
+ * @param {object} data
+ * @returns {string}
+ */
+function buildSessionJsonBlock(data) {
+  return SESSION_JSON_START + '\n' + JSON.stringify(data, null, 2) + '\n' + SESSION_JSON_END;
+}
+
+/**
+ * Extracts and parses the CLADE:SESSION:JSON block from a .tmp file's content.
+ * Returns null if the block does not exist or cannot be parsed.
+ * @param {string} content - session file content
+ * @returns {object|null}
+ */
+function parseSessionJsonBlock(content) {
+  const startIdx = content.indexOf(SESSION_JSON_START);
+  if (startIdx === -1) return null;
+
+  const jsonStart = startIdx + SESSION_JSON_START.length;
+  const endIdx = content.indexOf(SESSION_JSON_END, jsonStart);
+  if (endIdx === -1) return null;
+
+  const jsonStr = content.slice(jsonStart, endIdx).trim();
+  try {
+    return JSON.parse(jsonStr);
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
+ * Replaces the CLADE:SESSION:JSON block in tmpContent.
+ * Appends to the end if the block does not exist (idempotent).
+ * @param {string} tmpContent - existing session file text
+ * @param {object} data - JSON data to write
+ * @returns {string}
+ */
+function upsertSessionJsonBlock(tmpContent, data) {
+  const block = buildSessionJsonBlock(data);
+  const startIdx = tmpContent.indexOf(SESSION_JSON_START);
+  if (startIdx === -1) {
+    const separator = tmpContent.endsWith('\n') ? '\n' : '\n\n';
+    return tmpContent + separator + block + '\n';
+  }
+  const jsonStart = startIdx + SESSION_JSON_START.length;
+  const endIdx = tmpContent.indexOf(SESSION_JSON_END, jsonStart);
+  if (endIdx === -1) {
+    // Malformed block — truncate from start and re-append at end
+    return tmpContent.slice(0, startIdx).trimEnd() + '\n\n' + block + '\n';
+  }
+  const blockEnd = endIdx + SESSION_JSON_END.length;
+  const after = tmpContent.slice(blockEnd);
+  return tmpContent.slice(0, startIdx) + block + (after.startsWith('\n') ? after : '\n' + after);
+}
+
+module.exports = {
+  readHookInput,
+  createSessionTemplate,
+  buildFactsSection,
+  upsertFactsSection,
+  buildSessionJsonBlock,
+  parseSessionJsonBlock,
+  upsertSessionJsonBlock,
+};

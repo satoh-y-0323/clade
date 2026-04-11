@@ -33,6 +33,32 @@ DURATION: {estimated work time}
    - **If the file does not exist**: Use the Write tool to write the full template as-is
    - **If the file already exists**: Read the existing content with the Read tool, then use the Edit tool to **append** to each section. Do not duplicate section headings — add new items to the end of the existing bullet list in each section.
      Example: If `## Approaches That Worked (with evidence)` already exists, add new approaches to the end of that section (do not create a second heading).
+
+3.5. Write the JSON block:
+   Serialize the session content using the schema below and append it to the end of the file.
+   If a `<!-- CLADE:SESSION:JSON` block already exists, replace it with the Edit tool.
+
+   ```
+   <!-- CLADE:SESSION:JSON
+   {
+     "session": "{YYYYMMDD}",
+     "successes": [
+       { "title": "{approach name}", "summary": "{description}", "evidence": "{commit hash, etc.}" }
+     ],
+     "failures": [
+       { "title": "{approach name}", "lesson": "{lesson learned}" }
+     ],
+     "todos": [
+       { "done": false, "text": "{task description}", "priority": "{high|medium|low}" }
+     ]
+   }
+   -->
+   ```
+
+   - `successes` / `failures` / `todos` contain the same content as the Markdown sections above, structured as JSON
+   - If the `## Facts Log (auto-generated / stop.js)` section already exists, place this block **after** it
+   - Completed tasks (`done: true`) may be omitted from the list
+
 4. Report completion
 
 ## Notes

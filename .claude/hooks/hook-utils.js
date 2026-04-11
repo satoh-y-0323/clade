@@ -92,4 +92,75 @@ function upsertFactsSection(tmpContent, factsSection) {
   return tmpContent.slice(0, headerIndex) + factsSection + '\n' + tmpContent.slice(afterHeader + 1);
 }
 
-module.exports = { readHookInput, createSessionTemplate, buildFactsSection, upsertFactsSection };
+// ---------------------------------------------------------------------------
+// セッション JSON ブロック
+// ---------------------------------------------------------------------------
+
+const SESSION_JSON_START = '<!-- CLADE:SESSION:JSON';
+const SESSION_JSON_END   = '-->';
+
+/**
+ * セッションデータから CLADE:SESSION:JSON ブロック文字列を生成する。
+ * @param {object} data
+ * @returns {string}
+ */
+function buildSessionJsonBlock(data) {
+  return SESSION_JSON_START + '\n' + JSON.stringify(data, null, 2) + '\n' + SESSION_JSON_END;
+}
+
+/**
+ * .tmp ファイルの内容から CLADE:SESSION:JSON ブロックを抽出してパースする。
+ * ブロックが存在しないか、パースに失敗した場合は null を返す。
+ * @param {string} content - セッションファイルの内容
+ * @returns {object|null}
+ */
+function parseSessionJsonBlock(content) {
+  const startIdx = content.indexOf(SESSION_JSON_START);
+  if (startIdx === -1) return null;
+
+  const jsonStart = startIdx + SESSION_JSON_START.length;
+  const endIdx = content.indexOf(SESSION_JSON_END, jsonStart);
+  if (endIdx === -1) return null;
+
+  const jsonStr = content.slice(jsonStart, endIdx).trim();
+  try {
+    return JSON.parse(jsonStr);
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
+ * tmpContent 内の CLADE:SESSION:JSON ブロックを置換する。
+ * 存在しない場合は末尾に追記する（冪等性を保証）。
+ * @param {string} tmpContent - セッションファイルの既存テキスト
+ * @param {object} data - 書き込む JSON データ
+ * @returns {string}
+ */
+function upsertSessionJsonBlock(tmpContent, data) {
+  const block = buildSessionJsonBlock(data);
+  const startIdx = tmpContent.indexOf(SESSION_JSON_START);
+  if (startIdx === -1) {
+    const separator = tmpContent.endsWith('\n') ? '\n' : '\n\n';
+    return tmpContent + separator + block + '\n';
+  }
+  const jsonStart = startIdx + SESSION_JSON_START.length;
+  const endIdx = tmpContent.indexOf(SESSION_JSON_END, jsonStart);
+  if (endIdx === -1) {
+    // 壊れたブロックは先頭から切り捨てて末尾に再追記
+    return tmpContent.slice(0, startIdx).trimEnd() + '\n\n' + block + '\n';
+  }
+  const blockEnd = endIdx + SESSION_JSON_END.length;
+  const after = tmpContent.slice(blockEnd);
+  return tmpContent.slice(0, startIdx) + block + (after.startsWith('\n') ? after : '\n' + after);
+}
+
+module.exports = {
+  readHookInput,
+  createSessionTemplate,
+  buildFactsSection,
+  upsertFactsSection,
+  buildSessionJsonBlock,
+  parseSessionJsonBlock,
+  upsertSessionJsonBlock,
+};

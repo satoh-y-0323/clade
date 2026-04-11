@@ -11,6 +11,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { parseSessionJsonBlock } = require('./hook-utils');
 
 // ---- 定数 ----------------------------------------------------------------
 
@@ -122,6 +123,39 @@ function extractFromTmpFiles(filePaths) {
     }
 
     const sessionName = path.basename(filePath, '.tmp');
+
+    // JSON ブロックを優先して読み取り（存在すればテキストパースをスキップ）
+    const jsonData = parseSessionJsonBlock(content);
+    if (jsonData) {
+      if (Array.isArray(jsonData.failures)) {
+        for (const f of jsonData.failures) {
+          if (!f.title) continue;
+          rules.push({
+            type: 'rule',
+            title: f.title,
+            summary: f.lesson || f.title,
+            source: 'session-tmp',
+          });
+        }
+      }
+      if (Array.isArray(jsonData.successes)) {
+        for (const s of jsonData.successes) {
+          if (!s.title) continue;
+          const summary = [s.summary, s.evidence].filter(Boolean).join(' / ');
+          if (skillMap.has(s.title)) {
+            skillMap.get(s.title).count += 1;
+          } else {
+            skillMap.set(s.title, {
+              candidate: { type: 'skill', title: s.title, summary, source: 'session-tmp' },
+              count: 1,
+            });
+          }
+        }
+      }
+      continue; // テキストパースはスキップ
+    }
+
+    // フォールバック: テキストパース（JSON ブロックが存在しない旧形式ファイル用）
 
     // ルール候補: 試みたが失敗したアプローチ
     const failedSection = extractSection(content, '## 試みたが失敗したアプローチ');
