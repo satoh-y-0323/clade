@@ -1,5 +1,5 @@
 {
-  "version": "1.10.1",
+  "version": "1.11.0",
   "managed_files": {
     "commands": [
       "agent-architect.md",
@@ -22,7 +22,13 @@
       "playwright-remove-origin.md",
       "promote.md",
       "status.md",
+      "prune-reports.md",
+      "prune-rules.md",
       "update.md"
+    ],
+    "skills": [
+      "prune-reports.md",
+      "prune-rules.md"
     ],
     "hooks": [
       "check-group-isolation.js",
