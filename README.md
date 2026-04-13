@@ -58,14 +58,56 @@ Clade detects the VS Code extension at session start and notifies you of the lim
 
 ## Getting Started
 
-### 1. Clone this repository
+### Option A: AI-assisted setup (Recommended for non-developers)
+
+If you already have [Claude Code](https://claude.ai/code) installed, you can set up Clade by pasting a single prompt — no terminal commands required.
+
+Open Claude Code in your project directory and paste:
+
+**English version:**
+```
+Set up Clade (English version) in this project.
+
+Repository: https://github.com/satoh-y-0323/clade
+
+Steps:
+1. Detect the current OS (Windows / macOS / Linux)
+2. Clone the repository to a temporary directory
+3. Review the setup script before running it (setup_en.ps1 for Windows, setup_en.sh for macOS/Linux)
+4. Run the setup script targeting the current working directory as the project path
+5. Delete the temporary directory
+6. Confirm setup is complete and show next steps
+```
+
+**Japanese version:**
+```
+このプロジェクトにClade（日本語版）をセットアップしてください。
+
+リポジトリ: https://github.com/satoh-y-0323/clade
+
+手順:
+1. 現在のOSを確認する（Windows / macOS / Linux）
+2. リポジトリを一時ディレクトリにクローンする
+3. セットアップスクリプト（setup.ps1 または setup.sh）の内容を確認してから実行する
+4. 現在の作業ディレクトリをプロジェクトパスとしてスクリプトを実行する
+5. 一時ディレクトリを削除する
+6. セットアップ完了を確認し、次のステップを案内する
+```
+
+Claude Code handles the rest automatically — OS detection, script review, execution, and cleanup.
+
+---
+
+### Option B: Manual setup
+
+#### 1. Clone this repository
 
 ```bash
 git clone https://github.com/satoh-y-0323/clade.git clade
 cd clade
 ```
 
-### 2. Run the setup script
+#### 2. Run the setup script
 
 Choose the script that matches your preferred language:
 
@@ -100,7 +142,7 @@ chmod +x setup.sh
 The path argument specifies the project you want to set up.  
 This copies the `.claude/` directory into your project and initializes the session management hooks.
 
-### 3. Set up your coding conventions (recommended)
+#### 3. Set up your coding conventions (recommended)
 
 Open Claude Code in your project and run:
 
@@ -110,7 +152,7 @@ Open Claude Code in your project and run:
 
 This will ask about your language and coding conventions, then generate `.claude/skills/project/coding-conventions.md` automatically.
 
-### 4. Start working
+#### 4. Start working
 
 ```
 /agent-interviewer    # Start with requirements gathering
