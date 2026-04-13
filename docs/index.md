@@ -83,9 +83,17 @@ VS Code 拡張には現在既知のバグがあり、プロジェクトレベル
 
 ## 最近の更新
 
+### [v1.14.0] - 2026-04-13
+
+`statusline` に `rate_limits` 対応を追加。`context usage:` ラベルを先頭に表示し、Pro・Max プランでは `5hour limits:` と `7day limits:` のゲージ・使用率・リセット時間を横並びで表示。`core.md` の重複ルール4件を削除。
+
 ### [v1.13.0] - 2026-04-12
 
 session-start hook を廃止し `/init-session` 手動実行に統一。`/end-session` に `--no-promote` フラグを追加。`.tmp` 読み込み時の `CLADE:SESSION:JSON` ブロック除去でトークン消費を削減。
+
+### [v1.12.0] - 2026-04-11
+
+`update-clade-section.js` に `remove-rule` サブコマンドを追加。`.tmp` フォーマットに `CLADE:SESSION:JSON` ブロックを追加し機械的パースの耐性を向上。
 
 ### [v1.12.0] - 2026-04-11
 

@@ -1,5 +1,17 @@
 # 変更履歴
 
+## [v1.14.0] - 2026-04-13
+
+### New
+
+- `statusline` にラベルと `rate_limits` 対応を追加。`context usage:` ラベルを先頭に表示し、プランが rate_limits データを提供する場合（Pro・Max など）は `5hour limits:` と `7day limits:` のゲージ・使用率・リセット時間を横並びで表示する
+
+### Changed
+
+- `core.md` から cli.js に既に組み込まれているルール4件を削除（重複排除によるトークン節約）
+
+---
+
 ## [v1.13.0] - 2026-04-12
 
 ### New
