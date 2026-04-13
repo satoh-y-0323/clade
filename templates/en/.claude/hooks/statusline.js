@@ -1,22 +1,17 @@
 #!/usr/bin/env node
 // Context gauge statusline script
-// Displays a health-bar style context usage gauge
+// Displays context usage + optional rate limit gauges (when plan provides rate_limits data)
 
 let raw = '';
 process.stdin.setEncoding('utf8');
 process.stdin.on('data', chunk => (raw += chunk));
 process.stdin.on('end', () => {
-  let pct = 0;
+  let data = {};
   try {
-    const data = JSON.parse(raw);
-    pct = Math.round(data?.context_window?.used_percentage ?? 0);
+    data = JSON.parse(raw);
   } catch {
-    // fallback to 0 if parsing fails
+    // fallback to empty object
   }
-
-  const TOTAL_CELLS = 10;
-  const redCells = Math.min(Math.floor(pct / 10), TOTAL_CELLS);
-  const greenCells = TOTAL_CELLS - redCells;
 
   // ANSI color codes
   const GREEN  = '\x1b[32m';
@@ -27,26 +22,89 @@ process.stdin.on('end', () => {
   const DIM    = '\x1b[2m';
   const RESET  = '\x1b[0m';
 
-  const BLOCK = '█';
-  const BRACKET_L = DIM + '[' + RESET;
-  const BRACKET_R = DIM + ']' + RESET;
+  const BLOCK       = '█';
+  const BLOCK_EMPTY = '░';
+  const TOTAL_CELLS = 10;
 
-  // Build gauge: green cells (left) + red cells (right)
-  const gauge =
-    BRACKET_L +
-    GREEN + BLOCK.repeat(greenCells) +
-    RED   + BLOCK.repeat(redCells) +
-    RESET +
-    BRACKET_R;
+  function pctColor(pct) {
+    if (pct > 90)      return RED;
+    else if (pct > 75) return ORANGE;
+    else if (pct > 60) return YELLOW;
+    else               return GREEN;
+  }
 
-  // Percentage text color
-  let pctColor;
-  if (pct > 90)      pctColor = RED;
-  else if (pct > 75) pctColor = ORANGE;
-  else if (pct > 60) pctColor = YELLOW;
-  else               pctColor = WHITE;
+  function buildGauge(pct) {
+    const filledCells = Math.min(Math.floor(pct / 10), TOTAL_CELLS);
+    const emptyCells  = TOTAL_CELLS - filledCells;
+    const color = pctColor(pct);
+    return (
+      DIM + '[' + RESET +
+      color + BLOCK.repeat(filledCells) + RESET +
+      DIM   + BLOCK_EMPTY.repeat(emptyCells) + RESET +
+      DIM + ']' + RESET
+    );
+  }
 
-  const label = pctColor + pct + '%' + RESET;
+  function formatResetTime(resetsAt) {
+    if (!resetsAt) return '';
+    const diffMs = new Date(resetsAt).getTime() - Date.now();
+    if (diffMs <= 0) return '';
+    const diffSec = Math.floor(diffMs / 1000);
+    const days  = Math.floor(diffSec / 86400);
+    const hours = Math.floor((diffSec % 86400) / 3600);
+    const mins  = Math.floor((diffSec % 3600) / 60);
+    if (days > 0)  return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${mins}m`;
+    return `${mins}m`;
+  }
 
-  process.stdout.write(gauge + ' ' + label + '\n');
+  // --- context usage ---
+  const ctxPct = Math.round(data?.context_window?.used_percentage ?? 0);
+  const parts = [
+    DIM + 'context usage:' + RESET + ' ' +
+    buildGauge(ctxPct) + ' ' +
+    pctColor(ctxPct) + ctxPct + '%' + RESET
+  ];
+
+  // --- rate limits (only when data is present — plan-dependent) ---
+  const rateLimits = data?.rate_limits;
+  if (rateLimits) {
+    // Field name candidates for 5-hour window
+    const fiveHour =
+      rateLimits.five_hour ??
+      rateLimits['5h']     ??
+      rateLimits.fiveHour  ??
+      null;
+
+    if (fiveHour) {
+      const pct      = Math.round(fiveHour.used_percentage ?? 0);
+      const resetStr = formatResetTime(fiveHour.resets_at);
+      let part =
+        DIM + '5hour limits:' + RESET + ' ' +
+        buildGauge(pct) + ' ' +
+        pctColor(pct) + pct + '%' + RESET;
+      if (resetStr) part += ' ' + DIM + resetStr + RESET;
+      parts.push(part);
+    }
+
+    // Field name candidates for 7-day window
+    const sevenDay =
+      rateLimits.seven_day ??
+      rateLimits['7d']     ??
+      rateLimits.sevenDay  ??
+      null;
+
+    if (sevenDay) {
+      const pct      = Math.round(sevenDay.used_percentage ?? 0);
+      const resetStr = formatResetTime(sevenDay.resets_at);
+      let part =
+        DIM + '7day limits:' + RESET + ' ' +
+        buildGauge(pct) + ' ' +
+        pctColor(pct) + pct + '%' + RESET;
+      if (resetStr) part += ' ' + DIM + resetStr + RESET;
+      parts.push(part);
+    }
+  }
+
+  process.stdout.write(parts.join('  ') + '\n');
 });
