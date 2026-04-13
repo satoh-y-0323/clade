@@ -1,13 +1,57 @@
 # はじめ方
 
-## 1. リポジトリをクローンする
+## 方法A: AIアシストセットアップ（非エンジニアにおすすめ）
+
+[Claude Code](https://claude.ai/code) がすでにインストールされていれば、プロンプトを1つ貼り付けるだけでセットアップが完了します。ターミナル操作は不要です。
+
+セットアップしたいプロジェクトのディレクトリで Claude Code を開き、以下をそのまま貼り付けてください：
+
+::: code-group
+
+```text [日本語版]
+このプロジェクトにClade（日本語版）をセットアップしてください。
+
+リポジトリ: https://github.com/satoh-y-0323/clade
+
+手順:
+1. 現在のOSを確認する（Windows / macOS / Linux）
+2. リポジトリを一時ディレクトリにクローンする
+3. セットアップスクリプト（setup.ps1 または setup.sh）の内容を確認してから実行する
+4. 現在の作業ディレクトリをプロジェクトパスとしてスクリプトを実行する
+5. 一時ディレクトリを削除する
+6. セットアップ完了を確認し、次のステップを案内する
+```
+
+```text [英語版]
+Set up Clade (English version) in this project.
+
+Repository: https://github.com/satoh-y-0323/clade
+
+Steps:
+1. Detect the current OS (Windows / macOS / Linux)
+2. Clone the repository to a temporary directory
+3. Review the setup script before running it (setup_en.ps1 for Windows, setup_en.sh for macOS/Linux)
+4. Run the setup script targeting the current working directory as the project path
+5. Delete the temporary directory
+6. Confirm setup is complete and show next steps
+```
+
+:::
+
+あとは Claude Code が自動でOS判定・スクリプト確認・実行・後片付けまで行います。
+
+---
+
+## 方法B: 手動セットアップ
+
+### 1. リポジトリをクローンする
 
 ```bash
 git clone https://github.com/satoh-y-0323/clade.git clade
 cd clade
 ```
 
-## 2. セットアップスクリプトを実行する
+### 2. セットアップスクリプトを実行する
 
 ::: warning セットアップは必ず実行してください
 クローンしただけでは動作しません。セットアップスクリプトを実行することで、Clade の設定ファイルがあなたのプロジェクトにコピーされます。
@@ -52,7 +96,7 @@ chmod +x setup_en.sh
 - セッション管理フックを初期化
 - 必要なディレクトリ構造を作成
 
-## 3. コーディング規約を設定する（推奨）
+### 3. コーディング規約を設定する（推奨）
 
 セットアップしたプロジェクトで Claude Code を開き、以下を実行します：
 
@@ -62,7 +106,7 @@ chmod +x setup_en.sh
 
 使用言語とコーディング規約についてヒアリングし、`.claude/skills/project/coding-conventions.md` を自動生成します。TypeScript・Python・C#・Go・Java・Ruby など、あらゆる言語に対応しています。
 
-## 4. 作業を開始する
+### 4. 作業を開始する
 
 ```
 /agent-interviewer    # 要件ヒアリングから始める（推奨）
