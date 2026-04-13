@@ -38,6 +38,19 @@ After completion, say: "The context gauge has been **enabled**. Restart Claude C
 
 ## How to Read the Gauge
 
+Display format varies by plan:
+
+**With rate_limits data (Pro, Max, etc.):**
+```
+context usage: [█████░░░░░] 50%  5hour limits: [███░░░░░░░] 30% 2h 15m  7day limits: [██░░░░░░░░] 20% 5d 3h
+```
+
+**Without rate_limits data (Enterprise, etc.):**
+```
+context usage: [█████░░░░░] 50%
+```
+
 - 10 cells total; 1 cell = 10%
-- As usage increases, cells turn red from the right
-- Number color: yellow above 60%, orange above 75%, red above 90%
+- Filled blocks (left) = used, dim blocks (right) = remaining
+- Number color: green up to 60%, yellow above 60%, orange above 75%, red above 90%
+- Reset time shown as `Xh Xm` (hours/minutes) or `Xd Xh` (days/hours)

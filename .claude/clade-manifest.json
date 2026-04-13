@@ -53,9 +53,7 @@
       "clade-manifest.json",
       "VERSION"
     ],
-    "ja_only": [
-      "commands/context-gauge.md"
-    ],
+    "ja_only": [],
     "en_only": []
   }
 }
