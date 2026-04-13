@@ -1,114 +1,110 @@
-# Core Rules (Common to All Agents)
+# Core Rules（全エージェント共通）
 
-## Working Principles
-- Always check the current state before making changes (Read tool / git status / Glob tool)
-- Maintain one commit per task
-- Identify the root cause before fixing errors (do not fix by guessing)
-- Ask the user for clarification when uncertain before proceeding
-- Always confirm with the user before deleting files
-- Never pass long content as command-line arguments to Bash commands.
-  Reason: OS argument length limits (~8,000 characters) will cause errors.
-  Alternative: Use heredoc (`<<'EOF'`) or pipes to pass content via stdin.
-- If a Bash command fails due to argument length limits, do not attempt alternative approaches on your own.
-  Report the error to the user and wait for instructions.
+## 作業原則
+- 1タスク = 1コミットの粒度を保つ
+- 不明な点はユーザーに確認してから進む
+- Bash コマンドに長文をコマンドライン引数として渡してはならない。
+  理由: OS の引数文字数制限（目安8,000文字）でエラーになる。
+  代替: ヒアドキュメント（`<<'EOF'`）やパイプで stdin 経由で渡すこと。
+- Bash コマンドが引数の文字数制限エラーで失敗した場合、別の方法を自分で試みることは禁止。
+  エラー内容をユーザーに報告し、指示を待つこと。
 
-## Communication
-- Present a 1–3 line plan before starting work
-- Report concisely what was done after completion
-- If something fails, explain the reason and present alternatives
-- Report progress during long-running tasks
+## コミュニケーション
+- 作業開始前に計画を1〜3行で提示する
+- 完了後は何をしたかを簡潔に報告する
+- 失敗した場合は理由と代替案を提示する
+- 長い処理は進捗を報告しながら進める
 
-## Security
-- Do not write secret keys, API keys, or passwords directly in code
-- Confirm that .env files are included in .gitignore
-- Always confirm with the user before force pushing
+## セキュリティ
+- 秘密鍵・APIキー・パスワードをコードに直接書かない
+- .env ファイルは .gitignore に含まれていることを確認する
 
-## Standard Workflow (Phase Structure)
+## 標準ワークフロー（フェーズ構成）
 
-### Mandatory Rules for AI
-When the AI autonomously selects and coordinates agents, the following workflow **must be strictly followed**.
-Skipping phases or changing the order is prohibited.
+### AIとしての厳守ルール
+AIが自律的にエージェントを選択・連携させる場合は、以下のワークフローを**必ず厳守**する。
+フェーズをスキップしたり、順序を入れ替えることは禁止。
 
-### Confirmation Rules When User Directly Specifies an Agent
-When the user directly calls `/agent-xxx`, confirm the following before starting work:
+### ユーザーが直接エージェントを指定した場合の確認ルール
+ユーザーが `/agent-xxx` を直接呼び出した場合は、作業開始前に以下を確認する:
 
 ```
-Would you like to proceed according to the standard workflow (phase structure)?
-  [yes] Follow the workflow and coordinate with the next phase
-  [no]  Only perform this agent's work, then report completion to the user and stop
+標準ワークフロー（フェーズ構成）に沿って作業を進めますか？
+  [yes] ワークフローに従い、次フェーズへの連携も行います
+  [no]  このエージェントの作業のみ実施し、完了後にユーザーへ報告して終了します
 ```
 
-- **If yes**: Strictly follow the standard workflow below
-- **If no**: Only perform the specified agent's work, then report completion to the user (no handoff to the next agent)
+- **yes の場合**: 以下の標準ワークフローを厳守して進める
+- **no の場合**: 指定されたエージェントの作業のみ実施し、完了後はユーザーへ完了報告して終了する（次エージェントへの連携は行わない）
 
 ---
 
-### Phase 1: Requirements and Design
+### フェーズ1: 要件定義・設計
 ```
-Step 0. /agent-interviewer  → Requirements gathering, output requirements-report, approval
-        * Always perform for feature additions and bug fixes. May be skipped for new development.
-Step 1. /agent-architect    → Read requirements-report, design, output architecture-report, approval
+Step 0. /agent-interviewer  → 要件ヒアリング・requirements-report 出力・承認
+        ※ 機能追加・バグ修正では必ず実施。新規開発の場合は省略可。
+Step 1. /agent-architect    → requirements-report 読み込み・設計・architecture-report 出力・承認
 ```
-Reports present at the end of this phase: requirements-report, architecture-report
+このフェーズ完了時点で存在するレポート: requirements-report, architecture-report
 
-### Phase 2: Initial Planning
+### フェーズ2: 初回計画立案
 ```
-Step 2. /agent-planner      → Read requirements-report + architecture-report
-                              Output initial plan-report, approval
-                              * test/review reports do not yet exist at this stage (normal)
+Step 2. /agent-planner      → requirements-report + architecture-report を読み込み
+                              初回 plan-report 出力・承認
+                              ※ test/review レポートはまだ存在しないためスキップ（正常）
 ```
-Reports present at the end of this phase: + plan-report
+このフェーズ完了時点で存在するレポート: + plan-report
 
-### Phase 3: Implementation and Testing (TDD Cycle)
+### フェーズ3: 実装・テスト（TDDサイクル）
 ```
-Step 3. /agent-tester       → Review plan-report, design test specs, write failing tests (Red)
-Step 4. /agent-developer    → Review plan-report, implement (Green → Refactor)
-Step 5. /agent-tester       → Re-run tests, output test-report, approval
+Step 3. /agent-tester       → plan-report 確認・テスト仕様設計・失敗テスト作成（Red）
+Step 4. /agent-developer    → plan-report 確認・実装（Green → Refactor）
+Step 5. /agent-tester       → テスト再実行・test-report 出力・承認
 ```
-Reports present at the end of this phase: + test-report
+このフェーズ完了時点で存在するレポート: + test-report
 
-### Phase 4: Review and Plan Update
+### フェーズ4: レビュー・計画更新
 ```
-Step 6. /agent-code-reviewer     → Output code-review-report, approval
-Step 7. /agent-security-reviewer → Output security-review-report, approval
-Step 8. /agent-planner           → Integrate all reports, output updated plan-report, approval
+Step 6. /agent-code-reviewer     → code-review-report 出力・承認
+Step 7. /agent-security-reviewer → security-review-report 出力・承認
+Step 8. /agent-planner           → 全レポート統合・更新 plan-report 出力・承認
 ```
-Repeat Steps 3–8 until there are no more issues.
+指摘がなくなるまで Step 3〜8 を繰り返す。
 
-### TDD Flow (developer ↔ tester)
-1. `/agent-tester` designs test specs and writes failing tests (Red)
-2. `/agent-developer` implements (Green) → ask tester to re-verify
-3. `/agent-developer` refactors (Refactor) → ask tester to re-verify
-4. Repeat 2–3 until all tests pass
+### TDD フロー（developer ↔ tester）
+1. `/agent-tester` でテスト仕様設計・失敗テスト作成（Red）
+2. `/agent-developer` で実装（Green）→ tester に再確認依頼
+3. `/agent-developer` でリファクタ（Refactor）→ tester に再確認依頼
+4. 不合格がなくなるまで 2〜3 を繰り返す
 
 ---
 
-### Milestone Workflow
+### マイルストーン対応ワークフロー
 
-In large-scale development, `plan-report` may include milestones.
-A milestone is a development unit that represents a state where the work so far can be verified as functional, and a commit is made upon completion.
+大規模開発では、`plan-report` にマイルストーンが設定される場合がある。
+マイルストーンとは「そこまで完了したら動作確認可能な状態」に相当する開発単位であり、完了時にコミットを行う。
 
-#### Planner Responsibilities (during planning)
-When outputting a plan that includes milestones, always ask the user the following before requesting approval of the `plan-report`:
-
-```
-Choose behavior after each milestone completes:
-  [confirm] Show a "Continue to next milestone?" dialog after each milestone commit
-            (choose this if you may want to pause mid-way)
-  [auto]    Automatically proceed to the next milestone after each commit without confirmation
-            (choose this if you want to complete everything today)
-```
-
-Record the selection in the meta section at the top of the `plan-report`:
+#### プランナーの責務（計画立案時）
+マイルストーンを含む計画を出力する際は、`plan-report` を承認依頼する前に必ずユーザーへ以下を確認する:
 
 ```
-## Meta
-- milestone_mode: confirm  # or auto
+マイルストーン完了後の挙動を選択してください:
+  [confirm] 各マイルストーン完了・コミット後に「続きを処理しますか？」の確認ダイアログを表示する
+            （途中で作業を止めたい場合はこちら）
+  [auto]    各マイルストーン完了・コミット後に確認なしで自動的に次のマイルストーンへ進む
+            （今日中に全体を完了させたい場合はこちら）
 ```
 
-This confirmation may be omitted for small plans with no milestones.
+選択結果を `plan-report` の冒頭のメタ情報セクションに以下の形式で必ず明記する:
 
-#### Developer Responsibilities (during implementation)
-When the prompt specifies "Target milestone: N", implement only that milestone's tasks, commit, and end work without proceeding to the next milestone.
+```
+## メタ情報
+- milestone_mode: confirm  # または auto
+```
 
-Continuation confirmation between milestones (`milestone_mode: confirm` / `auto`) is controlled by the `/agent-developer` command (parent Claude).
+マイルストーンが存在しない（小規模な）計画の場合はこの確認を省略してよい。
+
+#### デベロッパーの責務（実装時）
+`plan-report` を読み込んだとき、プロンプトに「作業対象マイルストーン: N」が指定されている場合は、そのマイルストーンのタスクのみを実装してコミットし、次のマイルストーンには進まずに作業を終了する。
+
+マイルストーン間の継続確認（`milestone_mode: confirm` / `auto`）は `/agent-developer` コマンド（親Claude）が制御する。
