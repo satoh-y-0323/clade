@@ -83,6 +83,10 @@ VS Code 拡張には現在既知のバグがあり、プロジェクトレベル
 
 ## 最近の更新
 
+### [v1.14.1] - 2026-04-13
+
+`context-gauge.md` の EN テンプレート誤分類を修正。EN 版のゲージ説明を rate_limits 対応後の表示形式に更新。
+
 ### [v1.14.0] - 2026-04-13
 
 `statusline` に `rate_limits` 対応を追加。`context usage:` ラベルを先頭に表示し、Pro・Max プランでは `5hour limits:` と `7day limits:` のゲージ・使用率・リセット時間を横並びで表示。`core.md` の重複ルール4件を削除。

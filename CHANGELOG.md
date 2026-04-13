@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.14.1] - 2026-04-13
+
+### Fix
+
+- `context-gauge.md` を EN テンプレートにも正しく同期するよう修正（`ja_only` の誤分類を解消）
+- EN 版 `context-gauge.md` のゲージ説明を rate_limits 対応後の表示形式に更新
+
+---
+
 ## [v1.14.0] - 2026-04-13
 
 ### New
