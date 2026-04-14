@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.14.5] - 2026-04-14
+
+### Fix
+
+- `statusline.js` のリセット時刻が表示されない不具合を修正。Claude Code が `rate_limits.resets_at` を Unix タイムスタンプ（秒）で渡しているのに `new Date()` がミリ秒として解釈し、1970年1月の日付になっていた。数値の場合は `× 1000` してミリ秒に変換するよう修正
+
+---
+
 ## [v1.14.4] - 2026-04-14
 
 ### New
