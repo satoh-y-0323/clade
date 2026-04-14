@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.14.3] - 2026-04-14
+
+### New
+
+- `/init-session` にタスク規模トリアージを追加。新しいタスクを開始する際に small / medium / large の3択で作業規模を選ぶと、適切なワークフロー（直接指示 / `/agent-developer` / フルワークフロー）を案内するようになった
+
+---
+
 ## [v1.14.2] - 2026-04-14
 
 ### Fix
