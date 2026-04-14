@@ -50,3 +50,24 @@ Run manually by the user at the start of each session.
 ---
 
 Would you like to continue from where you left off, or start a new task?
+
+8. Branch based on the user's answer:
+
+   **"Continue"**: Review the remaining tasks and proceed with the work directly. Skip the triage.
+
+   **"New task"**: Ask about the task size:
+
+   ```
+   What kind of work are you planning?
+     [small]  Small fix, investigation, or question
+     [medium] Feature addition or bug fix
+     [large]  New feature design or large-scale change
+   ```
+
+   Guide the user based on their selection:
+
+   | Selection | Examples | Guidance |
+   |---|---|---|
+   | small | Config change, doc edit, investigation, question | "Go ahead and instruct me directly. No agent needed." |
+   | medium | Implement new logic, investigate and fix a bug | "Start with `/agent-developer`." |
+   | large | Design a new module, major redesign of existing code | "Use the full workflow (start with `/agent-interviewer`)." |
