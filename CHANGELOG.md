@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.14.2] - 2026-04-14
+
+### Fix
+
+- `setup.ps1` の文字化け修正: bash 経由で実行した際に日本語が CP932 で出力されていた問題を修正。スクリプト先頭に `[Console]::OutputEncoding = UTF8` を追加し、UTF-8 で正しく出力されるようにした
+
+---
+
 ## [v1.14.1] - 2026-04-13
 
 ### Fix
