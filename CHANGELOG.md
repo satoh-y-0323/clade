@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.14.4] - 2026-04-14
+
+### New
+
+- `getting-started.md` にワークフロー選択ガイドを追加。「直接指示でOK / `/agent-developer` から / フルワークフロー」の3段階を具体例付きで解説し、`/init-session` のトリアージ機能との連携も案内
+
+---
+
 ## [v1.14.3] - 2026-04-14
 
 ### New
