@@ -8,6 +8,8 @@ export default defineConfig({
 
   head: [
     ['meta', { name: 'theme-color', content: '#3451b2' }],
+    ['script', { async: '', src: 'https://www.googletagmanager.com/gtag/js?id=G-1E7GT7N7K6' }],
+    ['script', {}, "window.dataLayer = window.dataLayer || [];\nfunction gtag(){dataLayer.push(arguments);}\ngtag('js', new Date());\ngtag('config', 'G-1E7GT7N7K6');"],
   ],
 
   themeConfig: {
