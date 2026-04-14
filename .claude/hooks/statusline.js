@@ -47,7 +47,9 @@ process.stdin.on('end', () => {
 
   function formatResetTime(resetsAt) {
     if (!resetsAt) return '';
-    const diffMs = new Date(resetsAt).getTime() - Date.now();
+    // Claude Code passes resets_at as Unix timestamp (seconds), not milliseconds
+    const tsMs = typeof resetsAt === 'number' ? resetsAt * 1000 : new Date(resetsAt).getTime();
+    const diffMs = tsMs - Date.now();
     if (diffMs <= 0) return '';
     const diffSec = Math.floor(diffMs / 1000);
     const days  = Math.floor(diffSec / 86400);
