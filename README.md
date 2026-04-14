@@ -229,12 +229,14 @@ Here is a typical session using Clade to add a new feature.
 > yes
 ──────────────────────────────────────────
 ```
-![](docs/images/step1-1.png)  
-![](docs/images/step1-2.png)  
-![](docs/images/step1-3.png)  
-![](docs/images/step1-4.png)  
-![](docs/images/step1-5.png)  
-![](docs/images/step1-6.png)  
+<img width="680" alt="Interviewer: work type selection" src="docs/images/interviewer01.png">
+<img width="680" alt="Interviewer: what do you want to achieve" src="docs/images/interviewer02.png">
+<img width="680" alt="Interviewer: use case and background" src="docs/images/interviewer03.png">
+<img width="680" alt="Interviewer: completion criteria" src="docs/images/interviewer04.png">
+<img width="680" alt="Interviewer: priority" src="docs/images/interviewer05.png">
+<img width="680" alt="Interviewer: constraints" src="docs/images/interviewer06.png">
+<img width="680" alt="Interviewer: summary confirmation" src="docs/images/interviewer07.png">
+<img width="680" alt="Interviewer: report saved and approval" src="docs/images/interviewer08.png">
 
 ### Step 2 — Design
 
@@ -251,8 +253,7 @@ requirements-report-20260404-103012.md を読み込み中...
 この設計を承認しますか？（yes / no）
 > yes
 ```
-![](docs/images/step2-1.png)  
-![](docs/images/step2-2.png)  
+<img width="680" alt="Architect: architecture report saved and approval" src="docs/images/architect01.png">
 
 ### Step 3 — Planning → Implementation → Testing → Review
 
@@ -264,12 +265,14 @@ requirements-report-20260404-103012.md を読み込み中...
 > /agent-code-reviewer      # code-review-report を出力
 > /agent-security-reviewer  # security-review-report を出力
 ```
-![](docs/images/step3-1.png)  
-![](docs/images/step3-2.png)  
-![](docs/images/step3-3.png)  
-![](docs/images/step3-4.png)  
-![](docs/images/step3-5.png)  
-![](docs/images/step3-6.png)  
+<img width="680" alt="Planner: task plan saved and approval" src="docs/images/planner01.png">
+<img width="680" alt="Developer: implementation start" src="docs/images/developer01.png">
+<img width="680" alt="Developer: commit complete" src="docs/images/developer02.png">
+<img width="680" alt="Tester: running tests" src="docs/images/tester01.png">
+<img width="680" alt="Tester: test report saved and approval" src="docs/images/tester02.png">
+<img width="680" alt="Code Reviewer: code review report" src="docs/images/code-reviewer01.png">
+<img width="680" alt="Security Reviewer: security diagnosis report" src="docs/images/security-reviewer01.png">
+<img width="680" alt="Review reports approval" src="docs/images/review-report01.png">
 
 Each step saves a timestamped report and waits for your approval before proceeding.
 

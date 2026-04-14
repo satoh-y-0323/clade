@@ -227,12 +227,14 @@ chmod +x setup_en.sh
 > yes
 ──────────────────────────────────────────
 ```
-![](docs/images/step1-1.png)  
-![](docs/images/step1-2.png)  
-![](docs/images/step1-3.png)  
-![](docs/images/step1-4.png)  
-![](docs/images/step1-5.png)  
-![](docs/images/step1-6.png)  
+<img width="680" alt="インタビュアー: 作業種別の選択" src="docs/images/interviewer01.png">
+<img width="680" alt="インタビュアー: やりたいことを聞く" src="docs/images/interviewer02.png">
+<img width="680" alt="インタビュアー: 背景・使用場面を聞く" src="docs/images/interviewer03.png">
+<img width="680" alt="インタビュアー: 完了条件を聞く" src="docs/images/interviewer04.png">
+<img width="680" alt="インタビュアー: 優先度を聞く" src="docs/images/interviewer05.png">
+<img width="680" alt="インタビュアー: 制約を聞く" src="docs/images/interviewer06.png">
+<img width="680" alt="インタビュアー: ヒアリング内容の確認" src="docs/images/interviewer07.png">
+<img width="680" alt="インタビュアー: レポート保存・承認確認" src="docs/images/interviewer08.png">
 
 ### ステップ2 — 設計
 
@@ -249,8 +251,7 @@ requirements-report-20260404-103012.md を読み込み中...
 この設計を承認しますか？（yes / no）
 > yes
 ```
-![](docs/images/step2-1.png)  
-![](docs/images/step2-2.png)  
+<img width="680" alt="アーキテクト: アーキテクチャレポート保存・承認確認" src="docs/images/architect01.png">
 
 ### ステップ3 — 計画 → 実装 → テスト → レビュー
 
@@ -262,12 +263,14 @@ requirements-report-20260404-103012.md を読み込み中...
 > /agent-code-reviewer      # code-review-report を出力
 > /agent-security-reviewer  # security-review-report を出力
 ```
-![](docs/images/step3-1.png)  
-![](docs/images/step3-2.png)  
-![](docs/images/step3-3.png)  
-![](docs/images/step3-4.png)  
-![](docs/images/step3-5.png)  
-![](docs/images/step3-6.png)  
+<img width="680" alt="プランナー: 作業計画レポート保存・承認確認" src="docs/images/planner01.png">
+<img width="680" alt="デベロッパー: 実装開始の宣言" src="docs/images/developer01.png">
+<img width="680" alt="デベロッパー: 実装完了・コミット" src="docs/images/developer02.png">
+<img width="680" alt="テスター: テスト実行中" src="docs/images/tester01.png">
+<img width="680" alt="テスター: テストレポート保存・承認確認" src="docs/images/tester02.png">
+<img width="680" alt="コードレビュアー: コードレビューレポート" src="docs/images/code-reviewer01.png">
+<img width="680" alt="セキュリティレビュアー: セキュリティ診断レポート" src="docs/images/security-reviewer01.png">
+<img width="680" alt="レビューレポート承認確認" src="docs/images/review-report01.png">
 
 各ステップでタイムスタンプ付きのレポートが保存され、あなたの承認を待ってから次に進みます。
 
