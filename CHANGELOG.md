@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.16.0] - 2026-04-16
+
+### New
+
+- インタラクティブエージェント（interviewer・architect・planner）に `background: false` を追加。Claude Desktop など将来的にデフォルトがバックグラウンド実行に変わった場合でも、ユーザーとの対話が必要なエージェントが必ずフォアグラウンドで実行されることを保証する
+
+### Fix
+
+- セットアップスクリプト（setup.sh / setup.ps1 / setup_en.sh / setup_en.ps1）が `.claude/` をまるごとコピーする際、配布用リポジトリ固有の `rules/local.md` がユーザープロジェクトに混入するバグを修正。コピー後に `rules/local.md` が存在した場合は空テンプレートで上書きするように変更
+
+---
+
 ## [v1.15.0] - 2026-04-15
 
 ### New
