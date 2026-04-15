@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.15.0] - 2026-04-15
+
+### New
+
+- Add `/agent-doc-writer` utility agent for document generation
+  (Mermaid diagrams, README, operation manuals, API specs,
+  reverse-engineered specs). Includes a short interview on target,
+  audience, purpose, and detail level before generating output.
+
+---
+
 ## [v1.14.5] - 2026-04-14
 
 ### Fix
