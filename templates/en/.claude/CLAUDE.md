@@ -98,6 +98,7 @@ Agents are selected via custom commands:
 - `/agent-project-setup`      → Configure coding conventions, generate coding-conventions.md
 - `/agent-mcp-setup`          → Research, configure, and generate skill files for MCP servers
 - `/agent-workflow-builder`   → Meta-agent that auto-generates a set of agents from business workflow interviews
+- `/agent-doc-writer`         → Generate Mermaid diagrams, README files, operation manuals, API specs, and more
 <!-- CLADE:END -->
 
 ## User Agents
