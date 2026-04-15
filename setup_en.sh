@@ -88,6 +88,18 @@ else
     echo -e "  ${GREEN}-> Copy complete${RESET}"
 fi
 
+# Overwrite rules/local.md with empty template if it was copied from the distribution repo
+LOCAL_MD="${PROJ_CLAUDE}/rules/local.md"
+if [ -f "$LOCAL_MD" ]; then
+    cat > "$LOCAL_MD" << 'LOCALMD_EOF'
+# Local Rules (Project-specific)
+
+Add your project-specific rules here.
+Write rules to customize Claude Code behavior for this project.
+LOCALMD_EOF
+    echo -e "  ${YELLOW}-> rules/local.md overwritten with empty template${RESET}"
+fi
+
 # ===== Deploy settings.local.json =====
 echo ""
 echo -e "${CYAN}[2/4] Deploying settings.local.json...${RESET}"

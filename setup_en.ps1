@@ -71,6 +71,18 @@ if (Test-Path $projClaude) {
     Write-Host "  -> Copy complete" -ForegroundColor Green
 }
 
+# Overwrite rules/local.md with empty template if it was copied from the distribution repo
+$localMd = Join-Path $projClaude "rules\local.md"
+if (Test-Path $localMd) {
+    @"
+# Local Rules (Project-specific)
+
+Add your project-specific rules here.
+Write rules to customize Claude Code behavior for this project.
+"@ | Set-Content $localMd -Encoding UTF8
+    Write-Host "  -> rules/local.md overwritten with empty template" -ForegroundColor Yellow
+}
+
 # ===== Deploy settings.local.json =====
 Write-Host ""
 Write-Host "[2/4] Deploying settings.local.json..." -ForegroundColor Cyan

@@ -88,6 +88,18 @@ else
     echo -e "  ${GREEN}-> 配置完了${RESET}"
 fi
 
+# rules/local.md が配布用リポジトリからコピーされていた場合は空テンプレートで上書き
+LOCAL_MD="${PROJ_CLAUDE}/rules/local.md"
+if [ -f "$LOCAL_MD" ]; then
+    cat > "$LOCAL_MD" << 'LOCALMD_EOF'
+# ローカルルール（プロジェクト固有）
+
+このファイルにプロジェクト固有のルールを追記してください。
+Claude Code の挙動をカスタマイズするルールをここに書きます。
+LOCALMD_EOF
+    echo -e "  ${YELLOW}-> rules/local.md を空テンプレートで上書きしました${RESET}"
+fi
+
 # ===== settings.local.json の配置 =====
 echo ""
 echo -e "${CYAN}[2/4] settings.local.json を配置中...${RESET}"

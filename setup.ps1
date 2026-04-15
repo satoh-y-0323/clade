@@ -72,6 +72,18 @@ if (Test-Path $projClaude) {
     Write-Host "  -> 配置完了" -ForegroundColor Green
 }
 
+# rules/local.md が配布用リポジトリからコピーされていた場合は空テンプレートで上書き
+$localMd = Join-Path $projClaude "rules\local.md"
+if (Test-Path $localMd) {
+    @"
+# ローカルルール（プロジェクト固有）
+
+このファイルにプロジェクト固有のルールを追記してください。
+Claude Code の挙動をカスタマイズするルールをここに書きます。
+"@ | Set-Content $localMd -Encoding UTF8
+    Write-Host "  -> rules/local.md を空テンプレートで上書きしました" -ForegroundColor Yellow
+}
+
 # ===== settings.local.json の配置 =====
 Write-Host ""
 Write-Host "[2/4] settings.local.json を配置中..." -ForegroundColor Cyan
