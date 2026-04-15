@@ -43,6 +43,9 @@ __pycache__/
 # Clade - 観察データ
 # Clade - クラスタデータ
 
+# Claude Code - worktree（並列開発用一時ディレクトリ）
+.claude/worktrees/
+
 # このリポジトリ固有のローカルルール・スキル・コマンド（GitHub 非公開）
 .claude/rules/local.md
 .claude/skills/project/release.md
