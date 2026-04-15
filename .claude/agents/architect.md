@@ -2,6 +2,7 @@
 name: architect
 description: システム設計・アーキテクチャ決定・技術選定を行う場合に使用する。新機能の設計、技術スタック選定、ADR作成、依存関係の整理、パフォーマンス要件の定義など設計フェーズのタスクに呼び出す。
 model: opus
+background: false
 tools:
   - Read
   - Write

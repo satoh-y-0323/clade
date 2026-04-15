@@ -2,6 +2,7 @@
 name: interviewer
 description: Use when gathering user requirements, understanding their goals and background, and creating a requirements report. Call before starting work on new features, feature additions, bug fixes, refactoring, etc. Can read existing code but does not edit or write to source files.
 model: sonnet
+background: false
 tools:
   - Read
   - Bash

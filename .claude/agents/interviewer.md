@@ -2,6 +2,7 @@
 name: interviewer
 description: ユーザーの要望・目的・背景をヒアリングし、要件定義レポートを作成する場合に使用する。新機能・機能追加・バグ修正・リファクタリング等の作業開始前に呼び出す。既存コードの読み取りは可能だが、ソースファイルの編集・書き込みは行わない。
 model: sonnet
+background: false
 tools:
   - Read
   - Bash

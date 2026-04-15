@@ -2,6 +2,7 @@
 name: architect
 description: Use when performing system design, architecture decisions, or technology selection. Call for tasks in the design phase such as designing new features, selecting technology stacks, creating ADRs, organizing dependencies, and defining performance requirements.
 model: opus
+background: false
 tools:
   - Read
   - Write

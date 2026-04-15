@@ -2,6 +2,7 @@
 name: planner
 description: Use when integrating reports from each agent and creating a work plan with task assignments. Reads reports from architect/tester/code-reviewer/security-reviewer and outputs work instructions for developer, tester, code-reviewer, and security-reviewer as a plan-report. Does not edit or write to source files.
 model: opus
+background: false
 tools:
   - Read
   - Bash
