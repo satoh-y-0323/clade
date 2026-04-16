@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.16.3] - 2026-04-16
+
+### Fix
+
+- インタビュアー・アーキテクト・プランナーの各コマンドファイルに SendMessage による継続フローを追加。ユーザーの回答のたびに新しいエージェントを再スポーンしていたため O(N²) のトークン消費が発生していた問題を修正。agentId を保存し SendMessage で同一エージェントを継続させることで O(N) に改善する
+
+---
+
 ## [v1.16.2] - 2026-04-16
 
 ### Fix
