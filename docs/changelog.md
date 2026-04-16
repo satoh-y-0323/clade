@@ -1,5 +1,16 @@
 # 変更履歴
 
+## [v1.16.7] - 2026-04-16
+
+### Fix
+
+- SendMessage 継続フローの agentId 処理を改善。終了条件を「agentId が消えた時」から「レポート/ドキュメント承認時」に変更。複数の agentId 行が出力された場合は最後の行を使用。保存済み agentId を後続ターンでも使い続ける。中断時に SendMessage で終了メッセージを送る手順を追加
+- doc-writer・mcp-setup・project-setup に「AskUserQuestion は使わず 1 問ずつテキストで返す」指示を追加。複数の質問が一度にまとめて出力される問題を修正
+
+対象: agent-interviewer・agent-architect・agent-planner・agent-doc-writer・agent-mcp-setup・agent-project-setup
+
+---
+
 ## [v1.16.6] - 2026-04-16
 
 ### Fix
