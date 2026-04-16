@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.16.1] - 2026-04-16
+
+### Fix
+
+- `/update` コマンドがエージェント定義ファイル（`.claude/agents/`）・エージェントスキルファイル（`.claude/skills/agents/`）・スキルファイル（`.claude/skills/`）を更新しないバグを修正。`clade-manifest.json` に `agents`・`agent_skills` セクションを追加し、`clade-update.js`（JA・EN両版）にこれらのコピーハンドラを実装した
+
+---
+
 ## [v1.16.0] - 2026-04-16
 
 ### New

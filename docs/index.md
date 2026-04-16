@@ -83,6 +83,10 @@ VS Code 拡張には現在既知のバグがあり、プロジェクトレベル
 
 ## 最近の更新
 
+### [v1.16.1] - 2026-04-16
+
+`/update` コマンドがエージェント定義・スキルファイルを更新しないバグを修正。`clade-manifest.json` に `agents`・`agent_skills` セクションを追加し、コピーハンドラを実装した。
+
 ### [v1.16.0] - 2026-04-16
 
 interviewer・architect・planner に `background: false` を追加し、フォアグラウンド実行を明示的に保証。setup スクリプトが配布用リポジトリの `rules/local.md` をユーザープロジェクトに混入させるバグを修正。
