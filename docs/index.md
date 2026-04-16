@@ -83,6 +83,10 @@ VS Code 拡張には現在既知のバグがあり、プロジェクトレベル
 
 ## 最近の更新
 
+### [v1.16.5] - 2026-04-16
+
+`settings.json` に `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` を追加。Agent Teams を有効にすることで、インタビュアー・アーキテクト・プランナーが SendMessage によって同一エージェントを継続できるようになり、ユーザーとの対話ごとにエージェントを再スポーンする O(N²) トークン消費を O(N) に改善する。
+
 ### [v1.16.4] - 2026-04-16
 
 `"type": "module"` を持つプロジェクトで hooks が `require is not defined` エラーになる問題を修正。`.claude/hooks/package.json`（`{"type": "commonjs"}`）を追加し、プロジェクトの ESM 設定の影響を受けないようにした。

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.16.5] - 2026-04-16
+
+### New
+
+- `settings.json` に `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` を追加。Agent Teams を有効にすることで、インタビュアー・アーキテクト・プランナーが SendMessage によって同一エージェントを継続できるようになり、ユーザーとの対話ごとにエージェントを再スポーンする O(N²) トークン消費を O(N) に改善する
+
+---
+
 ## [v1.16.4] - 2026-04-16
 
 ### Fix
