@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.16.6] - 2026-04-16
+
+### Fix
+
+- doc-writer・mcp-setup・project-setup のコマンドファイルに SendMessage 継続フローを追加。複数ターンのヒアリング対話が必要なユーティリティエージェントでも、ユーザーの回答ごとに新しいエージェントを再スポーンしていた O(N²) トークン消費を O(N) に改善する（v1.16.3 で interviewer・architect・planner に適用した修正と同等）
+
+---
+
 ## [v1.16.5] - 2026-04-16
 
 ### New
