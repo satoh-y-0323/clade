@@ -12,13 +12,23 @@
 
 ### ステップ1: 初回起動
 Agent ツールで `subagent_type: interviewer` を指定して起動する。
-プロンプトに作業コンテキスト（ユーザーの依頼・既存レポートの有無）を含めること。
+プロンプトに以下を含めること:
+- 作業コンテキスト（ユーザーの依頼・既存レポートの有無）
+- AskUserQuestion ツールは使わず、質問をテキストで返すこと（親Claudeがユーザーに中継する）
+- agentId の出力指示（プレースホルダー形式は使わず以下のように記述する）:
+  「質問を返すたびに、応答末尾に自分の実際の agentId を以下の形式で出力すること:
+  `agentId: <実際のID> (use SendMessage with to: '<実際のID>' to continue this agent)`
+  `<実際のID>` には Agent Teams から自分に割り当てられた実際の ID 文字列を入れること。
+  プレースホルダーや 'undefined' を出力してはならない。」
 
 ### ステップ2: agentId の保存
 エージェントの出力に以下の形式が含まれていたら、agentId を記録する:
 ```
-agentId: {id} (use SendMessage with to: '{id}' to continue this agent)
+agentId: <id> (use SendMessage with to: '<id>' to continue this agent)
 ```
+**重要:**
+- 複数の agentId 行が出力された場合、**最後の agentId を使用する**（Agent Teams が付与する本物の ID は常に最後に出力される）
+- 一度 valid な agentId を保存したら、以降の応答で agentId が含まれなくなっても上書き・破棄しない。保存済みの agentId を使い続ける。
 
 ### ステップ3: 質問の表示
 エージェントが出力した質問をユーザーに表示し、回答を待つ。
@@ -30,7 +40,14 @@ agentId: {id} (use SendMessage with to: '{id}' to continue this agent)
 
 ### ステップ5: 繰り返し
 エージェントが次の質問を返したらステップ3へ戻る。
-agentId が出力に含まれなくなった（レポート出力・承認確認が完了した）時点で終了する。
+**終了条件:** エージェントがレポートを出力し、ユーザーが承認した時点で終了する。
+agentId の有無で終了を判断してはならない。
+
+### ステップ6: セッション終了（エラー・中断時）
+ユーザーが中断を指示した場合や、エラーが発生した場合は SendMessage で以下を送信してエージェントを終了させる:
+```
+ユーザーの指示によりセッションを中断します。
+```
 
 ## 用途
 - 新機能・機能追加・バグ修正・リファクタリング等の作業開始前のヒアリング
