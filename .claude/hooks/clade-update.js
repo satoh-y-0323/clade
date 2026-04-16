@@ -411,6 +411,42 @@ function copyFilesFromManifest(manifest, releaseDir, projectRoot, isEnglish) {
     copyFile(srcPath, destPath);
   }
 
+  // agents
+  for (const file of (managed.agents || [])) {
+    const jaOnlyKey = `agents/${file}`;
+    if (isEnglish && managed.ja_only.includes(jaOnlyKey)) continue;
+
+    const srcPath = path.join(releaseDir, `${releasePrefixBase}agents`, file);
+    if (!fs.existsSync(srcPath)) continue;
+
+    const destPath = path.join(projectRoot, `${prefix}.claude/agents`, file);
+    copyFile(srcPath, destPath);
+  }
+
+  // skills（トップレベル: .claude/skills/）
+  for (const file of (managed.skills || [])) {
+    const jaOnlyKey = `skills/${file}`;
+    if (isEnglish && managed.ja_only.includes(jaOnlyKey)) continue;
+
+    const srcPath = path.join(releaseDir, `${releasePrefixBase}skills`, file);
+    if (!fs.existsSync(srcPath)) continue;
+
+    const destPath = path.join(projectRoot, `${prefix}.claude/skills`, file);
+    copyFile(srcPath, destPath);
+  }
+
+  // agent_skills（.claude/skills/agents/）
+  for (const file of (managed.agent_skills || [])) {
+    const jaOnlyKey = `skills/agents/${file}`;
+    if (isEnglish && managed.ja_only.includes(jaOnlyKey)) continue;
+
+    const srcPath = path.join(releaseDir, `${releasePrefixBase}skills/agents`, file);
+    if (!fs.existsSync(srcPath)) continue;
+
+    const destPath = path.join(projectRoot, `${prefix}.claude/skills/agents`, file);
+    copyFile(srcPath, destPath);
+  }
+
   // other（CLAUDE.md はマーカー区間のみ更新、その他はコピー）
   for (const file of managed.other) {
     if (file === 'CLAUDE.md') {

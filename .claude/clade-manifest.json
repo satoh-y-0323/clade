@@ -1,6 +1,20 @@
 {
   "version": "1.16.0",
   "managed_files": {
+    "agents": [
+      "architect.md",
+      "code-reviewer.md",
+      "developer.md",
+      "doc-writer.md",
+      "interviewer.md",
+      "mcp-setup.md",
+      "merger.md",
+      "planner.md",
+      "project-setup.md",
+      "security-reviewer.md",
+      "tester.md",
+      "worktree-developer.md"
+    ],
     "commands": [
       "agent-architect.md",
       "agent-code-reviewer.md",
@@ -29,6 +43,16 @@
     "skills": [
       "prune-reports.md",
       "prune-rules.md"
+    ],
+    "agent_skills": [
+      "architect.md",
+      "code-reviewer.md",
+      "developer.md",
+      "interviewer.md",
+      "planner.md",
+      "reviewer-common.md",
+      "security-reviewer.md",
+      "tester.md"
     ],
     "hooks": [
       "check-group-isolation.js",

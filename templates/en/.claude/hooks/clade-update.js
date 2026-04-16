@@ -321,6 +321,30 @@ function copyFilesFromManifest(manifest, releaseDir, projectRoot) {
     copyFile(srcPath, destPath);
   }
 
+  // agents
+  for (const file of (managed.agents || [])) {
+    const srcPath = path.join(releaseDir, RELEASE_SRC_PREFIX, 'agents', file);
+    if (!fs.existsSync(srcPath)) continue;
+    const destPath = path.join(projectRoot, '.claude', 'agents', file);
+    copyFile(srcPath, destPath);
+  }
+
+  // skills (top-level: .claude/skills/)
+  for (const file of (managed.skills || [])) {
+    const srcPath = path.join(releaseDir, RELEASE_SRC_PREFIX, 'skills', file);
+    if (!fs.existsSync(srcPath)) continue;
+    const destPath = path.join(projectRoot, '.claude', 'skills', file);
+    copyFile(srcPath, destPath);
+  }
+
+  // agent_skills (.claude/skills/agents/)
+  for (const file of (managed.agent_skills || [])) {
+    const srcPath = path.join(releaseDir, RELEASE_SRC_PREFIX, 'skills', 'agents', file);
+    if (!fs.existsSync(srcPath)) continue;
+    const destPath = path.join(projectRoot, '.claude', 'skills', 'agents', file);
+    copyFile(srcPath, destPath);
+  }
+
   // other (CLAUDE.md, VERSION, clade-manifest.json are handled separately)
   for (const file of managed.other) {
     if (file === 'CLAUDE.md' || file === 'clade-manifest.json' || file === 'VERSION') {
