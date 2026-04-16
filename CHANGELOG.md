@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.16.4] - 2026-04-16
+
+### Fix
+
+- `"type": "module"` を持つプロジェクトで Clade の hooks が ES モジュールとして解釈され `require is not defined` エラーになる問題を修正。`.claude/hooks/package.json`（`{"type": "commonjs"}`）を追加し、hooks ディレクトリを CommonJS として明示することで解決
+
+---
+
 ## [v1.16.3] - 2026-04-16
 
 ### Fix
