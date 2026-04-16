@@ -30,6 +30,7 @@
 'use strict';
 const fs   = require('fs');
 const path = require('path');
+const { resolveContent, writeToFile, appendToFile } = require('./write-file');
 
 const [, , baseName, modeOrContent, ...rest] = process.argv;
 
@@ -40,11 +41,6 @@ if (!baseName || (modeOrContent !== 'new' && modeOrContent !== 'append')) {
   console.error('  new (stdin):     node write-report.js <baseName> new <<\'CLADE_REPORT_EOF\'');
   console.error('  append (stdin):  node write-report.js <baseName> append <targetFile> <<\'CLADE_REPORT_EOF\'');
   process.exit(1);
-}
-
-// Read content from stdin (when passed via heredoc)
-function readStdin() {
-  return fs.readFileSync(0, 'utf-8');
 }
 
 const reportsDir = path.join(process.cwd(), '.claude', 'reports');
@@ -76,33 +72,13 @@ function resolveNewPath(baseNameArg, timestamp) {
 const isNew    = modeOrContent === 'new';
 const isAppend = modeOrContent === 'append';
 
-/**
- * Resolve content (priority: --file > stdin)
- * @param {string[]} args - arguments after mode
- * @returns {string}
- */
-function resolveContent(args) {
-  const fileIdx = args.indexOf('--file');
-  if (fileIdx !== -1) {
-    const filePath = args[fileIdx + 1];
-    if (!filePath) {
-      console.error('[write-report] --file option requires a file path.');
-      process.exit(1);
-    }
-    return fs.readFileSync(filePath, 'utf-8');
-  }
-  // No --file: use stdin (heredoc) or inline args
-  const nonFlagArgs = args.filter((a, i) => a !== '--file' && args[i - 1] !== '--file');
-  return nonFlagArgs.length > 0 ? nonFlagArgs.join(' ') : readStdin();
-}
-
 if (isNew) {
   // New output mode
   const content    = resolveContent(rest);
   const timestamp  = generateTimestamp();
   const outputPath = resolveNewPath(baseName, timestamp);
 
-  fs.writeFileSync(outputPath, content, 'utf-8');
+  writeToFile(outputPath, content);
 
   const relativePath = path.relative(process.cwd(), outputPath).replace(/\\/g, '/');
   console.log(`[write-report] ${relativePath}`);
@@ -125,7 +101,7 @@ if (isNew) {
     process.exit(1);
   }
 
-  fs.appendFileSync(targetPath, content, 'utf-8');
+  appendToFile(targetPath, content);
 
   const relativePath = path.relative(process.cwd(), targetPath).replace(/\\/g, '/');
   console.log(`[write-report] ${relativePath} (appended)`);

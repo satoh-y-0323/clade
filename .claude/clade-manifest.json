@@ -68,6 +68,7 @@
       "record-approval.js",
       "statusline.js",
       "stop.js",
+      "write-file.js",
       "write-report.js"
     ],
     "rules": [
