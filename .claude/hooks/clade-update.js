@@ -598,6 +598,13 @@ async function runCheckMode(options = {}) {
 
 /**
  * --apply モードのメイン処理
+ *
+ * 二段階実行方式:
+ *   Stage 1（本関数）: zip ダウンロード → 新 clade-update.js をディスクにコピー → 新スクリプトを別プロセスで起動
+ *   Stage 2（runApplyFilesMode）: 新スクリプトで全管理ファイルをコピー → コミット
+ *
+ * これにより、clade-update.js 自身に新しいハンドラが追加されても
+ * 同一実行内で新コードが使われる。
  */
 async function runApplyMode() {
   const projectRoot = getProjectRoot();
@@ -618,8 +625,6 @@ async function runApplyMode() {
 
   const commitResult = runGit(['commit', '-m', backupMessage]);
   if (commitResult.status !== 0) {
-    // 変更がない場合も考慮（--allow-empty は使わない）
-    // コミットがスキップされた場合（nothing to commit）は無視
     if (!commitResult.stdout.includes('nothing to commit') &&
         !commitResult.stderr.includes('nothing to commit')) {
       process.stderr.write(`バックアップコミットに失敗しました: ${commitResult.stderr}\n`);
@@ -632,85 +637,32 @@ async function runApplyMode() {
   // 3. リリースアセットをダウンロードして展開
   const temporaryDir = fs.mkdtempSync(path.join(os.tmpdir(), 'clade-update-'));
 
-  let markerMissing = false;
-
   try {
     const zipBuffer = await httpsDownload(zipballUrl, extraHeaders);
     await extractZip(zipBuffer, temporaryDir);
-
     const releaseDir = findReleaseDir(temporaryDir);
 
-    // 4. マニフェストを読む
-    const manifestPath = path.join(projectRoot, '.claude', 'clade-manifest.json');
-    if (!fs.existsSync(manifestPath)) {
-      throw new Error(`clade-manifest.json が見つかりません: ${manifestPath}`);
-    }
-    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-
-    // 5. 日本語版ファイルのコピー
-    copyFilesFromManifest(manifest, releaseDir, projectRoot, false);
-
-    // 6. 英語版ファイルのコピー（templates/en/.claude が存在する場合のみ）
-    const enTemplateDir = path.join(projectRoot, 'templates', 'en', '.claude');
-    const hasEnTemplate = fs.existsSync(enTemplateDir);
-    if (hasEnTemplate) {
-      copyFilesFromManifest(manifest, releaseDir, projectRoot, true);
+    // 4. 新しい clade-update.js を先にディスクへコピー
+    //    スポーンする子プロセスが新コードを読み込めるようにする
+    const newScriptSrc = path.join(releaseDir, '.claude', 'hooks', 'clade-update.js');
+    const currentScriptPath = path.resolve(__dirname, 'clade-update.js');
+    if (fs.existsSync(newScriptSrc)) {
+      fs.copyFileSync(newScriptSrc, currentScriptPath);
     }
 
-    // 7. ja_only ファイルのコピー
-    copyJaOnlyFiles(manifest, releaseDir, projectRoot);
+    // 5. 新スクリプトを別プロセスで起動してファイルコピーを実行（Stage 2）
+    const child = spawnSync(
+      'node',
+      [currentScriptPath, '--apply-files', releaseDir, latestVersion],
+      { stdio: 'inherit', cwd: projectRoot }
+    );
 
-    // 8. en_only ファイルのコピー（templates/en/.claude が存在する場合のみ）
-    if (hasEnTemplate) {
-      copyEnOnlyFiles(manifest, releaseDir, projectRoot);
-    }
-
-    // 9. CLAUDE.md のマーカー区間更新（日本語版）
-    const localClaudeMdPath = path.join(projectRoot, '.claude', 'CLAUDE.md');
-    const releaseClaudeMdPath = path.join(releaseDir, '.claude', 'CLAUDE.md');
-    const jaResult = updateClaudeMdMarkerSection(localClaudeMdPath, releaseClaudeMdPath);
-    if (jaResult.markerMissing) {
-      markerMissing = true;
-    }
-
-    // 10. CLAUDE.md のマーカー区間更新（英語版、templates/en/.claude が存在する場合のみ）
-    if (hasEnTemplate) {
-      const localEnClaudeMdPath = path.join(projectRoot, 'templates', 'en', '.claude', 'CLAUDE.md');
-      const releaseEnClaudeMdPath = path.join(
-        releaseDir,
-        'templates',
-        'en',
-        '.claude',
-        'CLAUDE.md'
-      );
-      const enResult = updateClaudeMdMarkerSection(localEnClaudeMdPath, releaseEnClaudeMdPath);
-      if (enResult.markerMissing) {
-        markerMissing = true;
-      }
-    }
-
-    // 11. VERSION ファイルを更新
-    const versionPath = path.join(projectRoot, '.claude', 'VERSION');
-    fs.writeFileSync(versionPath, latestVersion + '\n', 'utf8');
-
-    // 12. マニフェスト自体もリリース版でコピー（オプション）
-    const releaseManifestPath = path.join(releaseDir, '.claude', 'clade-manifest.json');
-    if (fs.existsSync(releaseManifestPath)) {
-      copyFile(releaseManifestPath, manifestPath);
-    }
-
-    // 13. 完了コミット
-    runGit(['add', '-A']);
-    runGit(['commit', '-m', `chore: update clade to ${latestVersion}`]);
-
-    // 14. マーカーが存在しない場合は stderr に警告
-    if (markerMissing) {
-      process.stderr.write(JSON.stringify({ marker_missing: true }) + '\n');
+    if (child.status !== 0) {
+      throw new Error(`ファイルコピープロセスが失敗しました (exit code: ${child.status})`);
     }
 
     process.stdout.write(`clade を ${latestVersion} に更新しました\n`);
   } catch (error) {
-    // エラー時はロールバック（バックアップコミットが作成された場合のみ）
     process.stderr.write(`更新中にエラーが発生しました: ${error.message}\n`);
     if (backupCommitCreated) {
       process.stderr.write('バックアップコミットに戻しています...\n');
@@ -718,7 +670,6 @@ async function runApplyMode() {
     }
     process.exit(1);
   } finally {
-    // 一時ディレクトリを削除
     try {
       fs.rmSync(temporaryDir, { recursive: true, force: true });
     } catch (cleanupError) {
@@ -726,6 +677,82 @@ async function runApplyMode() {
         `警告: 一時ディレクトリの削除に失敗しました: ${temporaryDir}\n手動で削除してください。\n`
       );
     }
+  }
+}
+
+// ============================================================
+// Mode: --apply-files (internal, spawned by --apply)
+// ============================================================
+
+/**
+ * --apply-files モードのメイン処理
+ * --apply から新しい clade-update.js を経由して呼び出される内部モード。
+ * リリース版のマニフェストを使って全管理ファイルをコピーし、コミットする。
+ * @param {string} releaseDir - 展開されたリリースのルートディレクトリ
+ * @param {string} latestVersion - リリースバージョン
+ */
+async function runApplyFilesMode(releaseDir, latestVersion) {
+  const projectRoot = getProjectRoot();
+  let markerMissing = false;
+
+  try {
+    // リリース版のマニフェストを読む（新しいセクション定義を使用するため）
+    const releaseManifestPath = path.join(releaseDir, '.claude', 'clade-manifest.json');
+    if (!fs.existsSync(releaseManifestPath)) {
+      throw new Error(`リリース版の clade-manifest.json が見つかりません: ${releaseManifestPath}`);
+    }
+    const manifest = JSON.parse(fs.readFileSync(releaseManifestPath, 'utf8'));
+
+    // 日本語版ファイルのコピー
+    copyFilesFromManifest(manifest, releaseDir, projectRoot, false);
+
+    // 英語版ファイルのコピー（templates/en/.claude が存在する場合のみ）
+    const enTemplateDir = path.join(projectRoot, 'templates', 'en', '.claude');
+    const hasEnTemplate = fs.existsSync(enTemplateDir);
+    if (hasEnTemplate) {
+      copyFilesFromManifest(manifest, releaseDir, projectRoot, true);
+    }
+
+    // ja_only / en_only ファイルのコピー
+    copyJaOnlyFiles(manifest, releaseDir, projectRoot);
+    if (hasEnTemplate) {
+      copyEnOnlyFiles(manifest, releaseDir, projectRoot);
+    }
+
+    // CLAUDE.md のマーカー区間更新（日本語版）
+    const localClaudeMdPath = path.join(projectRoot, '.claude', 'CLAUDE.md');
+    const releaseClaudeMdPath = path.join(releaseDir, '.claude', 'CLAUDE.md');
+    const jaResult = updateClaudeMdMarkerSection(localClaudeMdPath, releaseClaudeMdPath);
+    if (jaResult.markerMissing) markerMissing = true;
+
+    // CLAUDE.md のマーカー区間更新（英語版）
+    if (hasEnTemplate) {
+      const localEnClaudeMdPath = path.join(projectRoot, 'templates', 'en', '.claude', 'CLAUDE.md');
+      const releaseEnClaudeMdPath = path.join(releaseDir, 'templates', 'en', '.claude', 'CLAUDE.md');
+      const enResult = updateClaudeMdMarkerSection(localEnClaudeMdPath, releaseEnClaudeMdPath);
+      if (enResult.markerMissing) markerMissing = true;
+    }
+
+    // VERSION ファイルを更新
+    const versionPath = path.join(projectRoot, '.claude', 'VERSION');
+    fs.writeFileSync(versionPath, latestVersion + '\n', 'utf8');
+
+    // マニフェストをリリース版でコピー
+    const manifestPath = path.join(projectRoot, '.claude', 'clade-manifest.json');
+    copyFile(releaseManifestPath, manifestPath);
+
+    // 完了コミット
+    runGit(['add', '-A']);
+    runGit(['commit', '-m', `chore: update clade to ${latestVersion}`]);
+
+    if (markerMissing) {
+      process.stderr.write(JSON.stringify({ marker_missing: true }) + '\n');
+    }
+
+    process.exit(0);
+  } catch (error) {
+    process.stderr.write(`ファイルコピー中にエラーが発生しました: ${error.message}\n`);
+    process.exit(1);
   }
 }
 
@@ -793,6 +820,17 @@ if (mode === '--check') {
     process.stderr.write(`エラー: ${error.message}\n`);
     process.exit(1);
   });
+} else if (mode === '--apply-files') {
+  const releaseDir = args[1];
+  const latestVersion = args[2];
+  if (!releaseDir || !latestVersion) {
+    process.stderr.write('使用方法: node clade-update.js --apply-files <releaseDir> <version>\n');
+    process.exit(1);
+  }
+  runApplyFilesMode(releaseDir, latestVersion).catch((error) => {
+    process.stderr.write(`エラー: ${error.message}\n`);
+    process.exit(1);
+  });
 } else if (mode === '--rollback') {
   try {
     runRollbackMode();
@@ -805,6 +843,7 @@ if (mode === '--check') {
     `使用方法:
   node .claude/hooks/clade-update.js --check
   node .claude/hooks/clade-update.js --apply
+  node .claude/hooks/clade-update.js --apply-files <releaseDir> <version>
   node .claude/hooks/clade-update.js --rollback
 `
   );

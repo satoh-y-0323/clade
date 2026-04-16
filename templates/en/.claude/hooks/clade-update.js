@@ -430,6 +430,16 @@ async function runCheckMode(options = {}) {
 // Mode: --apply
 // ============================================================
 
+/**
+ * --apply mode main process
+ *
+ * Two-stage execution:
+ *   Stage 1 (this function): Download zip → copy new clade-update.js to disk → spawn new process
+ *   Stage 2 (runApplyFilesMode): New script copies all managed files → commit
+ *
+ * This ensures that even when new handlers are added to clade-update.js itself,
+ * the new code is used within the same update run.
+ */
 async function runApplyMode() {
   const projectRoot = getProjectRoot();
 
@@ -461,48 +471,28 @@ async function runApplyMode() {
   // 3. Download and extract release asset
   const temporaryDir = fs.mkdtempSync(path.join(os.tmpdir(), 'clade-update-'));
 
-  let markerMissing = false;
-
   try {
     const zipBuffer = await httpsDownload(zipballUrl, extraHeaders);
     await extractZip(zipBuffer, temporaryDir);
-
     const releaseDir = findReleaseDir(temporaryDir);
 
-    // 4. Read manifest from the project
-    const manifestPath = path.join(projectRoot, '.claude', 'clade-manifest.json');
-    if (!fs.existsSync(manifestPath)) {
-      throw new Error(`clade-manifest.json not found: ${manifestPath}`);
-    }
-    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-
-    // 5. Copy English template files: release/templates/en/.claude/ → project/.claude/
-    copyFilesFromManifest(manifest, releaseDir, projectRoot);
-
-    // 6. Update CLAUDE.md marker section from English template
-    const localClaudeMdPath   = path.join(projectRoot, '.claude', 'CLAUDE.md');
-    const releaseClaudeMdPath = path.join(releaseDir, RELEASE_SRC_PREFIX, 'CLAUDE.md');
-    const result = updateClaudeMdMarkerSection(localClaudeMdPath, releaseClaudeMdPath);
-    if (result.markerMissing) {
-      markerMissing = true;
+    // 4. Copy new clade-update.js to disk first (English edition)
+    //    so the spawned child process loads the new code
+    const newScriptSrc = path.join(releaseDir, RELEASE_SRC_PREFIX, 'hooks', 'clade-update.js');
+    const currentScriptPath = path.resolve(__dirname, 'clade-update.js');
+    if (fs.existsSync(newScriptSrc)) {
+      fs.copyFileSync(newScriptSrc, currentScriptPath);
     }
 
-    // 7. Update VERSION file
-    const versionPath = path.join(projectRoot, '.claude', 'VERSION');
-    fs.writeFileSync(versionPath, latestVersion + '\n', 'utf8');
+    // 5. Spawn new script in a separate process to copy files (Stage 2)
+    const child = spawnSync(
+      'node',
+      [currentScriptPath, '--apply-files', releaseDir, latestVersion],
+      { stdio: 'inherit', cwd: projectRoot }
+    );
 
-    // 8. Update clade-manifest.json from English template if available
-    const releaseManifestPath = path.join(releaseDir, RELEASE_SRC_PREFIX, 'clade-manifest.json');
-    if (fs.existsSync(releaseManifestPath)) {
-      copyFile(releaseManifestPath, manifestPath);
-    }
-
-    // 9. Completion commit
-    runGit(['add', '-A']);
-    runGit(['commit', '-m', `chore: update clade to ${latestVersion}`]);
-
-    if (markerMissing) {
-      process.stderr.write(JSON.stringify({ marker_missing: true }) + '\n');
+    if (child.status !== 0) {
+      throw new Error(`File copy process failed (exit code: ${child.status})`);
     }
 
     process.stdout.write(`clade updated to ${latestVersion}\n`);
@@ -521,6 +511,61 @@ async function runApplyMode() {
         `Warning: failed to remove temp directory: ${temporaryDir}\nPlease remove it manually.\n`
       );
     }
+  }
+}
+
+// ============================================================
+// Mode: --apply-files (internal, spawned by --apply)
+// ============================================================
+
+/**
+ * --apply-files mode main process
+ * Internal mode called by --apply via the new clade-update.js.
+ * Reads the manifest from the release and copies all managed files, then commits.
+ * @param {string} releaseDir - Root directory of the extracted release
+ * @param {string} latestVersion - Release version
+ */
+async function runApplyFilesMode(releaseDir, latestVersion) {
+  const projectRoot = getProjectRoot();
+  let markerMissing = false;
+
+  try {
+    // Read manifest from the release (to use new section definitions)
+    const releaseManifestPath = path.join(releaseDir, RELEASE_SRC_PREFIX, 'clade-manifest.json');
+    if (!fs.existsSync(releaseManifestPath)) {
+      throw new Error(`Release clade-manifest.json not found: ${releaseManifestPath}`);
+    }
+    const manifest = JSON.parse(fs.readFileSync(releaseManifestPath, 'utf8'));
+
+    // Copy English template files: release/templates/en/.claude/ → project/.claude/
+    copyFilesFromManifest(manifest, releaseDir, projectRoot);
+
+    // Update CLAUDE.md marker section from English template
+    const localClaudeMdPath   = path.join(projectRoot, '.claude', 'CLAUDE.md');
+    const releaseClaudeMdPath = path.join(releaseDir, RELEASE_SRC_PREFIX, 'CLAUDE.md');
+    const result = updateClaudeMdMarkerSection(localClaudeMdPath, releaseClaudeMdPath);
+    if (result.markerMissing) markerMissing = true;
+
+    // Update VERSION file
+    const versionPath = path.join(projectRoot, '.claude', 'VERSION');
+    fs.writeFileSync(versionPath, latestVersion + '\n', 'utf8');
+
+    // Update clade-manifest.json from release
+    const manifestPath = path.join(projectRoot, '.claude', 'clade-manifest.json');
+    copyFile(releaseManifestPath, manifestPath);
+
+    // Completion commit
+    runGit(['add', '-A']);
+    runGit(['commit', '-m', `chore: update clade to ${latestVersion}`]);
+
+    if (markerMissing) {
+      process.stderr.write(JSON.stringify({ marker_missing: true }) + '\n');
+    }
+
+    process.exit(0);
+  } catch (error) {
+    process.stderr.write(`Error copying files: ${error.message}\n`);
+    process.exit(1);
   }
 }
 
@@ -578,6 +623,17 @@ if (mode === '--check') {
     process.stderr.write(`Error: ${error.message}\n`);
     process.exit(1);
   });
+} else if (mode === '--apply-files') {
+  const releaseDir = args[1];
+  const latestVersion = args[2];
+  if (!releaseDir || !latestVersion) {
+    process.stderr.write('Usage: node clade-update.js --apply-files <releaseDir> <version>\n');
+    process.exit(1);
+  }
+  runApplyFilesMode(releaseDir, latestVersion).catch((error) => {
+    process.stderr.write(`Error: ${error.message}\n`);
+    process.exit(1);
+  });
 } else if (mode === '--rollback') {
   try {
     runRollbackMode();
@@ -590,6 +646,7 @@ if (mode === '--check') {
     `Usage:
   node .claude/hooks/clade-update.js --check
   node .claude/hooks/clade-update.js --apply
+  node .claude/hooks/clade-update.js --apply-files <releaseDir> <version>
   node .claude/hooks/clade-update.js --rollback
 `
   );
