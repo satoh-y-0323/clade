@@ -28,15 +28,32 @@ If no requirements report exists (starting fresh with architect), proceed direct
 
 ## Report Output and Approval Flow
 1. Output the report using the Bash tool (the actual file path is returned):
+
+   **Standard size (recommended)**: single heredoc
    ```
    node .claude/hooks/write-report.js architecture-report new <<'CLADE_REPORT_EOF'
 {full report content}
 CLADE_REPORT_EOF
    → Output example: [write-report] .claude/reports/architecture-report-20260401-143022.md
    ```
-   > **Heredoc syntax note**: Write `CLADE_REPORT_EOF` at the **start of the line (no indentation)**.
-   > If `CLADE_REPORT_EOF` appears alone on a line within the content, the heredoc terminates early — do not include the terminator string in the content.
-   > Since `<<'CLADE_REPORT_EOF'` uses single quotes, special characters (`` ` ``, `$`, `'`, etc.) in the content are treated literally and require no escaping.
+   > **Syntax note**: Write `CLADE_REPORT_EOF` at the **start of the line (no indentation)**. Do not include the terminator string as a standalone line in the content.
+
+   **Large reports**: append mode for split output
+   ```
+   # Section 1 (create new → note the filename)
+   node .claude/hooks/write-report.js architecture-report new <<'CLADE_REPORT_EOF'
+{opening sections (overview, architecture diagram, etc.)}
+CLADE_REPORT_EOF
+   # → e.g.: [write-report] .claude/reports/architecture-report-20260401-143022.md
+
+   # Section 2+ (append)
+   node .claude/hooks/write-report.js architecture-report append architecture-report-20260401-143022.md <<'CLADE_REPORT_EOF'
+{next section}
+CLADE_REPORT_EOF
+   ```
+
+   **⚠️ If Bash fails with a permission error (last resort)**: Never give up silently.
+   Output the full report content inline and end with: "Bash write failed. Please save the above content to `.claude/reports/architecture-report-{timestamp}.md` using the Write tool."
 
 2. Note the output file path.
 

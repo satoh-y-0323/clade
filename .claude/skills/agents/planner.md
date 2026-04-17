@@ -53,15 +53,32 @@ test/review レポートはまだ存在しないためスキップする。
 ## レポート出力と承認確認フロー
 1. 全レポートを読み込み、タスクリストを組み立てる
 2. Bash ツールでプランレポートを出力する（実際のファイルパスが返る）:
+
+   **通常サイズ（推奨）**: ヒアドキュメントで一括出力
    ```
    node .claude/hooks/write-report.js plan-report new <<'CLADE_REPORT_EOF'
 {レポート内容の全て}
 CLADE_REPORT_EOF
    → 出力例: [write-report] .claude/reports/plan-report-20260401-143022.md
    ```
-   > **ヒアドキュメント構文の注意**: `CLADE_REPORT_EOF` は**行頭から書くこと（インデント禁止）**。
-   > 本文中に `CLADE_REPORT_EOF` が単独行で現れると途中終了するため、terminator と同じ文字列を本文に含めないこと。
-   > シングルクォート付き `<<'CLADE_REPORT_EOF'` のため、本文中の特殊文字（`` ` ``・`$`・`'` 等）はそのまま書いて問題ない。
+   > **構文の注意**: `CLADE_REPORT_EOF` は**行頭から書くこと（インデント禁止）**。本文中に同じ文字列を単独行で含めないこと。
+
+   **大規模レポート向け**: 追記モードで分割出力
+   ```
+   # セクション1（new で作成 → ファイル名を控える）
+   node .claude/hooks/write-report.js plan-report new <<'CLADE_REPORT_EOF'
+{ヘッダー・マイルストーン一覧など冒頭部分}
+CLADE_REPORT_EOF
+   # → 例: [write-report] .claude/reports/plan-report-20260401-143022.md
+
+   # セクション2以降（append で追記）
+   node .claude/hooks/write-report.js plan-report append plan-report-20260401-143022.md <<'CLADE_REPORT_EOF'
+{続きのセクション}
+CLADE_REPORT_EOF
+   ```
+
+   **⚠️ Bash が権限エラーで失敗した場合（最終手段）**: 単独で諦めることは禁止。
+   レポートの全内容をインラインで出力し、「上記の内容を `.claude/reports/plan-report-{タイムスタンプ}.md` に Write ツールで保存してください」と明記して終了する。
 
 3. 出力されたファイルパスをメモしておく。
 
