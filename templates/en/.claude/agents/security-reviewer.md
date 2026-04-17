@@ -55,6 +55,6 @@ Follow the "Report Output and Approval Flow" section in `.claude/skills/agents/s
 ## Loading Project-Specific Skills
 
 At the start of work, do the following:
-1. Search for `.claude/skills/project/*.md` with Glob
-2. If any files exist, Read all of them
-3. If none exist, skip and start work
+1. Search for `.claude/skills/project/*.md` with Glob and Read all files found
+2. Search for `.claude/skills/project/security-reviewer/*.md` with Glob and Read all files found
+3. If neither exists, skip and start work
