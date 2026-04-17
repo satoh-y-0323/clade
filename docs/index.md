@@ -83,6 +83,10 @@ VS Code 拡張には現在既知のバグがあり、プロジェクトレベル
 
 ## 最近の更新
 
+### [v1.17.1] - 2026-04-17
+
+`hook-utils.js` に `isWorktree()` を追加。worktree 内から実行された場合は `stop.js`・`pre-compact.js` が即時終了するよう修正。worktree エージェントがメインリポジトリのセッションファイルを上書きしてしまう問題を根本解決。
+
 ### [v1.17.0] - 2026-04-17
 
 worktree 並列開発の権限設定を大幅改善。`settings.local.json.example` の git 権限パターンを個別化し、`cd && git` 複合コマンドの許可・`.claude/` 配下への Write/Edit 権限を追加。merger エージェントの `cd /path && git ...` 禁止ルールを強調配置。`hook-utils.js` に `getProjectRoot()` を追加し、worktree 実行時にセッションファイルがメインリポジトリへ正しく書き込まれるよう修正。
@@ -90,10 +94,6 @@ worktree 並列開発の権限設定を大幅改善。`settings.local.json.examp
 ### [v1.16.7] - 2026-04-16
 
 SendMessage 継続フローの agentId 処理を改善。終了条件の修正・複数 agentId 行への対処・中断時の終了フロー追加など、対話型エージェントの信頼性を向上。doc-writer・mcp-setup・project-setup が複数の質問を一度に出力する問題も修正。
-
-### [v1.16.6] - 2026-04-16
-
-doc-writer・mcp-setup・project-setup のコマンドに SendMessage 継続フローを追加。ユーティリティエージェントでも複数ターンのヒアリング中に新しいエージェントを再スポーンしていた O(N²) トークン消費を O(N) に改善する。
 
 ### [v1.16.2] - 2026-04-16
 

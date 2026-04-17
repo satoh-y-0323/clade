@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.17.1] - 2026-04-17
+
+### Fix
+
+- `hook-utils.js` に `isWorktree()` を追加。`git rev-parse --git-dir` と `--git-common-dir` を比較し、worktree 内から実行されたと判定した場合は `stop.js`・`pre-compact.js` が即時終了するよう修正。worktree エージェントがメインリポジトリのセッションファイルを上書きしてしまう問題を根本解決
+
+---
+
 ## [v1.17.0] - 2026-04-17
 
 ### New
