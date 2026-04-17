@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // post-tool.js
 // Claude Code hook: PostToolUse
-// Bash コマンドの実行結果を bash-log.jsonl に記録する
+// Record Bash command execution results to bash-log.jsonl
 
 'use strict';
 const fs   = require('fs');
@@ -10,7 +10,7 @@ const { readHookInput } = require('./hook-utils');
 
 const hookInput = readHookInput();
 
-// Bash 以外は記録しない
+// Only record Bash
 if ((hookInput.tool_name || '') !== 'Bash') process.exit(0);
 
 const input        = hookInput.tool_input || {};
@@ -21,11 +21,11 @@ const session      = now.toISOString().slice(0, 10).replace(/-/g, '');
 
 const cmd = (input.command || '').slice(0, 300);
 
-// is_error の判定
+// Determine is_error
 const isError = toolResponse.is_error === true ||
                (typeof toolResponse.error === 'string' && toolResponse.error.length > 0);
 
-// 出力テキストの取得（最大 800 文字、改行を↵に変換して1行に収める）
+// Extract output text (up to 800 chars, collapse newlines to ↵ so it fits on one line)
 const responseStr = typeof toolResponse === 'string'
   ? toolResponse
   : (toolResponse.output || JSON.stringify(toolResponse));

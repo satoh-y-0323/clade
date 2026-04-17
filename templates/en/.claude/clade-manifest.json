@@ -1,6 +1,6 @@
 {
   "version": "1.17.3",
-  "language": "ja",
+  "language": "en",
   "managed_files": {
     "agents": [
       "architect.md",

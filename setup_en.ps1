@@ -9,6 +9,7 @@ param(
     [string]$ProjectPath = (Get-Location).Path
 )
 
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 

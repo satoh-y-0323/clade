@@ -1,22 +1,22 @@
 #!/usr/bin/env node
 // check-group-isolation.js
-// Claude Code hook: PreToolUse (worktree-developer 専用)
-// 並列グループのファイルオーナーシップ範囲外への書き込み・削除をブロック
+// Claude Code hook: PreToolUse (worktree-developer only)
+// Block writes / deletes that fall outside the parallel group's file ownership
 
 'use strict';
 const fs   = require('fs');
 const path = require('path');
 const { readHookInput } = require('./hook-utils');
 
-// ===== 入力読み込み =====
+// ===== Read input =====
 const hookInput = readHookInput();
 
 const toolName  = hookInput.tool_name || '';
 const toolInput = hookInput.tool_input || {};
 const cwd       = hookInput.cwd || process.cwd();
 
-// ===== worktree グループID の抽出 =====
-// group-config.json からグループIDを読む（isolation: "worktree" 対応）
+// ===== Extract the worktree group ID =====
+// Read the group ID from group-config.json (for isolation: "worktree")
 const normalizedCwd = cwd.replace(/\\/g, '/');
 const groupConfigPath = path.join(cwd, '.claude', 'group-config.json');
 let groupId;
@@ -24,9 +24,9 @@ try {
   const config = JSON.parse(fs.readFileSync(groupConfigPath, 'utf8'));
   groupId = config.groupId;
 } catch (_) {}
-if (!groupId) process.exit(0); // group-config.json がなければチェックしない
+if (!groupId) process.exit(0); // No group-config.json → skip the check
 
-// ===== チェック対象のファイルパスを取得 =====
+// ===== Collect file paths to check =====
 let targetFiles = [];
 
 if (toolName === 'Write' || toolName === 'Edit') {
@@ -35,10 +35,10 @@ if (toolName === 'Write' || toolName === 'Edit') {
 
 } else if (toolName === 'Bash') {
   const cmd = toolInput.command || '';
-  // rm コマンドのターゲットを簡易抽出（複雑なシェル構文は対象外）
+  // Lightly extract targets of rm commands (complex shell syntax is out of scope)
   const rmMatch = cmd.match(/\brm\s+(?:-[^\s]*\s+)*([^\s|&;<>]+(?:\s+[^\s|&;<>]+)*)/);
-  if (!rmMatch) process.exit(0); // rm でなければスキップ
-  // スペース区切りでファイルパスを分割（フラグ除外）
+  if (!rmMatch) process.exit(0); // Not rm → skip
+  // Split file paths on whitespace (drop flags)
   const args = rmMatch[1].split(/\s+/).filter(a => !a.startsWith('-'));
   targetFiles = args.filter(a => a.length > 0);
   if (targetFiles.length === 0) process.exit(0);
@@ -47,7 +47,7 @@ if (toolName === 'Write' || toolName === 'Edit') {
   process.exit(0);
 }
 
-// ===== plan-report から許可パターンを取得 =====
+// ===== Load allowed patterns from plan-report =====
 const reportsDir = path.join(cwd, '.claude', 'reports');
 let planReportContent = '';
 try {
@@ -57,28 +57,28 @@ try {
   if (files.length === 0) process.exit(0);
   planReportContent = fs.readFileSync(path.join(reportsDir, files[files.length - 1]), 'utf8');
 } catch (_) {
-  process.exit(0); // plan-report が読めなければチェックしない
+  process.exit(0); // Cannot read plan-report → skip the check
 }
 
-// YAML フロントマターを抽出
+// Extract YAML frontmatter
 const fmMatch = planReportContent.match(/^---\r?\n([\s\S]*?)\r?\n---/);
 if (!fmMatch) process.exit(0);
 
 const allowedPatterns = getGroupFiles(fmMatch[1], groupId);
 if (!allowedPatterns || allowedPatterns.length === 0) process.exit(0);
 
-// ===== 各ファイルパスをチェック =====
+// ===== Check each file path =====
 const normalizedCwdSlash = normalizedCwd.endsWith('/') ? normalizedCwd : normalizedCwd + '/';
 
 for (const rawPath of targetFiles) {
   let fp = rawPath.replace(/\\/g, '/');
 
-  // 絶対パスの場合は worktree root からの相対パスに変換
+  // For absolute paths, convert to paths relative to the worktree root
   if (path.isAbsolute(rawPath)) {
     if (fp.startsWith(normalizedCwdSlash)) {
       fp = fp.slice(normalizedCwdSlash.length);
     } else {
-      // worktree 外の絶対パスへの操作はブロック
+      // Operations on absolute paths outside the worktree are blocked
       block(rawPath, groupId, allowedPatterns, 'PATH_OUTSIDE_WORKTREE');
     }
   }
@@ -90,7 +90,7 @@ for (const rawPath of targetFiles) {
 
 process.exit(0);
 
-// ===== ヘルパー関数 =====
+// ===== Helper functions =====
 
 function getGroupFiles(frontmatterText, gid) {
   const lines = frontmatterText.split(/\r?\n/);
@@ -106,31 +106,31 @@ function getGroupFiles(frontmatterText, gid) {
     }
     if (!inParallelGroups) continue;
 
-    // 別のトップレベルキーに到達したら終了
+    // Stop once we reach another top-level key
     if (/^\S/.test(line)) break;
 
-    // 対象グループの開始
+    // Start of the target group
     if (line === `  ${gid}:`) {
       inTargetGroup = true;
       inFiles       = false;
       continue;
     }
 
-    // 別のグループに到達したら終了
+    // Stop once we reach another group
     if (inTargetGroup && /^  \S/.test(line) && line !== `  ${gid}:`) break;
 
     if (!inTargetGroup) continue;
 
-    // files: セクションの開始
+    // Start of the files: section
     if (line === '    files:') {
       inFiles = true;
       continue;
     }
 
-    // files: 配下の別キーに到達したら終了
+    // Stop once we reach another key under files:
     if (inFiles && /^    \S/.test(line) && !line.startsWith('      -')) break;
 
-    // ファイルパターンを収集
+    // Collect file patterns
     if (inFiles && line.startsWith('      - ')) {
       files.push(line.slice(8).trim());
     }
@@ -147,12 +147,12 @@ function matchGlob(filePath, pattern) {
   const normalized = filePath.replace(/\\/g, '/');
   const pat        = pattern.replace(/\\/g, '/');
 
-  // 特殊文字をエスケープしてから ** と * を変換
+  // Escape regex metacharacters, then expand ** and *
   const regexStr = pat
     .replace(/[.+^${}()|[\]]/g, '\\$&')
-    .replace(/\*\*/g, '\x00')   // ** を一時プレースホルダーに
-    .replace(/\*/g, '[^/]*')    // * は単一セグメント
-    .replace(/\x00/g, '.*');    // ** は任意パス
+    .replace(/\*\*/g, '\x00')   // temporarily stash **
+    .replace(/\*/g, '[^/]*')    // * → single path segment
+    .replace(/\x00/g, '.*');    // ** → any path
 
   return new RegExp('^' + regexStr + '$').test(normalized);
 }

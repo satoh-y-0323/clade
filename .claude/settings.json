@@ -6,6 +6,8 @@
     "allow": [
       "Bash(node .claude/hooks/write-file.js*)",
       "Bash(node **/.claude/hooks/write-file.js*)",
+      "Bash(node .claude/hooks/apply-diff.js*)",
+      "Bash(node **/.claude/hooks/apply-diff.js*)",
       "Bash(node .claude/hooks/write-report.js*)",
       "Bash(node **/.claude/hooks/write-report.js*)",
       "Bash(node .claude/hooks/record-approval.js*)",

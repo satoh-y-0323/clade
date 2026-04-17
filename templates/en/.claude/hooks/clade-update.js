@@ -359,6 +359,77 @@ function copyFilesFromManifest(manifest, releaseDir, projectRoot) {
 }
 
 /**
+ * Detect diffs for interactive files (settings.json / settings.local.json) and
+ * place <target>.new next to the target when there are differences.
+ * @param {object} manifest
+ * @param {string} releaseDir
+ * @param {string} projectRoot
+ * @returns {Array<{target: string, new: string|null, isNew: boolean}>}
+ */
+function processInteractiveFiles(manifest, releaseDir, projectRoot) {
+  const managed = manifest.managed_files;
+  const interactiveFiles = managed.interactive_files || [];
+  const diffs = [];
+
+  for (const entry of interactiveFiles) {
+    const sourceName = typeof entry === 'string' ? entry : entry.source;
+    const targetName = typeof entry === 'string' ? entry : entry.target;
+
+    const srcPath = path.join(releaseDir, RELEASE_SRC_PREFIX, sourceName);
+    if (!fs.existsSync(srcPath)) continue;
+
+    const targetPath = path.join(projectRoot, '.claude', targetName);
+    const newPath = targetPath + '.new';
+    const newContent = fs.readFileSync(srcPath, 'utf8');
+
+    if (!fs.existsSync(targetPath)) {
+      copyFile(srcPath, targetPath);
+      if (fs.existsSync(newPath)) {
+        try { fs.unlinkSync(newPath); } catch (_) {}
+      }
+      diffs.push({ target: targetPath, new: null, isNew: true });
+      continue;
+    }
+
+    const existingContent = fs.readFileSync(targetPath, 'utf8');
+    if (existingContent === newContent) {
+      if (fs.existsSync(newPath)) {
+        try { fs.unlinkSync(newPath); } catch (_) {}
+      }
+      continue;
+    }
+
+    ensureDirectory(path.dirname(newPath));
+    fs.writeFileSync(newPath, newContent, 'utf8');
+    diffs.push({ target: targetPath, new: newPath, isNew: false });
+  }
+
+  return diffs;
+}
+
+/**
+ * Copy protected files only when the target does not yet exist
+ * (memory/memory.json etc. are never overwritten to preserve user state).
+ * @param {object} manifest
+ * @param {string} releaseDir
+ * @param {string} projectRoot
+ */
+function processProtectedFiles(manifest, releaseDir, projectRoot) {
+  const managed = manifest.managed_files;
+  const protectedFiles = managed.protected_files || [];
+
+  for (const file of protectedFiles) {
+    const srcPath = path.join(releaseDir, RELEASE_SRC_PREFIX, file);
+    if (!fs.existsSync(srcPath)) continue;
+
+    const destPath = path.join(projectRoot, '.claude', file);
+    if (fs.existsSync(destPath)) continue;
+
+    copyFile(srcPath, destPath);
+  }
+}
+
+/**
  * Update only the CLADE marker section in CLAUDE.md.
  * Returns { markerMissing: boolean }.
  * @param {string} localClaudeMdPath
@@ -528,6 +599,7 @@ async function runApplyMode() {
 async function runApplyFilesMode(releaseDir, latestVersion) {
   const projectRoot = getProjectRoot();
   let markerMissing = false;
+  const interactiveDiffs = [];
 
   try {
     // Read manifest from the release (to use new section definitions)
@@ -540,6 +612,12 @@ async function runApplyFilesMode(releaseDir, latestVersion) {
     // Copy English template files: release/templates/en/.claude/ → project/.claude/
     copyFilesFromManifest(manifest, releaseDir, projectRoot);
 
+    // Interactive files: stage .new files for files with diffs
+    interactiveDiffs.push(...processInteractiveFiles(manifest, releaseDir, projectRoot));
+
+    // Protected files: only placed on first install, never overwritten
+    processProtectedFiles(manifest, releaseDir, projectRoot);
+
     // Update CLAUDE.md marker section from English template
     const localClaudeMdPath   = path.join(projectRoot, '.claude', 'CLAUDE.md');
     const releaseClaudeMdPath = path.join(releaseDir, RELEASE_SRC_PREFIX, 'CLAUDE.md');
@@ -550,13 +628,39 @@ async function runApplyFilesMode(releaseDir, latestVersion) {
     const versionPath = path.join(projectRoot, '.claude', 'VERSION');
     fs.writeFileSync(versionPath, latestVersion + '\n', 'utf8');
 
-    // Update clade-manifest.json from release
+    // Update clade-manifest.json from release, preserving local language value
     const manifestPath = path.join(projectRoot, '.claude', 'clade-manifest.json');
-    copyFile(releaseManifestPath, manifestPath);
+    let localLanguage = 'en';
+    if (fs.existsSync(manifestPath)) {
+      try {
+        const existing = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+        if (typeof existing.language === 'string') {
+          localLanguage = existing.language;
+        }
+      } catch (_) {
+        // keep default
+      }
+    }
+    const newManifest = JSON.parse(fs.readFileSync(releaseManifestPath, 'utf8'));
+    newManifest.language = localLanguage;
+    fs.writeFileSync(manifestPath, JSON.stringify(newManifest, null, 2) + '\n', 'utf8');
 
     // Completion commit
     runGit(['add', '-A']);
     runGit(['commit', '-m', `chore: update clade to ${latestVersion}`]);
+
+    // Emit result JSON on stdout (consumed by the /update command for the interactive loop)
+    const output = {
+      success: true,
+      version: latestVersion,
+      marker_missing: markerMissing,
+      interactive_diffs: interactiveDiffs.map((d) => ({
+        target: d.target,
+        new: d.new,
+        isNew: d.isNew,
+      })),
+    };
+    process.stdout.write(JSON.stringify(output) + '\n');
 
     if (markerMissing) {
       process.stderr.write(JSON.stringify({ marker_missing: true }) + '\n');

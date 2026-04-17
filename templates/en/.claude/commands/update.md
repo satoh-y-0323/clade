@@ -68,7 +68,10 @@ Do you want to apply the update?
 node .claude/hooks/clade-update.js --apply
 ```
 
-- **Success**: Tell the user "clade has been updated to `{latest_version}`."
+- **Success**:
+  1. The last line of stdout is JSON. Parse it and read the `interactive_diffs` array.
+  2. If `interactive_diffs` is empty or absent, tell the user "clade has been updated to `{latest_version}`." and finish.
+  3. If `interactive_diffs` has one or more entries, proceed to Step 5.
 - **Success but stderr contains `{"marker_missing":true}`**: Notify the user:
   "No CLADE markers were found in CLAUDE.md. The CLADE-managed section was not updated.
   Please manually add `<!-- CLADE:START -->` / `<!-- CLADE:END -->` markers."
@@ -80,7 +83,40 @@ An error occurred during the update. Do you want to roll back?
   [no]  Leave as is
 ```
 
-### Step 5: Rollback (on error only)
+### Step 5: Interactive diff loop
+
+Process each entry in the apply stdout's `interactive_diffs` array in order.
+Each entry has the following fields:
+
+- `target`: Path of the file to be updated
+- `new`: Path of the staged `.new` file (or `null` when there is no diff)
+- `isNew`: `true` when the target file was newly placed (no existing user file)
+
+For each entry:
+
+1. **If `new` is `null` or `isNew === true`**: Tell the user "`{target}` was placed as a new file." and move to the next entry.
+2. **If `new` is non-null**:
+   1. Use the Bash tool to display the diff:
+      ```bash
+      git diff --no-index --color=never "<target>" "<new>"
+      ```
+      Note: git returns exit code 1 when there are diffs. This is not an error — display the stdout contents.
+   2. Ask the user:
+      ```
+      {target} has changes. Overwrite with the contents of {new}?
+        [yes] Overwrite (the .new file will be deleted)
+        [no]  Do not overwrite (the .new file will remain; please merge it manually)
+      ```
+   3. **yes**: Run with the Bash tool:
+      ```bash
+      node .claude/hooks/apply-diff.js --target "<target>" --new "<new>"
+      ```
+      Tell the user "`{target}` was overwritten."
+   4. **no**: Tell the user "`{new}` has been kept. Please review its contents and merge them into `{target}` manually."
+
+Once all entries have been processed, tell the user "clade has been updated to `{latest_version}`." and finish.
+
+### Step 6: Rollback (on error only)
 
 If rollback is selected, run with the Bash tool:
 
@@ -96,3 +132,5 @@ node .claude/hooks/clade-update.js --rollback
 - The current state is automatically backed up as a git commit before updating
 - Files you added to `.claude/` will not be overwritten (only files registered in clade-manifest.json are updated)
 - The user-written section of CLAUDE.md (after `<!-- CLADE:END -->`) will not be modified
+- `settings.json` / `settings.local.json` may contain user-specific customizations, so diffs are confirmed interactively (Step 5)
+- `memory/memory.json` is never overwritten once it exists, to preserve your accumulated data

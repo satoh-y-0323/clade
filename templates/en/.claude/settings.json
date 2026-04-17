@@ -6,6 +6,8 @@
     "allow": [
       "Bash(node .claude/hooks/write-file.js*)",
       "Bash(node **/.claude/hooks/write-file.js*)",
+      "Bash(node .claude/hooks/apply-diff.js*)",
+      "Bash(node **/.claude/hooks/apply-diff.js*)",
       "Bash(node .claude/hooks/write-report.js*)",
       "Bash(node **/.claude/hooks/write-report.js*)",
       "Bash(node .claude/hooks/record-approval.js*)",
@@ -24,8 +26,10 @@
       "Bash(gh run view*)",
       "Bash(gh repo view*)",
       "Bash(gh auth status*)",
-      "Write(.claude/group-config.json)",
-      "Write(**/.claude/group-config.json)",
+      "Read(**)",
+      "Glob(**)",
+      "Grep(**)",
+      "Write(**)",
       "Bash(cd * && git*)",
       "Bash(git -C *)",
       "Bash(git checkout*)",
@@ -84,17 +88,6 @@
           {
             "type": "command",
             "command": "node .claude/hooks/pre-compact.js"
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .claude/hooks/session-start.js"
           }
         ]
       }

@@ -1,258 +1,258 @@
-# /agent-workflow-builder コマンド
+# /agent-workflow-builder command
 
-ユーザーの業務をヒアリングし、その業務に特化したエージェント群を自動生成するメタエージェント。
-「Clade を使って Clade のエージェントを作る」再帰的な構造。
+A meta-agent that interviews the user about their work and auto-generates a set of agents tailored to it.
+A recursive structure: "use Clade to create Clade agents."
 
-## 概要
+## Overview
 
-4フェーズで動作する:
-1. **Phase 1: ヒアリング** — 業務・繰り返し作業・IN/OUT を 5〜6 問で聴取
-2. **Phase 2: ワークフロー設計** — Step ごとにエージェントを提案してユーザー確認
-3. **Phase 3: エージェントファイル生成** — 各 Step の `.md` ファイルを生成
-4. **Phase 4: CLAUDE.md 更新** — `## User Agents` セクションに追記
-
----
-
-## 起動時の判断
-
-まず Glob ツールで `.claude/reports/workflow-report-*.md` を検索する:
-
-- **ファイルが存在する場合**: 最新ファイルを Read して Phase 3 から再開する
-- **ファイルが存在しない場合**: Phase 1 から開始する
+Runs in 4 phases:
+1. **Phase 1: Interview** — Ask 5–6 questions about the work, recurring tasks, and IN/OUT
+2. **Phase 2: Workflow design** — Propose an agent for each step and confirm with the user
+3. **Phase 3: Agent file generation** — Generate a `.md` file for each step
+4. **Phase 4: Update CLAUDE.md** — Append to the `## User Agents` section
 
 ---
 
-## Phase 1: ヒアリング
+## Decision at startup
 
-以下の質問を **1問ずつ順番に** AskUserQuestion ツールで聴取する（全問を一度に聞かない）。
+First, use the Glob tool to search `.claude/reports/workflow-report-*.md`:
 
-### Q1: 職種・仕事の内容
+- **If a file exists**: Read the latest file and resume from Phase 3.
+- **If no file exists**: Start from Phase 1.
 
-```
-どんな仕事をされていますか？
-職種や担当業務を簡単に教えてください。
-（例: 営業事務、マーケター、人事担当、プロジェクトマネージャー など）
-```
+---
 
-### Q2: 繰り返し作業
+## Phase 1: Interview
 
-```
-毎日または毎週、繰り返している作業を教えてください。
-「毎週月曜に売上を集計して上司にメールする」のような具体的な作業が理想です。
-複数ある場合は、一番自動化したいものを選んでください。
-```
+Ask the following questions **one at a time, in order** via the AskUserQuestion tool (do not ask them all at once).
 
-### Q3: インプット（作業の開始点）
+### Q1: Role / nature of work
 
 ```
-その作業は何から始まりますか？「インプット」となるものを教えてください。
-（例: Excel ファイル、受信メール、Slack の通知、顧客からの依頼 など）
+What kind of work do you do?
+Briefly describe your role or main responsibilities.
+(e.g., sales admin, marketer, HR specialist, project manager, etc.)
 ```
 
-### Q4: アウトプット（作業の終点）
+### Q2: Recurring tasks
 
 ```
-作業が完了したとき、何を「成果物」として渡しますか？
-（例: 報告書をメールで送る、スプレッドシートを更新する、資料を保存する など）
+Please describe a task you repeat daily or weekly.
+A concrete task like "every Monday, tally sales and email the manager" is ideal.
+If there are several, choose the one you most want to automate.
 ```
 
-### Q5: 一番大変なステップ
+### Q3: Input (starting point of the task)
 
 ```
-その作業の中で、一番時間がかかる・大変だと感じるところはどこですか？
-（例: 情報を集めてまとめる部分、文章を考える部分、確認・チェックの部分 など）
+What does this task start from? Please describe its "input."
+(e.g., an Excel file, an incoming email, a Slack notification, a customer request, etc.)
 ```
 
-### Q6: 確認・承認のタイミング（任意）
+### Q4: Output (end point of the task)
 
 ```
-誰かに確認・承認をとるタイミングはありますか？
-（例: 上司に内容を確認してから送る、チームに共有してフィードバックをもらう など）
-なければ「なし」と答えてください。
+When the task is complete, what is the "deliverable" you hand off?
+(e.g., send a report by email, update a spreadsheet, save materials, etc.)
+```
+
+### Q5: The hardest step
+
+```
+Within this task, which part takes the most time or feels the hardest?
+(e.g., gathering and summarizing information, drafting text, review / checking, etc.)
+```
+
+### Q6: Confirmation / approval checkpoints (optional)
+
+```
+Are there any points where you need confirmation or approval from someone?
+(e.g., have a manager review the content before sending, share with the team for feedback, etc.)
+If there are none, answer "none."
 ```
 
 ---
 
-## Phase 2: ワークフロー設計
+## Phase 2: Workflow design
 
-Phase 1 の回答をもとに、以下の手順でワークフローを設計する。
+Based on the Phase 1 answers, design the workflow using the procedure below.
 
-### ステップの割り当て基準
+### Criteria for assigning steps
 
-ヒアリング内容を分析し、以下を参考にステップを決定する:
+Analyze the interview content and decide the steps, using the following as a reference:
 
-| 状況 | 役割カテゴリ | エージェント名（例） |
-|------|------------|------------------|
-| 情報の収集・整理が必要 | `収集` | agent-gatherer |
-| 文章・資料・データの生成が必要 | `作成` | agent-creator |
-| 内容の確認・品質チェックが必要 | `確認` | agent-checker |
-| 承認フローや最終調整が必要 | `仕上` | agent-finalizer |
-| 外部への送信・共有が必要 | `配布` | agent-distributor |
+| Situation | Role category | Example agent name |
+|-----------|--------------|-------------------|
+| Needs information gathering / organization | `gather` | agent-gatherer |
+| Needs generation of text / documents / data | `create` | agent-creator |
+| Needs content review / quality check | `check` | agent-checker |
+| Needs an approval flow or final polish | `finalize` | agent-finalizer |
+| Needs sending / sharing externally | `distribute` | agent-distributor |
 
-**ステップ数の目安**: 2〜5 ステップ（シンプルな業務は 2〜3、複雑な業務は 4〜5）
+**Target step count**: 2–5 steps (2–3 for simple work, 4–5 for complex work)
 
-エージェント名はユーザーの業務内容に合わせた名前にする:
-- 業務名が「売上報告」なら → `agent-sales-gatherer`, `agent-report-creator` のように
-- 汎用的な名前より、業務を表す具体的な名前を優先する
+Make agent names match the user's domain:
+- If the work is "sales report," use names like `agent-sales-gatherer`, `agent-report-creator`
+- Prefer concrete names that describe the work over generic ones
 
-### ワークフロー提案と確認ループ
+### Workflow proposal and confirmation loop
 
-AskUserQuestion ツールを使ってワークフローを提案し、「yes」が得られるまで修正・再提示を繰り返す:
+Use the AskUserQuestion tool to propose a workflow and iterate until the user answers "yes":
 
 ```
-ヒアリング内容をもとに、以下のワークフローを提案します。
+Based on your answers, here is the proposed workflow.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-作業名: {作業名（例: 週次売上報告ワークフロー）}
+Task name: {task name (e.g., Weekly Sales Report Workflow)}
 
-  Step 1. [収集] agent-{name}     → {このステップでやること}
-  Step 2. [作成] agent-{name}     → {このステップでやること}
-  Step 3. [確認] agent-{name}     → {このステップでやること}
+  Step 1. [gather]   agent-{name}  → {what this step does}
+  Step 2. [create]   agent-{name}  → {what this step does}
+  Step 3. [check]    agent-{name}  → {what this step does}
   ...
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-このワークフローで合っていますか？
-調整したい点があればお知らせください。（例: Step 3 はいらない、Step 2 と 3 を一緒にしたい）
-問題なければ「yes」と答えてください。
+Is this workflow correct?
+Let me know if you'd like any adjustments. (e.g., "Step 3 isn't needed," "merge Steps 2 and 3")
+Answer "yes" if it looks good.
 ```
 
-ユーザーから修正指示が来た場合はワークフローを更新して再提示する。
+If the user requests changes, update the workflow and present it again.
 
 ---
 
-## Phase 3: エージェントファイル生成
+## Phase 3: Agent file generation
 
-承認済みワークフローの各ステップに対応する `.md` ファイルを生成する。
+Generate a `.md` file for each step of the approved workflow.
 
-### 生成するファイル
+### Files to generate
 
-1. **各ステップのエージェント指示書** — `.claude/commands/agent-{name}.md`（ステップ数分）
-2. **統括コマンド** — `.claude/commands/{workflow-name}.md`
+1. **Agent instruction files for each step** — `.claude/commands/agent-{name}.md` (one per step)
+2. **Umbrella command** — `.claude/commands/{workflow-name}.md`
 
-### エージェント指示書のテンプレート
+### Template for agent instruction files
 
-既存の `interviewer`（ヒアリング構造）・`code-reviewer`（確認・指摘の構造）・`developer`（成果物生成の構造）をベースに、
-役割名とチェックリストだけ差し替えて生成する:
+Base them on the existing `interviewer` (interview structure), `code-reviewer` (review / finding structure), and `developer` (deliverable-generating structure) files, replacing only the role name and checklist:
 
 ```markdown
-# /agent-{name} コマンド
+# /agent-{name} command
 
-{役割の説明（1〜2文）}
+{Role description (1–2 sentences)}
 
-## 役割
-- **入力**: {前 Step からの引き継ぎ内容}
-- **出力**: {次 Step へ渡す成果物}
+## Role
+- **Input**: {hand-off content from the previous Step}
+- **Output**: {deliverable passed to the next Step}
 
-## 作業手順
+## Work steps
 
-1. {手順1}
-2. {手順2}
-3. {手順3}
+1. {step 1}
+2. {step 2}
+3. {step 3}
 
-## 完了条件
-- {チェック項目1}
-- {チェック項目2}
+## Completion criteria
+- {check item 1}
+- {check item 2}
 
-## 注意事項
-- {注意1}
+## Notes
+- {note 1}
 ```
 
-### 統括コマンドのテンプレート
+### Template for the umbrella command
 
 ```markdown
-# /{workflow-name} コマンド
+# /{workflow-name} command
 
-{作業名} を自動実行するワークフロー。
-各エージェントを順番に呼び出し、業務全体を完了させる。
+A workflow that automates {task name}.
+Invokes each agent in order to complete the whole task.
 
-## 実行順序
+## Execution order
 
-1. `/agent-{step1-name}` — {Step 1 の説明}
-2. `/agent-{step2-name}` — {Step 2 の説明}
+1. `/agent-{step1-name}` — {description of Step 1}
+2. `/agent-{step2-name}` — {description of Step 2}
 ...
 
-## 使い方
+## Usage
 
-`/{workflow-name}` を実行すると、上記の順にエージェントが起動する。
-各 Step 完了後に確認を取りながら進む。
+Running `/{workflow-name}` launches the agents in the order above.
+The flow waits for confirmation after each Step.
 ```
 
-各ファイルを Write ツールで生成する。生成完了後、生成したファイル一覧をユーザーに報告する。
+Create each file with the Write tool. When generation is complete, report the list of created files to the user.
 
 ---
 
-## Phase 4: CLAUDE.md 更新
+## Phase 4: Update CLAUDE.md
 
-`CLAUDE.md` の `## User Agents` セクションに生成したエージェントを追記する。
+Append the generated agents to the `## User Agents` section of `CLAUDE.md`.
 
-> **注意**: `## Available Agents` セクションは `<!-- CLADE:START -->` ～ `<!-- CLADE:END -->` 内にあり、
-> `/update` 実行時に上書きされる。ユーザー生成エージェントは必ず `## User Agents` セクションに追記すること。
+> **Note**: The `## Available Agents` section lives inside `<!-- CLADE:START -->` – `<!-- CLADE:END -->` and
+> is overwritten when `/update` runs. Always append user-generated agents under `## User Agents`.
 
-### 追記フォーマット
+### Append format
 
 ```markdown
-### {作業名}ワークフロー（自動生成）
-- `/{workflow-name}`              → {作業名} を実行するワークフロー統括コマンド
-- `/agent-{step1-name}`           → {Step 1 の役割}
-- `/agent-{step2-name}`           → {Step 2 の役割}
+### {task name} workflow (auto-generated)
+- `/{workflow-name}`              → Umbrella command that runs the {task name} workflow
+- `/agent-{step1-name}`           → {Step 1 role}
+- `/agent-{step2-name}`           → {Step 2 role}
 ```
 
-Edit ツールで `CLAUDE.md` の `## User Agents` セクション内の
-`<!-- /agent-workflow-builder によって自動追記される -->` コメントの直後に追記する。
+Use the Edit tool to insert the text into `CLAUDE.md`, right after the
+`<!-- Automatically appended by /agent-workflow-builder -->` comment in the `## User Agents` section.
 
 ---
 
-## 完了報告
+## Completion report
 
-全フェーズ完了後、以下をユーザーに伝える:
+After all phases are complete, tell the user:
 
 ```
-✅ ワークフロービルダーが完了しました！
+✅ Workflow builder finished!
 
-生成したファイル:
-  - .claude/commands/agent-{name}.md × {N} 件
-  - .claude/commands/{workflow-name}.md（統括コマンド）
-  - CLAUDE.md 更新済み
+Generated files:
+  - .claude/commands/agent-{name}.md × {N}
+  - .claude/commands/{workflow-name}.md (umbrella command)
+  - CLAUDE.md updated
 
-使い方:
-  /{workflow-name} を実行すると、{作業名} のフローが自動で動き始めます。
+Usage:
+  Running /{workflow-name} starts the {task name} flow automatically.
 
-次のステップ:
-  各エージェントの指示書（.claude/commands/agent-{name}.md）を開いて、
-  「手順」や「完了条件」をあなたの業務に合わせて微調整するとより精度が上がります。
+Next steps:
+  Open each agent instruction file (.claude/commands/agent-{name}.md)
+  and fine-tune "Work steps" and "Completion criteria" to fit your work —
+  this makes the agents noticeably more accurate.
 ```
 
 ---
 
-## ワークフロー設計レポートの出力（Phase 2 完了時）
+## Workflow design report output (end of Phase 2)
 
-Phase 2 の承認が得られたら、以下のレポートを出力して Phase 3 に備える:
+Once Phase 2 is approved, write the following report to prepare for Phase 3:
 
 ```bash
 node .claude/hooks/write-report.js workflow-report new <<'REPORT'
-# ワークフロー設計レポート
+# Workflow Design Report
 
-## 作業名
-{作業名}
+## Task name
+{task name}
 
-## ヒアリング結果
-- 職種・仕事: {Q1の回答}
-- 繰り返し作業: {Q2の回答}
-- インプット: {Q3の回答}
-- アウトプット: {Q4の回答}
-- 一番大変なステップ: {Q5の回答}
-- 確認・承認: {Q6の回答}
+## Interview results
+- Role / work: {answer to Q1}
+- Recurring tasks: {answer to Q2}
+- Input: {answer to Q3}
+- Output: {answer to Q4}
+- Hardest step: {answer to Q5}
+- Confirmation / approval: {answer to Q6}
 
-## 承認済みワークフロー
+## Approved workflow
 
-| Step | エージェント名 | 役割カテゴリ | やること |
-|------|--------------|------------|---------|
-| 1    | agent-{name} | {カテゴリ}  | {やること} |
-| 2    | agent-{name} | {カテゴリ}  | {やること} |
+| Step | Agent name   | Role category | What it does |
+|------|--------------|---------------|--------------|
+| 1    | agent-{name} | {category}    | {what it does} |
+| 2    | agent-{name} | {category}    | {what it does} |
 
-## 統括コマンド名
+## Umbrella command name
 /{workflow-name}
 REPORT
 ```
 
-レポート出力後、そのまま Phase 3 へ進む（ユーザーへの確認は不要）。
+After writing the report, proceed directly to Phase 3 (no user confirmation needed).

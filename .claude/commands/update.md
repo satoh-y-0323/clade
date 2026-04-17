@@ -68,7 +68,10 @@ node .claude/hooks/clade-update.js --check
 node .claude/hooks/clade-update.js --apply
 ```
 
-- **成功した場合**: 「clade を `{latest_version}` に更新しました。」と伝える。
+- **成功した場合**:
+  1. stdout の最終行は JSON 形式。パースして `interactive_diffs` 配列を取得する。
+  2. `interactive_diffs` が空または存在しない場合は、「clade を `{latest_version}` に更新しました。」と伝えて終了する。
+  3. `interactive_diffs` が1件以上ある場合は Step 5 へ進む。
 - **成功かつ stderr に `{"marker_missing":true}` が含まれる場合**: 以下を案内する:
   「CLAUDE.md に CLADE マーカーが見つかりませんでした。CLADE 管理セクションは更新されませんでした。
   手動で `<!-- CLADE:START -->` / `<!-- CLADE:END -->` マーカーを追加してください。」
@@ -80,7 +83,40 @@ node .claude/hooks/clade-update.js --apply
   [no]  このままにする
 ```
 
-### Step 5: ロールバック（エラー時のみ）
+### Step 5: 対話的な差分処理ループ
+
+apply の stdout JSON の `interactive_diffs` 配列を順番に処理する。
+各エントリは以下のフィールドを持つ:
+
+- `target`: 更新対象のファイルパス
+- `new`: 新バージョンが配置された `.new` ファイルのパス（差分がない場合は `null`）
+- `isNew`: `true` の場合は新規配置済み（ユーザーの既存ファイルが存在しなかった）
+
+各エントリに対して以下を行う:
+
+1. **`new` が `null` または `isNew === true` の場合**: 「`{target}` を新規配置しました。」と伝えて次のエントリへ。
+2. **`new` が非 null の場合**:
+   1. Bash ツールで差分を表示する:
+      ```bash
+      git diff --no-index --color=never "<target>" "<new>"
+      ```
+      ※ 差分がある場合 git は exit code 1 を返す。これはエラーではないので stdout の内容を表示する。
+   2. ユーザーに確認を取る:
+      ```
+      {target} に差分があります。{new} の内容で上書きしますか？
+        [yes] 上書きする（.new ファイルは削除されます）
+        [no]  上書きしない（.new ファイルは残ります。手動でマージしてください）
+      ```
+   3. **yes の場合**: Bash ツールで以下を実行する:
+      ```bash
+      node .claude/hooks/apply-diff.js --target "<target>" --new "<new>"
+      ```
+      「`{target}` を上書きしました。」と伝える。
+   4. **no の場合**: 「`{new}` をそのまま残しました。内容を確認してから手動で `{target}` にマージしてください。」と伝える。
+
+すべてのエントリを処理し終えたら、「clade を `{latest_version}` に更新しました。」と伝えて終了する。
+
+### Step 6: ロールバック（エラー時のみ）
 
 ロールバックを選択した場合は Bash ツールで以下を実行する:
 
@@ -96,3 +132,5 @@ node .claude/hooks/clade-update.js --rollback
 - 更新前に現在の状態が自動でバックアップコミットされる
 - ユーザーが `.claude/` に追加したファイルは上書きされない（clade-manifest.json に登録されたファイルのみ更新）
 - CLAUDE.md のユーザー記述部分（`<!-- CLADE:END -->` 以降）は更新されない
+- `settings.json` / `settings.local.json` はユーザー独自の設定を含む可能性があるため、差分がある場合は対話で上書きを確認する（Step 5）
+- `memory/memory.json` はユーザーの蓄積データを壊さないよう、既にファイルが存在する場合は一切更新されない

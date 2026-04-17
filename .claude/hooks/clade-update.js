@@ -369,25 +369,27 @@ function findReleaseDir(extractDir) {
  * @param {object} manifest
  * @param {string} releaseDir - 展開されたリリースのルートディレクトリ
  * @param {string} projectRoot - プロジェクトルート
- * @param {boolean} isEnglish - 英語版テンプレート更新かどうか
+ * @param {boolean} sourceIsEnglish - リリース側の source が EN 版かどうか
+ * @param {boolean} targetIsEnglish - コピー先 target が EN 版（templates/en/.claude/）かどうか
  */
-function copyFilesFromManifest(manifest, releaseDir, projectRoot, isEnglish) {
+function copyFilesFromManifest(manifest, releaseDir, projectRoot, sourceIsEnglish, targetIsEnglish) {
   const managed = manifest.managed_files;
-  const prefix = isEnglish ? 'templates/en/' : '';
-  const releasePrefixBase = isEnglish ? 'templates/en/.claude/' : '.claude/';
+  const targetPrefix = targetIsEnglish ? 'templates/en/' : '';
+  const releasePrefixBase = sourceIsEnglish ? 'templates/en/.claude/' : '.claude/';
+  const jaOnlyList = managed.ja_only || [];
 
   // commands
   for (const file of managed.commands) {
-    // ja_only チェック: ja_only に含まれるファイルは英語版に配置しない
+    // ja_only チェック: source が EN の場合、ja_only は source に存在しないのでスキップ
     const jaOnlyKey = `commands/${file}`;
-    if (isEnglish && managed.ja_only.includes(jaOnlyKey)) {
+    if (sourceIsEnglish && jaOnlyList.includes(jaOnlyKey)) {
       continue;
     }
 
     const srcPath = path.join(releaseDir, `${releasePrefixBase}commands`, file);
     if (!fs.existsSync(srcPath)) continue;
 
-    const destPath = path.join(projectRoot, `${prefix}.claude/commands`, file);
+    const destPath = path.join(projectRoot, `${targetPrefix}.claude/commands`, file);
     copyFile(srcPath, destPath);
   }
 
@@ -398,7 +400,7 @@ function copyFilesFromManifest(manifest, releaseDir, projectRoot, isEnglish) {
     const srcPath = path.join(releaseDir, `${releasePrefixBase}hooks`, file);
     if (!fs.existsSync(srcPath)) continue;
 
-    const destPath = path.join(projectRoot, `${prefix}.claude/hooks`, file);
+    const destPath = path.join(projectRoot, `${targetPrefix}.claude/hooks`, file);
     copyFile(srcPath, destPath);
   }
 
@@ -407,47 +409,47 @@ function copyFilesFromManifest(manifest, releaseDir, projectRoot, isEnglish) {
     const srcPath = path.join(releaseDir, `${releasePrefixBase}rules`, file);
     if (!fs.existsSync(srcPath)) continue;
 
-    const destPath = path.join(projectRoot, `${prefix}.claude/rules`, file);
+    const destPath = path.join(projectRoot, `${targetPrefix}.claude/rules`, file);
     copyFile(srcPath, destPath);
   }
 
   // agents
   for (const file of (managed.agents || [])) {
     const jaOnlyKey = `agents/${file}`;
-    if (isEnglish && managed.ja_only.includes(jaOnlyKey)) continue;
+    if (sourceIsEnglish && jaOnlyList.includes(jaOnlyKey)) continue;
 
     const srcPath = path.join(releaseDir, `${releasePrefixBase}agents`, file);
     if (!fs.existsSync(srcPath)) continue;
 
-    const destPath = path.join(projectRoot, `${prefix}.claude/agents`, file);
+    const destPath = path.join(projectRoot, `${targetPrefix}.claude/agents`, file);
     copyFile(srcPath, destPath);
   }
 
-  // skills（トップレベル: .claude/skills/）
+  // skills（トップレベル: .claude/skills/。file にサブパスが含まれる場合あり）
   for (const file of (managed.skills || [])) {
     const jaOnlyKey = `skills/${file}`;
-    if (isEnglish && managed.ja_only.includes(jaOnlyKey)) continue;
+    if (sourceIsEnglish && jaOnlyList.includes(jaOnlyKey)) continue;
 
     const srcPath = path.join(releaseDir, `${releasePrefixBase}skills`, file);
     if (!fs.existsSync(srcPath)) continue;
 
-    const destPath = path.join(projectRoot, `${prefix}.claude/skills`, file);
+    const destPath = path.join(projectRoot, `${targetPrefix}.claude/skills`, file);
     copyFile(srcPath, destPath);
   }
 
   // agent_skills（.claude/skills/agents/）
   for (const file of (managed.agent_skills || [])) {
     const jaOnlyKey = `skills/agents/${file}`;
-    if (isEnglish && managed.ja_only.includes(jaOnlyKey)) continue;
+    if (sourceIsEnglish && jaOnlyList.includes(jaOnlyKey)) continue;
 
     const srcPath = path.join(releaseDir, `${releasePrefixBase}skills/agents`, file);
     if (!fs.existsSync(srcPath)) continue;
 
-    const destPath = path.join(projectRoot, `${prefix}.claude/skills/agents`, file);
+    const destPath = path.join(projectRoot, `${targetPrefix}.claude/skills/agents`, file);
     copyFile(srcPath, destPath);
   }
 
-  // other（CLAUDE.md はマーカー区間のみ更新、その他はコピー）
+  // other（CLAUDE.md はマーカー区間のみ更新、settings.local.json.example/その他はコピー）
   for (const file of managed.other) {
     if (file === 'CLAUDE.md') {
       // CLAUDE.md はマーカー区間のみ更新（別関数で処理）
@@ -461,7 +463,95 @@ function copyFilesFromManifest(manifest, releaseDir, projectRoot, isEnglish) {
     const srcPath = path.join(releaseDir, `${releasePrefixBase}${file}`);
     if (!fs.existsSync(srcPath)) continue;
 
-    const destPath = path.join(projectRoot, `${prefix}.claude`, file);
+    const destPath = path.join(projectRoot, `${targetPrefix}.claude`, file);
+    copyFile(srcPath, destPath);
+  }
+}
+
+/**
+ * 対話対象ファイル（settings.json / settings.local.json）の差分を検出し、
+ * 差分があれば <target>.new として横置きする
+ * @param {object} manifest
+ * @param {string} releaseDir
+ * @param {string} projectRoot
+ * @param {boolean} sourceIsEnglish
+ * @param {boolean} targetIsEnglish
+ * @returns {Array<{target: string, new: string, isNew: boolean}>} 差分のあったファイル情報
+ */
+function processInteractiveFiles(manifest, releaseDir, projectRoot, sourceIsEnglish, targetIsEnglish) {
+  const managed = manifest.managed_files;
+  const interactiveFiles = managed.interactive_files || [];
+  const targetPrefix = targetIsEnglish ? 'templates/en/' : '';
+  const releasePrefixBase = sourceIsEnglish ? 'templates/en/.claude/' : '.claude/';
+  const diffs = [];
+
+  for (const entry of interactiveFiles) {
+    const sourceName = typeof entry === 'string' ? entry : entry.source;
+    const targetName = typeof entry === 'string' ? entry : entry.target;
+
+    const srcPath = path.join(releaseDir, `${releasePrefixBase}${sourceName}`);
+    if (!fs.existsSync(srcPath)) continue;
+
+    const targetPath = path.join(projectRoot, `${targetPrefix}.claude`, targetName);
+    const newPath = targetPath + '.new';
+
+    const newContent = fs.readFileSync(srcPath, 'utf8');
+
+    if (!fs.existsSync(targetPath)) {
+      // target が存在しない → 新規配置
+      copyFile(srcPath, targetPath);
+      // 念のため既存の .new は掃除
+      if (fs.existsSync(newPath)) {
+        try { fs.unlinkSync(newPath); } catch (_) {}
+      }
+      diffs.push({ target: targetPath, new: null, isNew: true });
+      continue;
+    }
+
+    const existingContent = fs.readFileSync(targetPath, 'utf8');
+
+    if (existingContent === newContent) {
+      // 差分なし → 既存の .new があれば削除
+      if (fs.existsSync(newPath)) {
+        try { fs.unlinkSync(newPath); } catch (_) {}
+      }
+      continue;
+    }
+
+    // 差分あり → .new として横置き
+    ensureDirectory(path.dirname(newPath));
+    fs.writeFileSync(newPath, newContent, 'utf8');
+    diffs.push({ target: targetPath, new: newPath, isNew: false });
+  }
+
+  return diffs;
+}
+
+/**
+ * 保護対象ファイル（memory/memory.json など）を、既存があればスキップ・なければ初回配置
+ * @param {object} manifest
+ * @param {string} releaseDir
+ * @param {string} projectRoot
+ * @param {boolean} sourceIsEnglish
+ * @param {boolean} targetIsEnglish
+ */
+function processProtectedFiles(manifest, releaseDir, projectRoot, sourceIsEnglish, targetIsEnglish) {
+  const managed = manifest.managed_files;
+  const protectedFiles = managed.protected_files || [];
+  const targetPrefix = targetIsEnglish ? 'templates/en/' : '';
+  const releasePrefixBase = sourceIsEnglish ? 'templates/en/.claude/' : '.claude/';
+
+  for (const file of protectedFiles) {
+    const srcPath = path.join(releaseDir, `${releasePrefixBase}${file}`);
+    if (!fs.existsSync(srcPath)) continue;
+
+    const destPath = path.join(projectRoot, `${targetPrefix}.claude`, file);
+    if (fs.existsSync(destPath)) {
+      // 既存あり → 上書きしない
+      continue;
+    }
+
+    // 初回配置
     copyFile(srcPath, destPath);
   }
 }
@@ -694,6 +784,7 @@ async function runApplyMode() {
 async function runApplyFilesMode(releaseDir, latestVersion) {
   const projectRoot = getProjectRoot();
   let markerMissing = false;
+  const interactiveDiffs = [];
 
   try {
     // リリース版のマニフェストを読む（新しいセクション定義を使用するため）
@@ -703,30 +794,57 @@ async function runApplyFilesMode(releaseDir, latestVersion) {
     }
     const manifest = JSON.parse(fs.readFileSync(releaseManifestPath, 'utf8'));
 
-    // 日本語版ファイルのコピー
-    copyFilesFromManifest(manifest, releaseDir, projectRoot, false);
+    // ローカル manifest から言語判定
+    const localManifestPath = path.join(projectRoot, '.claude', 'clade-manifest.json');
+    let localLanguage = 'ja';
+    if (fs.existsSync(localManifestPath)) {
+      try {
+        const localManifest = JSON.parse(fs.readFileSync(localManifestPath, 'utf8'));
+        if (localManifest.language === 'en') {
+          localLanguage = 'en';
+        }
+      } catch (_) {
+        // 読み込み失敗時は ja デフォルト
+      }
+    }
+    const isEnglish = localLanguage === 'en';
 
-    // 英語版ファイルのコピー（templates/en/.claude が存在する場合のみ）
+    // 配布用リポジトリ判定（templates/en/.claude の有無で）
     const enTemplateDir = path.join(projectRoot, 'templates', 'en', '.claude');
-    const hasEnTemplate = fs.existsSync(enTemplateDir);
-    if (hasEnTemplate) {
-      copyFilesFromManifest(manifest, releaseDir, projectRoot, true);
+    const isDistributionRepo = fs.existsSync(enTemplateDir);
+
+    if (isDistributionRepo) {
+      // 配布用リポジトリ: JA/EN の両方を更新（source=target=JA、source=target=EN）
+      copyFilesFromManifest(manifest, releaseDir, projectRoot, false, false);
+      copyFilesFromManifest(manifest, releaseDir, projectRoot, true, true);
+      interactiveDiffs.push(...processInteractiveFiles(manifest, releaseDir, projectRoot, false, false));
+      interactiveDiffs.push(...processInteractiveFiles(manifest, releaseDir, projectRoot, true, true));
+      processProtectedFiles(manifest, releaseDir, projectRoot, false, false);
+      processProtectedFiles(manifest, releaseDir, projectRoot, true, true);
+    } else {
+      // ユーザー環境: language に応じて source を選択（target は常に .claude/）
+      copyFilesFromManifest(manifest, releaseDir, projectRoot, isEnglish, false);
+      interactiveDiffs.push(...processInteractiveFiles(manifest, releaseDir, projectRoot, isEnglish, false));
+      processProtectedFiles(manifest, releaseDir, projectRoot, isEnglish, false);
     }
 
-    // ja_only / en_only ファイルのコピー
-    copyJaOnlyFiles(manifest, releaseDir, projectRoot);
-    if (hasEnTemplate) {
+    // ja_only / en_only ファイルのコピー（配布用リポジトリでのみ使用）
+    if (isDistributionRepo) {
+      copyJaOnlyFiles(manifest, releaseDir, projectRoot);
       copyEnOnlyFiles(manifest, releaseDir, projectRoot);
     }
 
-    // CLAUDE.md のマーカー区間更新（日本語版）
+    // CLAUDE.md のマーカー区間更新
     const localClaudeMdPath = path.join(projectRoot, '.claude', 'CLAUDE.md');
-    const releaseClaudeMdPath = path.join(releaseDir, '.claude', 'CLAUDE.md');
+    const claudeSrcBase = (isEnglish && !isDistributionRepo)
+      ? path.join(releaseDir, 'templates', 'en', '.claude')
+      : path.join(releaseDir, '.claude');
+    const releaseClaudeMdPath = path.join(claudeSrcBase, 'CLAUDE.md');
     const jaResult = updateClaudeMdMarkerSection(localClaudeMdPath, releaseClaudeMdPath);
     if (jaResult.markerMissing) markerMissing = true;
 
-    // CLAUDE.md のマーカー区間更新（英語版）
-    if (hasEnTemplate) {
+    // CLAUDE.md のマーカー区間更新（配布用リポジトリの EN 側）
+    if (isDistributionRepo) {
       const localEnClaudeMdPath = path.join(projectRoot, 'templates', 'en', '.claude', 'CLAUDE.md');
       const releaseEnClaudeMdPath = path.join(releaseDir, 'templates', 'en', '.claude', 'CLAUDE.md');
       const enResult = updateClaudeMdMarkerSection(localEnClaudeMdPath, releaseEnClaudeMdPath);
@@ -736,14 +854,51 @@ async function runApplyFilesMode(releaseDir, latestVersion) {
     // VERSION ファイルを更新
     const versionPath = path.join(projectRoot, '.claude', 'VERSION');
     fs.writeFileSync(versionPath, latestVersion + '\n', 'utf8');
+    if (isDistributionRepo) {
+      const enVersionPath = path.join(projectRoot, 'templates', 'en', '.claude', 'VERSION');
+      fs.writeFileSync(enVersionPath, latestVersion + '\n', 'utf8');
+    }
 
-    // マニフェストをリリース版でコピー
+    // マニフェストをリリース版でコピー（ユーザー環境では language を保持）
     const manifestPath = path.join(projectRoot, '.claude', 'clade-manifest.json');
-    copyFile(releaseManifestPath, manifestPath);
+    if (isDistributionRepo) {
+      // 配布用リポジトリ: JA 版 manifest をそのまま JA 側に、EN 版 manifest を EN 側に
+      copyFile(releaseManifestPath, manifestPath);
+      const enManifestSrc = path.join(releaseDir, 'templates', 'en', '.claude', 'clade-manifest.json');
+      const enManifestDest = path.join(projectRoot, 'templates', 'en', '.claude', 'clade-manifest.json');
+      if (fs.existsSync(enManifestSrc)) {
+        copyFile(enManifestSrc, enManifestDest);
+      }
+    } else {
+      // ユーザー環境: language フィールドを保持してコピー
+      const releaseSrcPath = isEnglish
+        ? path.join(releaseDir, 'templates', 'en', '.claude', 'clade-manifest.json')
+        : releaseManifestPath;
+      if (fs.existsSync(releaseSrcPath)) {
+        const releaseManifestObj = JSON.parse(fs.readFileSync(releaseSrcPath, 'utf8'));
+        releaseManifestObj.language = localLanguage;
+        fs.writeFileSync(manifestPath, JSON.stringify(releaseManifestObj, null, 2) + '\n', 'utf8');
+      } else {
+        copyFile(releaseManifestPath, manifestPath);
+      }
+    }
 
     // 完了コミット
     runGit(['add', '-A']);
     runGit(['commit', '-m', `chore: update clade to ${latestVersion}`]);
+
+    // 結果を JSON で stdout に出力（update.md が解析して対話ループに使う）
+    const result = {
+      success: true,
+      version: latestVersion,
+      marker_missing: markerMissing,
+      interactive_diffs: interactiveDiffs.map((d) => ({
+        target: d.target,
+        new: d.new,
+        isNew: d.isNew,
+      })),
+    };
+    process.stdout.write(JSON.stringify(result) + '\n');
 
     if (markerMissing) {
       process.stderr.write(JSON.stringify({ marker_missing: true }) + '\n');

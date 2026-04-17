@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // pre-tool.js
 // Claude Code hook: PreToolUse
-// 危険コマンドのガード
+// Guard against dangerous commands
 
 'use strict';
 const { readHookInput } = require('./hook-utils');
@@ -9,23 +9,23 @@ const { readHookInput } = require('./hook-utils');
 const hookInput = readHookInput();
 const tool = hookInput.tool_name || '';
 
-// Bash 以外はガード不要
+// Only guard Bash
 if (tool !== 'Bash') process.exit(0);
 
 const cmd = (hookInput.tool_input || {}).command || '';
 
-// git force push: 警告（ブロックしない）
+// git force push: warn (do not block)
 if (/git\s+push\s+(--force|-f)\b/.test(cmd)) {
-  process.stderr.write('[PreToolUse WARNING] git force push を検出しました。実行前にユーザーに確認を取ってください。\n');
+  process.stderr.write('[PreToolUse WARNING] Detected a git force push. Please confirm with the user before running it.\n');
 }
 
-// rm -rf / または ~: ブロック
+// rm -rf / or ~: block
 if (/rm\s+-rf\s+[/~]/.test(cmd)) {
-  process.stderr.write(`[PreToolUse BLOCK] 危険なコマンドをブロックしました: ${cmd}\n`);
+  process.stderr.write(`[PreToolUse BLOCK] Blocked a dangerous command: ${cmd}\n`);
   process.exit(2);
 }
 
-// 本番DB破壊操作: 警告（ブロックしない）
+// Destructive DB operations in production: warn (do not block)
 if (/DROP\s+TABLE|DROP\s+DATABASE|TRUNCATE/i.test(cmd)) {
-  process.stderr.write('[PreToolUse WARNING] 破壊的なDB操作を検出しました。本番環境での実行でないことを確認してください。\n');
+  process.stderr.write('[PreToolUse WARNING] Detected a destructive DB operation. Please confirm this is not running against production.\n');
 }
