@@ -1,5 +1,15 @@
 # 変更履歴
 
+## [v1.17.2] - 2026-04-17
+
+### Fix
+
+- tester・planner・architect・code-reviewer・security-reviewer・reviewer-common の全レポート出力フローに追記モード（append）と失敗時フォールバックを追加
+- code-reviewer・security-reviewer スキルファイルのヒアドキュメント terminator インデントバグを修正
+- Bash 書き込みが失敗した場合、サブエージェントが単独で諦めず親 Claude へ委譲するよう明示指示を追加
+
+---
+
 ## [v1.17.1] - 2026-04-17
 
 ### Fix
