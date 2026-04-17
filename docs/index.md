@@ -83,6 +83,10 @@ VS Code 拡張には現在既知のバグがあり、プロジェクトレベル
 
 ## 最近の更新
 
+### [v1.18.1] - 2026-04-17
+
+`/update` 実行後に旧パスのファイルが残存する問題を修正。`clade-manifest.json` に `removed_files` フィールドを追加し、ファイルが別パスへ移動された際に旧パスのファイルを自動削除するようになった。
+
 ### [v1.18.0] - 2026-04-17
 
 `/update` コマンドに対話型の差分処理ループを追加。`settings.json` / `settings.local.json` は差分表示と上書き確認の対話で安全に更新できるようになった。`protected_files` カテゴリで `memory/memory.json` のような蓄積データを保護。ローカル `clade-manifest.json` の `language` フィールドで JA/EN を識別し、EN 版プロジェクトでも `/update` が正しく動作するよう修正。

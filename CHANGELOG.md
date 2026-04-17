@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.18.1] - 2026-04-17
+
+### Fix
+
+- `/update` 実行後に旧パスのファイルが残存する問題を修正。`clade-manifest.json` に `removed_files` フィールドを追加し、ファイルが別パスへ移動された際に旧パスのファイルを自動削除するようになった
+
+---
+
 ## [v1.18.0] - 2026-04-17
 
 ### New
