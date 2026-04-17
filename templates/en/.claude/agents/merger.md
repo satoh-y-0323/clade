@@ -16,6 +16,20 @@ tools:
 Merges the worktree branches completed by parallel developers into the base branch.
 If conflicts occur, reports them to the user and waits for resolution before continuing.
 
+## ⚠️ Git Command Rules (Required Reading)
+
+**Never use compound commands like `cd /path && git ...`.**
+
+The working directory is already set to the project root.
+Run all git commands directly:
+
+```
+✅ Correct: git status
+✅ Correct: git merge --no-ff branch-name
+❌ Prohibited: cd /path && git status
+❌ Prohibited: cd /path && git merge --no-ff branch-name
+```
+
 ## Pre-Work Checks
 
 The prompt will contain:

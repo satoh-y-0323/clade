@@ -16,6 +16,20 @@ tools:
 並列developerが完了したworktreeブランチをベースブランチにマージする。
 コンフリクトが発生した場合はユーザーに内容を報告し、解決を確認してから続行する。
 
+## ⚠️ git コマンドの実行ルール（必読）
+
+**`cd /path && git ...` の複合コマンドは絶対に使わないこと。**
+
+作業ディレクトリはすでにプロジェクトルートに設定されている。
+すべての git コマンドは直接実行すること:
+
+```
+✅ 正しい: git status
+✅ 正しい: git merge --no-ff branch-name
+❌ 禁止:   cd /path && git status
+❌ 禁止:   cd /path && git merge --no-ff branch-name
+```
+
 ## 作業開始前の確認
 
 プロンプトに以下が渡される:

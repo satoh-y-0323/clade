@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.17.0] - 2026-04-17
+
+### New
+
+- worktree 並列開発の権限設定を修正。`settings.local.json.example` の `Bash(git:*)` を個別パターンに分解し、`Bash(cd * && git*)`・`Write(.claude/**)`・`Edit(.claude/**)` を追加。worktree エージェントが git コマンドの実行権限を取得できなかった問題と、Agent Teams が `group-config.json` を自動生成する際の権限エラーを解消
+- `settings.json` に `Bash(git -C *)`・`Bash(git checkout*)` を追加。merger エージェントが `git -C` 形式でコマンド実行できるよう対応
+- merger エージェントの冒頭に `cd /path && git ...` 禁止ルールを追加。LLM がルールを無視しないよう ⚠️ 付きの強調ブロックとして配置
+- `hook-utils.js` に `getProjectRoot()` を追加。worktree から実行されても `git rev-parse --git-common-dir` でメインリポジトリルートを特定し、`stop.js`・`pre-compact.js` がメインリポジトリのセッションファイルに正しく書き込めるよう修正（`post-tool.js` は worktree isolation のガードレールを守るため `process.cwd()` を維持）
+- `group-config.json` をデフォルト値（`{"groupId": "default"}`）で配布に追加
+
+---
+
 ## [v1.16.7] - 2026-04-16
 
 ### Fix

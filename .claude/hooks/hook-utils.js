@@ -168,8 +168,27 @@ function upsertSessionJsonBlock(tmpContent, data) {
   return tmpContent.slice(0, startIdx) + block + (after.startsWith('\n') ? after : '\n' + after);
 }
 
+/**
+ * worktree から呼ばれた場合でもメインリポジトリのルートを返す。
+ * git rev-parse --git-common-dir でメインの .git ディレクトリを特定する。
+ * @returns {string}
+ */
+function getProjectRoot() {
+  try {
+    const { execSync } = require('child_process');
+    const gitCommonDir = execSync('git rev-parse --git-common-dir', { encoding: 'utf8' }).trim();
+    const absGitDir = path.isAbsolute(gitCommonDir)
+      ? gitCommonDir
+      : path.join(process.cwd(), gitCommonDir);
+    return path.dirname(absGitDir);
+  } catch (_) {
+    return process.cwd();
+  }
+}
+
 module.exports = {
   readHookInput,
+  getProjectRoot,
   createSessionTemplate,
   buildFactsSection,
   upsertFactsSection,

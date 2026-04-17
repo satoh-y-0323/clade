@@ -6,9 +6,9 @@
 'use strict';
 const fs   = require('fs');
 const path = require('path');
-const { createSessionTemplate } = require('./hook-utils');
+const { createSessionTemplate, getProjectRoot } = require('./hook-utils');
 
-const cwd         = process.cwd();
+const cwd         = getProjectRoot();
 const sessionDir  = path.join(cwd, '.claude', 'memory', 'sessions');
 const now         = new Date();
 const dateStr     = now.toISOString().slice(0, 10).replace(/-/g, '');

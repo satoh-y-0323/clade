@@ -41,7 +41,19 @@ plan-report（並列グループ定義を含む）
       "Edit(**)",
       "Glob(**)",
       "Grep(**)",
-      "Bash(git:*)",
+      "Bash(cd * && git*)",
+      "Bash(git add*)",
+      "Bash(git restore*)",
+      "Bash(git commit*)",
+      "Bash(git merge*)",
+      "Bash(git branch*)",
+      "Bash(git rev-parse*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git worktree*)",
+      "Write(.claude/**)",
+      "Edit(.claude/**)",
       "Bash(node*)"
     ]
   }

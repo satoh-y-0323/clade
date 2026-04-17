@@ -1,5 +1,17 @@
 # 変更履歴
 
+## [v1.17.0] - 2026-04-17
+
+### New
+
+- worktree 並列開発の権限設定を修正。`settings.local.json.example` の git 権限パターンを個別化し、`cd && git` 複合コマンドの許可・`.claude/` 配下への Write/Edit 権限を追加
+- `settings.json` に merger エージェント向けの `git -C`・`git checkout` 権限を追加
+- merger エージェントに `cd /path && git ...` 禁止ルールを冒頭追加
+- `hook-utils.js` に `getProjectRoot()` を追加。worktree 実行時も `stop.js`・`pre-compact.js` がメインリポジトリのセッションファイルに正しく書き込めるよう修正
+- `group-config.json` をデフォルト値で配布に追加
+
+---
+
 ## [v1.16.7] - 2026-04-16
 
 ### Fix

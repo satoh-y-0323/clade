@@ -168,8 +168,27 @@ function upsertSessionJsonBlock(tmpContent, data) {
   return tmpContent.slice(0, startIdx) + block + (after.startsWith('\n') ? after : '\n' + after);
 }
 
+/**
+ * Returns the main repository root even when called from a worktree.
+ * Uses git rev-parse --git-common-dir to locate the main .git directory.
+ * @returns {string}
+ */
+function getProjectRoot() {
+  try {
+    const { execSync } = require('child_process');
+    const gitCommonDir = execSync('git rev-parse --git-common-dir', { encoding: 'utf8' }).trim();
+    const absGitDir = path.isAbsolute(gitCommonDir)
+      ? gitCommonDir
+      : path.join(process.cwd(), gitCommonDir);
+    return path.dirname(absGitDir);
+  } catch (_) {
+    return process.cwd();
+  }
+}
+
 module.exports = {
   readHookInput,
+  getProjectRoot,
   createSessionTemplate,
   buildFactsSection,
   upsertFactsSection,
