@@ -32,6 +32,9 @@ __pycache__/
 .claude/instincts/clusters/
 # .claude/skills/project/  ← チームで共有する場合はコメントアウト
 
+# Claude Code - デバッグ用一時ファイル
+.claude/memory/*-debug.json
+
 # Claude Code - 一時ファイル（レポート下書き等）
 .claude/tmp/
 
