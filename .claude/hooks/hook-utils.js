@@ -169,6 +169,22 @@ function upsertSessionJsonBlock(tmpContent, data) {
 }
 
 /**
+ * 現在のプロセスが git worktree 内で動いているかどうかを返す。
+ * --git-dir と --git-common-dir が異なる場合は worktree 内と判断する。
+ * @returns {boolean}
+ */
+function isWorktree() {
+  try {
+    const { execSync } = require('child_process');
+    const gitDir    = execSync('git rev-parse --git-dir',        { encoding: 'utf8' }).trim();
+    const commonDir = execSync('git rev-parse --git-common-dir', { encoding: 'utf8' }).trim();
+    return gitDir !== commonDir;
+  } catch (_) {
+    return false;
+  }
+}
+
+/**
  * worktree から呼ばれた場合でもメインリポジトリのルートを返す。
  * git rev-parse --git-common-dir でメインの .git ディレクトリを特定する。
  * @returns {string}
@@ -188,6 +204,7 @@ function getProjectRoot() {
 
 module.exports = {
   readHookInput,
+  isWorktree,
   getProjectRoot,
   createSessionTemplate,
   buildFactsSection,

@@ -6,7 +6,9 @@
 'use strict';
 const fs   = require('fs');
 const path = require('path');
-const { createSessionTemplate, buildFactsSection, upsertFactsSection, getProjectRoot } = require('./hook-utils');
+const { createSessionTemplate, buildFactsSection, upsertFactsSection, getProjectRoot, isWorktree } = require('./hook-utils');
+
+if (isWorktree()) process.exit(0);
 
 const cwd         = getProjectRoot();
 const sessionDir  = path.join(cwd, '.claude', 'memory', 'sessions');

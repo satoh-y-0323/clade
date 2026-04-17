@@ -169,6 +169,22 @@ function upsertSessionJsonBlock(tmpContent, data) {
 }
 
 /**
+ * Returns true if the current process is running inside a git worktree.
+ * Compares --git-dir and --git-common-dir; they differ when in a worktree.
+ * @returns {boolean}
+ */
+function isWorktree() {
+  try {
+    const { execSync } = require('child_process');
+    const gitDir    = execSync('git rev-parse --git-dir',        { encoding: 'utf8' }).trim();
+    const commonDir = execSync('git rev-parse --git-common-dir', { encoding: 'utf8' }).trim();
+    return gitDir !== commonDir;
+  } catch (_) {
+    return false;
+  }
+}
+
+/**
  * Returns the main repository root even when called from a worktree.
  * Uses git rev-parse --git-common-dir to locate the main .git directory.
  * @returns {string}
@@ -188,6 +204,7 @@ function getProjectRoot() {
 
 module.exports = {
   readHookInput,
+  isWorktree,
   getProjectRoot,
   createSessionTemplate,
   buildFactsSection,
