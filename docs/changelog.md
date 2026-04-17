@@ -1,5 +1,13 @@
 # 変更履歴
 
+## [v1.17.3] - 2026-04-17
+
+### Fix
+
+- `settings.json` の `enableWeakerNestedSandbox` を `true` に変更。サブエージェントが sandbox 内で Bash を実行できず write-report.js が一切呼び出せなかった根本原因を解決
+
+---
+
 ## [v1.17.2] - 2026-04-17
 
 ### Fix

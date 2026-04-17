@@ -83,6 +83,10 @@ VS Code 拡張には現在既知のバグがあり、プロジェクトレベル
 
 ## 最近の更新
 
+### [v1.17.3] - 2026-04-17
+
+`settings.json` の `enableWeakerNestedSandbox` を `true` に変更。サブエージェントが sandbox 内で Bash を実行できず write-report.js が呼び出せなかった根本原因を解決。
+
 ### [v1.17.2] - 2026-04-17
 
 全レポート出力フローに追記モード（append）と失敗時フォールバックを追加。Bash 書き込みが失敗した際にサブエージェントが単独で諦めず親 Claude へ委譲するよう明示。code-reviewer・security-reviewer のヒアドキュメント terminator インデントバグも修正。
