@@ -1,5 +1,21 @@
 # 変更履歴
 
+## [v1.18.0] - 2026-04-17
+
+### New
+
+- `/update` コマンドに対話型の差分処理ループを追加。`settings.json` / `settings.local.json` に差分がある場合は内容を表示して上書きするかユーザーに確認し、拒否された場合は `.new` ファイルを残して手動マージを案内するようになった
+- `clade-manifest.json` に `protected_files` カテゴリを追加。`memory/memory.json` のような蓄積データを `/update` から保護し、既存ファイルがある場合は一切上書きしないよう変更
+- ローカル `clade-manifest.json` の新フィールド `language` で JA/EN を識別するようになった。`setup_en.sh` / `setup_en.ps1` でセットアップされた EN 版プロジェクトで `/update` を実行すると、リリースの英語版テンプレートから正しく更新される
+
+### Fix
+
+- `/update` で配布対象にもかかわらず更新されていなかったファイルを `clade-manifest.json` に登録: `agent-doc-writer.md`, `context-gauge.md`, `cluster-promote-core.js`, `update-clade-section.js`, `group-config.json`, `skills/project/code-reviewer/code-review-checklist.md`, `skills/project/security-reviewer/security-review-checklist.md`, `skills/project/mcp-servers.md`, `skills/project/playwright-mcp.md`
+- EN 版のセットアップ（`setup_en.sh` / `setup_en.ps1`）では `.claude/VERSION` と `.claude/clade-manifest.json` が配置されず `/update` コマンドが動作しなかった問題を修正
+- `setup_en.ps1` に `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8` を追加して `setup.ps1` と挙動を揃えた
+
+---
+
 ## [v1.17.3] - 2026-04-17
 
 ### Fix

@@ -83,6 +83,10 @@ VS Code 拡張には現在既知のバグがあり、プロジェクトレベル
 
 ## 最近の更新
 
+### [v1.18.0] - 2026-04-17
+
+`/update` コマンドに対話型の差分処理ループを追加。`settings.json` / `settings.local.json` は差分表示と上書き確認の対話で安全に更新できるようになった。`protected_files` カテゴリで `memory/memory.json` のような蓄積データを保護。ローカル `clade-manifest.json` の `language` フィールドで JA/EN を識別し、EN 版プロジェクトでも `/update` が正しく動作するよう修正。
+
 ### [v1.17.3] - 2026-04-17
 
 `settings.json` の `enableWeakerNestedSandbox` を `true` に変更。サブエージェントが sandbox 内で Bash を実行できず write-report.js が呼び出せなかった根本原因を解決。
@@ -90,10 +94,6 @@ VS Code 拡張には現在既知のバグがあり、プロジェクトレベル
 ### [v1.17.2] - 2026-04-17
 
 全レポート出力フローに追記モード（append）と失敗時フォールバックを追加。Bash 書き込みが失敗した際にサブエージェントが単独で諦めず親 Claude へ委譲するよう明示。code-reviewer・security-reviewer のヒアドキュメント terminator インデントバグも修正。
-
-### [v1.17.1] - 2026-04-17
-
-`hook-utils.js` に `isWorktree()` を追加。worktree 内から実行された場合は `stop.js`・`pre-compact.js` が即時終了するよう修正。worktree エージェントがメインリポジトリのセッションファイルを上書きしてしまう問題を根本解決。
 
 ### [v1.17.0] - 2026-04-17
 
