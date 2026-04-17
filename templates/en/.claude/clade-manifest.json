@@ -98,6 +98,10 @@
     "protected_files": [
       "memory/memory.json"
     ],
+    "removed_files": [
+      "skills/project/code-review-checklist.md",
+      "skills/project/security-review-checklist.md"
+    ],
     "ja_only": [],
     "en_only": []
   }

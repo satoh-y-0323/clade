@@ -557,6 +557,24 @@ function processProtectedFiles(manifest, releaseDir, projectRoot, sourceIsEnglis
 }
 
 /**
+ * 旧パスに残存するファイルを削除する（ファイル移動後の残骸クリーンアップ）
+ * @param {object} manifest
+ * @param {string} projectRoot
+ * @param {boolean} targetIsEnglish
+ */
+function removeObsoleteFiles(manifest, projectRoot, targetIsEnglish) {
+  const removedFiles = manifest.managed_files.removed_files || [];
+  const targetPrefix = targetIsEnglish ? 'templates/en/' : '';
+
+  for (const file of removedFiles) {
+    const filePath = path.join(projectRoot, `${targetPrefix}.claude`, file);
+    if (fs.existsSync(filePath)) {
+      try { fs.unlinkSync(filePath); } catch (_) {}
+    }
+  }
+}
+
+/**
  * ja_only ファイルを .claude/commands/ にコピーする（日本語版のみ）
  * @param {object} manifest
  * @param {string} releaseDir
@@ -817,6 +835,8 @@ async function runApplyFilesMode(releaseDir, latestVersion) {
       // 配布用リポジトリ: JA/EN の両方を更新（source=target=JA、source=target=EN）
       copyFilesFromManifest(manifest, releaseDir, projectRoot, false, false);
       copyFilesFromManifest(manifest, releaseDir, projectRoot, true, true);
+      removeObsoleteFiles(manifest, projectRoot, false);
+      removeObsoleteFiles(manifest, projectRoot, true);
       interactiveDiffs.push(...processInteractiveFiles(manifest, releaseDir, projectRoot, false, false));
       interactiveDiffs.push(...processInteractiveFiles(manifest, releaseDir, projectRoot, true, true));
       processProtectedFiles(manifest, releaseDir, projectRoot, false, false);
@@ -824,6 +844,7 @@ async function runApplyFilesMode(releaseDir, latestVersion) {
     } else {
       // ユーザー環境: language に応じて source を選択（target は常に .claude/）
       copyFilesFromManifest(manifest, releaseDir, projectRoot, isEnglish, false);
+      removeObsoleteFiles(manifest, projectRoot, false);
       interactiveDiffs.push(...processInteractiveFiles(manifest, releaseDir, projectRoot, isEnglish, false));
       processProtectedFiles(manifest, releaseDir, projectRoot, isEnglish, false);
     }

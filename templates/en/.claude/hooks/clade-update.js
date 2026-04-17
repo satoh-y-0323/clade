@@ -430,6 +430,21 @@ function processProtectedFiles(manifest, releaseDir, projectRoot) {
 }
 
 /**
+ * Remove files that have been moved to a new path (cleanup after relocation).
+ * @param {object} manifest
+ * @param {string} projectRoot
+ */
+function removeObsoleteFiles(manifest, projectRoot) {
+  const removedFiles = manifest.managed_files.removed_files || [];
+  for (const file of removedFiles) {
+    const filePath = path.join(projectRoot, '.claude', file);
+    if (fs.existsSync(filePath)) {
+      try { fs.unlinkSync(filePath); } catch (_) {}
+    }
+  }
+}
+
+/**
  * Update only the CLADE marker section in CLAUDE.md.
  * Returns { markerMissing: boolean }.
  * @param {string} localClaudeMdPath
@@ -611,6 +626,9 @@ async function runApplyFilesMode(releaseDir, latestVersion) {
 
     // Copy English template files: release/templates/en/.claude/ → project/.claude/
     copyFilesFromManifest(manifest, releaseDir, projectRoot);
+
+    // Remove files that have been relocated to new paths
+    removeObsoleteFiles(manifest, projectRoot);
 
     // Interactive files: stage .new files for files with diffs
     interactiveDiffs.push(...processInteractiveFiles(manifest, releaseDir, projectRoot));
