@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.19.0] - 2026-04-18
+
+### Changed
+
+- 並列実行サポートを廃止し、直列実行に一本化。Claude Code の permissions チェッカーで並列 subagent 起動時に race condition が発生し、全 tool が 76% の確率で DENIED される問題が根本原因
+- `worktree-developer` エージェントを削除
+- `merger` エージェントを削除
+- `check-group-isolation.js` フックを削除
+- `agent-developer` コマンドから並列モード（parallel_groups）を除去
+- `agent-code-reviewer` / `agent-security-reviewer` コマンドから並列起動指示を除去
+- planner スキルから `parallel_groups` YAML フロントマター定義を除去
+- `settings.json` から `Bash(git worktree*)` / `Bash(cd * && git*)` 権限を削除
+
+---
+
 ## [v1.18.4] - 2026-04-18
 
 ### Fix
