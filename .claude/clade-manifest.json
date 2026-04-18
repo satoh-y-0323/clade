@@ -98,7 +98,10 @@
     ],
     "removed_files": [
       "skills/project/code-review-checklist.md",
-      "skills/project/security-review-checklist.md"
+      "skills/project/security-review-checklist.md",
+      "agents/merger.md",
+      "agents/worktree-developer.md",
+      "hooks/check-group-isolation.js"
     ],
     "ja_only": [],
     "en_only": []
