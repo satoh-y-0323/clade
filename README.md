@@ -17,7 +17,6 @@ It organizes specialized agents by role — interviewer, architect, planner, dev
 - **Role-based agents** — Each agent has a clearly defined responsibility and rule set
 - **Structured workflow** — Phases from requirements → design → planning → implementation → testing → review
 - **Human-in-the-loop** — Every phase produces a report that requires your approval before moving on
-- **Parallel development** — The planner can split work into independent groups. The developer command launches multiple agents in parallel worktrees and merges automatically when all groups complete
 - **Project-contained by default** — All configuration lives inside `.claude/` and travels with the project. Nothing leaks into your global environment without your explicit intent
 - **Promote when ready** — Skills, rules, and MCP servers that prove useful across multiple projects can be elevated to global scope with `/promote`, on your terms
 - **Fully customizable** — Tailor agents, rules, and skills to your team's conventions
@@ -37,19 +36,18 @@ It organizes specialized agents by role — interviewer, architect, planner, dev
 
 **Running via CLI is recommended.**
 
-The VS Code extension currently has a known bug where project-level `permissions.allow` entries in `.claude/settings.json` are not respected. This causes confirmation dialogs to appear for every hook script execution, which prevents parallel background agents from completing correctly.
+The VS Code extension currently has a known bug where project-level `permissions.allow` entries in `.claude/settings.json` are not respected. This causes confirmation dialogs to appear for every hook script execution.
 
 | | CLI | VS Code Extension |
 |---|---|---|
 | `permissions.allow` (project-level) | Works correctly | Not recognized (known bug) |
-| Parallel background agents | Fully supported | Not available (dialog cannot appear in background) |
 | Multi-line input | Enable with `/terminal-setup` (`Shift+Enter`) | Native support |
 
 ### Running in the VS Code Extension
 
 Clade detects the VS Code extension at session start and notifies you of the limitation. You can either:
 
-- **Continue in sequential mode** — Agents run one at a time. All features work, just without parallelism.
+- **Continue in sequential mode** — Agents run one at a time. All features work correctly.
 - **Switch to CLI** — Open the integrated terminal (`Ctrl+`` / `Cmd+``), run `claude`, then `/terminal-setup` to enable `Shift+Enter` for multi-line input, and `/init-session` to restore your previous session.
 
 > This limitation will be resolved once [anthropics/claude-code#43787](https://github.com/anthropics/claude-code/issues/43787) is fixed.
@@ -180,8 +178,6 @@ Phase 2: Planning
 Phase 3: Implementation & Testing (TDD)
   /agent-tester       →  write failing tests (Red)
   /agent-developer    →  implement (Green → Refactor)
-    [parallel mode]   →  launches worktree-developer agents per group
-                          merger merges all branches when done
   /agent-tester       →  verify & test-report
 
 Phase 4: Review
