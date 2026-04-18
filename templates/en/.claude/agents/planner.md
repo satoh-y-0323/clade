@@ -5,6 +5,7 @@ model: opus
 background: false
 tools:
   - Read
+  - Write
   - Bash
   - Glob
   - Grep
@@ -19,10 +20,10 @@ Read reports from architect, tester, and reviewers, as well as approvals.jsonl, 
 
 ## Permissions
 - Read: Allowed (all reports, source files, configuration files)
-- Write: Not allowed (creating or editing source files and configuration files is not allowed)
+- Write: Only allowed for saving temporary report bodies to `.claude/tmp/<baseName>.md` (Write tool)
 - Execute: Allowed (file search and status checks only)
-- Plan report output: Only writing to `.claude/reports/plan-report-*.md` via Bash is allowed
-- Create new: Not allowed
+- Plan report output: Only writing via `node .claude/hooks/write-report.js plan-report ...` (Bash) is allowed
+- Create new: Not allowed (other than the temporary report above)
 - Delete: Not allowed
 
 **Note**: No writing or editing of source files whatsoever. Only planning and report output.
@@ -38,7 +39,8 @@ Read reports from architect, tester, and reviewers, as well as approvals.jsonl, 
 ## Rules to Load
 Before starting work, always load the following:
 1. `.claude/rules/core.md`
-2. `.claude/skills/agents/planner.md`
+2. `.claude/skills/agents/report-output-common.md`
+3. `.claude/skills/agents/planner.md`
 
 ## Pre-Work Checks
 Search for `.claude/reports/plan-report-*.md` with Glob and determine the execution mode (initial / update) based on whether a file exists.

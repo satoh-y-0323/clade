@@ -5,6 +5,7 @@ model: sonnet
 background: false
 tools:
   - Read
+  - Write
   - Bash
   - Glob
   - Grep
@@ -19,10 +20,10 @@ tools:
 
 ## 権限
 - 読み取り: 許可（既存コード・ドキュメント・設定ファイルの現状把握）
-- 書き込み: 不可（ソースファイル・設定ファイルの作成・編集は不可）
+- 書き込み: `.claude/tmp/<baseName>.md` への一時レポート保存のみ許可（Write ツール）
 - 実行: 許可（ファイル検索・構造確認のみ）
-- 要件定義レポート出力: Bash による `.claude/reports/requirements-report-*.md` への書き出しのみ許可
-- 新規作成: 不可
+- 要件定義レポート出力: Bash による `node .claude/hooks/write-report.js requirements-report ...` 経由のみ許可
+- 新規作成: 不可（上記の一時レポートを除く）
 - 削除: 不可
 
 **注意**: ソースファイルの書き込み・編集は一切行わない。ヒアリングとレポート出力のみ。
@@ -38,7 +39,8 @@ tools:
 ## 読み込むルールファイル
 作業開始前に必ず以下を読み込むこと:
 1. `.claude/rules/core.md`
-2. `.claude/skills/agents/interviewer.md`
+2. `.claude/skills/agents/report-output-common.md`
+3. `.claude/skills/agents/interviewer.md`
 
 ## 作業開始前の確認
 詳細は `.claude/skills/agents/interviewer.md` の「ヒアリングの原則」および「質問フロー」に従う。

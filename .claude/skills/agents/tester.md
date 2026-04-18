@@ -76,35 +76,10 @@
 5. 結果を以下のフローでレポートに出力し、承認を確認する
 
 ## レポート出力と承認確認フロー
-1. Bash ツールでレポートを出力する（実際のファイルパスが返る）:
+1. レポートを出力する（baseName = `test-report`）。
+   出力方法の詳細は `.claude/skills/agents/report-output-common.md` の「レポート出力フロー（共通）」に従う。
 
-   **通常サイズ（推奨）**: ヒアドキュメントで一括出力
-   ```
-   node .claude/hooks/write-report.js test-report new <<'CLADE_REPORT_EOF'
-{レポート内容の全て}
-CLADE_REPORT_EOF
-   → 出力例: [write-report] .claude/reports/test-report-20260401-143022.md
-   ```
-   > **構文の注意**: `CLADE_REPORT_EOF` は**行頭から書くこと（インデント禁止）**。本文中に同じ文字列を単独行で含めないこと。
-
-   **大規模レポート向け**: 追記モードで分割出力
-   ```
-   # セクション1（new で作成 → ファイル名を控える）
-   node .claude/hooks/write-report.js test-report new <<'CLADE_REPORT_EOF'
-{ヘッダー・サマリなど冒頭部分}
-CLADE_REPORT_EOF
-   # → 例: [write-report] .claude/reports/test-report-20260401-143022.md
-
-   # セクション2以降（append で追記）
-   node .claude/hooks/write-report.js test-report append test-report-20260401-143022.md <<'CLADE_REPORT_EOF'
-{続きのセクション}
-CLADE_REPORT_EOF
-   ```
-
-   **⚠️ Bash が権限エラーで失敗した場合（最終手段）**: 単独で諦めることは禁止。
-   レポートの全内容をインラインで出力し、「上記の内容を `.claude/reports/test-report-{タイムスタンプ}.md` に Write ツールで保存してください」と明記して終了する。
-
-2. 出力されたファイルパスをメモしておく。
+2. 出力されたファイルパス（`.claude/reports/test-report-{タイムスタンプ}.md`）をメモしておく。
 
 3. AskUserQuestion ツールを使ってレポートの内容をユーザーに提示し、承認を待つ:
    「テストレポートを `.claude/reports/test-report-{タイムスタンプ}.md` に保存しました。

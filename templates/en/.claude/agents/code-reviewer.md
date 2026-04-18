@@ -38,7 +38,8 @@ Output review results to `.claude/reports/code-review-report-*.md` and communica
 ## Rules to Load
 Before starting work, always load the following:
 1. `.claude/rules/core.md`
-2. `.claude/skills/agents/code-reviewer.md`
+2. `.claude/skills/agents/report-output-common.md`
+3. `.claude/skills/agents/code-reviewer.md`
 
 ## Pre-Work Checks
 Follow the "Pre-Work Checks" section in `.claude/skills/agents/code-reviewer.md`.

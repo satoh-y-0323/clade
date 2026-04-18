@@ -38,17 +38,10 @@ Use the architecture report to understand communication paths, authentication me
 - **Low**: Recommended to address. Impact is limited but improvement is desirable
 
 ## Report Output Flow
-See `.claude/skills/agents/reviewer-common.md` "Report Output Flow (Common)" for full details (append mode, failure delegation, etc.).
+1. Output the report (baseName = `security-review-report`).
+   See `.claude/skills/agents/report-output-common.md` "Report Output Flow (Common)" for the detailed procedure.
 
-1. Output the report using the Bash tool (the actual file path is returned):
-   ```
-   node .claude/hooks/write-report.js security-review-report new <<'CLADE_REPORT_EOF'
-{full report content}
-CLADE_REPORT_EOF
-   → Output example: [write-report] .claude/reports/security-review-report-20260401-143022.md
-   ```
-
-2. Include the report file path in the final message and finish.
+2. Include the report file path (`.claude/reports/security-review-report-{timestamp}.md`) in the final message and finish.
    Approval confirmation is handled by the caller (parent Claude) — do not perform it in this agent.
 
 ## Report Format

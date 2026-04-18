@@ -38,7 +38,8 @@ Output assessment results to `.claude/reports/security-review-report-*.md` and c
 ## Rules to Load
 Before starting work, always load the following:
 1. `.claude/rules/core.md`
-2. `.claude/skills/agents/security-reviewer.md`
+2. `.claude/skills/agents/report-output-common.md`
+3. `.claude/skills/agents/security-reviewer.md`
 
 ## Pre-Work Checks
 Follow the "Pre-Work Checks" section in `.claude/skills/agents/security-reviewer.md`.

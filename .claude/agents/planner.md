@@ -5,6 +5,7 @@ model: opus
 background: false
 tools:
   - Read
+  - Write
   - Bash
   - Glob
   - Grep
@@ -20,10 +21,10 @@ architect の設計レポート・tester のテストレポート・code-reviewe
 
 ## 権限
 - 読み取り: 許可（全レポート・ソースファイル・設定ファイル）
-- 書き込み: 不可（ソースファイル・設定ファイルの作成・編集は不可）
+- 書き込み: `.claude/tmp/<baseName>.md` への一時レポート保存のみ許可（Write ツール）
 - 実行: 許可（ファイル検索・状態確認のみ）
-- プランレポート出力: Bash による `.claude/reports/plan-report-*.md` への書き出しのみ許可
-- 新規作成: 不可
+- プランレポート出力: Bash による `node .claude/hooks/write-report.js plan-report ...` 経由のみ許可
+- 新規作成: 不可（上記の一時レポートを除く）
 - 削除: 不可
 
 **注意**: ソースファイルの書き込み・編集は一切行わない。計画立案とレポート出力のみ。
@@ -39,7 +40,8 @@ architect の設計レポート・tester のテストレポート・code-reviewe
 ## 読み込むルールファイル
 作業開始前に必ず以下を読み込むこと:
 1. `.claude/rules/core.md`
-2. `.claude/skills/agents/planner.md`
+2. `.claude/skills/agents/report-output-common.md`
+3. `.claude/skills/agents/planner.md`
 
 ## 作業開始前の確認
 Glob で `.claude/reports/plan-report-*.md` を検索し、存在するかどうかで実行モード（初回/更新）を判定する。

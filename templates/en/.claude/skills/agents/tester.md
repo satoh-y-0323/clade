@@ -76,35 +76,10 @@ In test-driven development, the tester handles the Red phase.
 5. Output results to the report following the flow below and confirm approval
 
 ## Report Output and Approval Flow
-1. Output the report using the Bash tool (the actual file path is returned):
+1. Output the report (baseName = `test-report`).
+   See `.claude/skills/agents/report-output-common.md` "Report Output Flow (Common)" for the detailed procedure.
 
-   **Standard size (recommended)**: single heredoc
-   ```
-   node .claude/hooks/write-report.js test-report new <<'CLADE_REPORT_EOF'
-{full report content}
-CLADE_REPORT_EOF
-   → Output example: [write-report] .claude/reports/test-report-20260401-143022.md
-   ```
-   > **Syntax note**: Write `CLADE_REPORT_EOF` at the **start of the line (no indentation)**. Do not include the terminator string as a standalone line in the content.
-
-   **Large reports**: append mode for split output
-   ```
-   # Section 1 (create new → note the filename)
-   node .claude/hooks/write-report.js test-report new <<'CLADE_REPORT_EOF'
-{header, summary, etc.}
-CLADE_REPORT_EOF
-   # → e.g.: [write-report] .claude/reports/test-report-20260401-143022.md
-
-   # Section 2+ (append)
-   node .claude/hooks/write-report.js test-report append test-report-20260401-143022.md <<'CLADE_REPORT_EOF'
-{next section}
-CLADE_REPORT_EOF
-   ```
-
-   **⚠️ If Bash fails with a permission error (last resort)**: Never give up silently.
-   Output the full report content inline and end with: "Bash write failed. Please save the above content to `.claude/reports/test-report-{timestamp}.md` using the Write tool."
-
-2. Note the output file path.
+2. Note the output file path (`.claude/reports/test-report-{timestamp}.md`).
 
 3. Use the AskUserQuestion tool to present the report content to the user and wait for approval:
    "I have saved the test report to `.claude/reports/test-report-{timestamp}.md`.

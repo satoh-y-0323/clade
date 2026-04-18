@@ -81,15 +81,10 @@ Is this understanding correct? Please let me know if there are corrections or ad
 ```
 
 ### Step 5: Report Output and Approval Flow
-1. Output the report using the Bash tool (the actual file path is returned):
-   ```
-   node .claude/hooks/write-report.js requirements-report new <<'CLADE_REPORT_EOF'
-   {full report content}
-   CLADE_REPORT_EOF
-   → Output example: [write-report] .claude/reports/requirements-report-20260401-143022.md
-   ```
+1. Output the report (baseName = `requirements-report`).
+   See `.claude/skills/agents/report-output-common.md` "Report Output Flow (Common)" for the detailed procedure.
 
-2. Note the output file path.
+2. Note the output file path (`.claude/reports/requirements-report-{timestamp}.md`).
 
 3. Use the AskUserQuestion tool to present the report content to the user and wait for approval:
    "I have saved the requirements report to `.claude/reports/requirements-report-{timestamp}.md`.

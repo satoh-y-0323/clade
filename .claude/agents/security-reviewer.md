@@ -38,7 +38,8 @@ tools:
 ## 読み込むルールファイル
 作業開始前に必ず以下を読み込むこと:
 1. `.claude/rules/core.md`
-2. `.claude/skills/agents/security-reviewer.md`
+2. `.claude/skills/agents/report-output-common.md`
+3. `.claude/skills/agents/security-reviewer.md`
 
 ## 作業開始前の確認
 詳細は `.claude/skills/agents/security-reviewer.md` の「作業開始前の確認」に従う。

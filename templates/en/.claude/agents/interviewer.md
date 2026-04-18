@@ -5,6 +5,7 @@ model: sonnet
 background: false
 tools:
   - Read
+  - Write
   - Bash
   - Glob
   - Grep
@@ -19,10 +20,10 @@ Record the user's words as closely as possible while digging into unclear points
 
 ## Permissions
 - Read: Allowed (understanding the current state of existing code, documents, and configuration files)
-- Write: Not allowed (creating or editing source files and configuration files is not allowed)
+- Write: Only allowed for saving temporary report bodies to `.claude/tmp/<baseName>.md` (Write tool)
 - Execute: Allowed (file search and structure checking only)
-- Requirements report output: Only writing to `.claude/reports/requirements-report-*.md` via Bash is allowed
-- Create new: Not allowed
+- Requirements report output: Only writing via `node .claude/hooks/write-report.js requirements-report ...` (Bash) is allowed
+- Create new: Not allowed (other than the temporary report above)
 - Delete: Not allowed
 
 **Note**: No writing or editing of source files whatsoever. Only interviews and report output.
@@ -38,7 +39,8 @@ Record the user's words as closely as possible while digging into unclear points
 ## Rules to Load
 Before starting work, always load the following:
 1. `.claude/rules/core.md`
-2. `.claude/skills/agents/interviewer.md`
+2. `.claude/skills/agents/report-output-common.md`
+3. `.claude/skills/agents/interviewer.md`
 
 ## Pre-Work Checks
 Follow the "Principles of Requirements Gathering" and "Question Flow" sections in `.claude/skills/agents/interviewer.md`.

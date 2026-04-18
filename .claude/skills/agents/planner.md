@@ -52,35 +52,10 @@ test/review レポートはまだ存在しないためスキップする。
 
 ## レポート出力と承認確認フロー
 1. 全レポートを読み込み、タスクリストを組み立てる
-2. Bash ツールでプランレポートを出力する（実際のファイルパスが返る）:
+2. レポートを出力する（baseName = `plan-report`）。
+   出力方法の詳細は `.claude/skills/agents/report-output-common.md` の「レポート出力フロー（共通）」に従う。
 
-   **通常サイズ（推奨）**: ヒアドキュメントで一括出力
-   ```
-   node .claude/hooks/write-report.js plan-report new <<'CLADE_REPORT_EOF'
-{レポート内容の全て}
-CLADE_REPORT_EOF
-   → 出力例: [write-report] .claude/reports/plan-report-20260401-143022.md
-   ```
-   > **構文の注意**: `CLADE_REPORT_EOF` は**行頭から書くこと（インデント禁止）**。本文中に同じ文字列を単独行で含めないこと。
-
-   **大規模レポート向け**: 追記モードで分割出力
-   ```
-   # セクション1（new で作成 → ファイル名を控える）
-   node .claude/hooks/write-report.js plan-report new <<'CLADE_REPORT_EOF'
-{ヘッダー・マイルストーン一覧など冒頭部分}
-CLADE_REPORT_EOF
-   # → 例: [write-report] .claude/reports/plan-report-20260401-143022.md
-
-   # セクション2以降（append で追記）
-   node .claude/hooks/write-report.js plan-report append plan-report-20260401-143022.md <<'CLADE_REPORT_EOF'
-{続きのセクション}
-CLADE_REPORT_EOF
-   ```
-
-   **⚠️ Bash が権限エラーで失敗した場合（最終手段）**: 単独で諦めることは禁止。
-   レポートの全内容をインラインで出力し、「上記の内容を `.claude/reports/plan-report-{タイムスタンプ}.md` に Write ツールで保存してください」と明記して終了する。
-
-3. 出力されたファイルパスをメモしておく。
+3. 出力されたファイルパス（`.claude/reports/plan-report-{タイムスタンプ}.md`）をメモしておく。
 
 4. AskUserQuestion ツールを使ってレポートの内容をユーザーに提示し、承認を待つ:
    「作業計画レポートを `.claude/reports/plan-report-{タイムスタンプ}.md` に保存しました。

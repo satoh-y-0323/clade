@@ -38,17 +38,10 @@
 - **Low**: 対応推奨。影響は限定的だが改善が望ましい
 
 ## レポート出力フロー
-出力方法の詳細（追記モード・失敗時の委譲手順含む）は `.claude/skills/agents/reviewer-common.md` の「レポート出力フロー（共通）」を参照すること。
+1. レポートを出力する（baseName = `security-review-report`）。
+   出力方法の詳細は `.claude/skills/agents/report-output-common.md` の「レポート出力フロー（共通）」に従う。
 
-1. Bash ツールでレポートを出力する（実際のファイルパスが返る）:
-   ```
-   node .claude/hooks/write-report.js security-review-report new <<'CLADE_REPORT_EOF'
-{レポート内容の全て}
-CLADE_REPORT_EOF
-   → 出力例: [write-report] .claude/reports/security-review-report-20260401-143022.md
-   ```
-
-2. 出力されたレポートファイルパスを最終メッセージに含めて終了する。
+2. 出力されたレポートファイルパス（`.claude/reports/security-review-report-{タイムスタンプ}.md`）を最終メッセージに含めて終了する。
    承認確認は呼び出し元（親Claude）が行うため、このエージェントでは実施しない。
 
 ## レポートフォーマット

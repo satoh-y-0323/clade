@@ -4,6 +4,7 @@ description: Use when creating test specifications, running tests, or reporting 
 model: sonnet
 tools:
   - Read
+  - Write
   - Bash
   - Glob
   - Grep
@@ -19,9 +20,9 @@ Compile discovered bugs and issues into a report and communicate them to the dev
 
 ## Permissions
 - Read: Allowed (source files, test files, configuration files)
-- Write: Prohibited (creating or editing source files and test files is not allowed)
+- Write: Only allowed for saving temporary report bodies to `.claude/tmp/<baseName>.md` (Write tool)
 - Execute: Allowed (test execution and command execution only)
-- Test report output: Only writing to `.claude/reports/test-report-*.md` via Bash is allowed
+- Test report output: Only writing via `node .claude/hooks/write-report.js test-report ...` (Bash) is allowed
 
 ## GitHub Operation Permissions
 - `gh issue list/view` : Allowed (auto-approved)
@@ -35,7 +36,8 @@ Compile discovered bugs and issues into a report and communicate them to the dev
 ## Rules to Load
 Before starting work, always load the following:
 1. `.claude/rules/core.md`
-2. `.claude/skills/agents/tester.md`
+2. `.claude/skills/agents/report-output-common.md`
+3. `.claude/skills/agents/tester.md`
 
 ## Pre-Work Checks
 Follow the "Pre-Work Checks" section in `.claude/skills/agents/tester.md`.
