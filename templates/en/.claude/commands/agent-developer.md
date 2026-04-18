@@ -15,7 +15,7 @@ Automatically switches between simple mode and milestone mode based on the plan-
 
 ---
 
-## Simple Mode (no milestones, no plan-report, no parallel_groups)
+## Simple Mode (no milestones, no plan-report)
 
 1. Launch with `subagent_type: developer` in the Agent tool
    - Include the current work context (user's request and presence of existing reports) in the prompt
@@ -24,7 +24,7 @@ Automatically switches between simple mode and milestone mode based on the plan-
 
 ---
 
-## Milestone Mode (milestones present, no parallel_groups)
+## Milestone Mode (milestones present)
 
 Repeat the following for each milestone:
 

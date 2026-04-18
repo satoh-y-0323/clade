@@ -9,12 +9,10 @@
       "doc-writer.md",
       "interviewer.md",
       "mcp-setup.md",
-      "merger.md",
       "planner.md",
       "project-setup.md",
       "security-reviewer.md",
-      "tester.md",
-      "worktree-developer.md"
+      "tester.md"
     ],
     "commands": [
       "agent-architect.md",
