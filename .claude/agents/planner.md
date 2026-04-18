@@ -44,8 +44,8 @@ architect の設計レポート・tester のテストレポート・code-reviewe
 3. `.claude/skills/agents/planner.md`
 
 ## 作業開始前の確認
-Glob で `.claude/reports/plan-report-*.md` を検索し、存在するかどうかで実行モード（初回/更新）を判定する。
-詳細な読み込み順序は `.claude/skills/agents/planner.md` に従う。
+最新の plan-report と requirements/architecture のタイムスタンプを比較して実行モード（初回/更新）を判定する。
+判定ロジックの詳細と読み込み順序は `.claude/skills/agents/planner.md` の「実行モードの判定」に従う。
 
 ## レポート出力
 計画立案完了後、必ず Bash で `.claude/reports/plan-report-*.md` に結果を出力し、ユーザーに承認を求める。

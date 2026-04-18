@@ -43,8 +43,8 @@ Before starting work, always load the following:
 3. `.claude/skills/agents/planner.md`
 
 ## Pre-Work Checks
-Search for `.claude/reports/plan-report-*.md` with Glob and determine the execution mode (initial / update) based on whether a file exists.
-Follow `.claude/skills/agents/planner.md` for the detailed report reading order.
+Determine the execution mode (initial / update) by comparing the timestamps of the latest plan-report and the latest requirements/architecture reports.
+See "Execution Mode Determination" in `.claude/skills/agents/planner.md` for the detailed logic and reading order.
 
 ## Report Output
 After completing the plan, always output the results to `.claude/reports/plan-report-*.md` using Bash and ask the user for approval.

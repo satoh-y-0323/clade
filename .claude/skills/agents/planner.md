@@ -4,33 +4,53 @@
 - `.claude/skills/project/project-plan`（存在する場合）
 
 ## 計画立案の原則
-- **実行モードを最初に判定してから**、存在するレポートのみを読み込む
+- **実行モードを最初に判定してから**、必要なレポートのみを読み込む
 - タスクはアトミックに定義する（1タスク = 1エージェントが完結できる単位）
 - 依存関係は明示的に記述する（「T1完了後」「T2承認後」等）
 - 未解決の指摘事項は必ず次サイクルのタスクに含める
-- 初回モードでは test/review レポートが存在しないことは正常であり、スキップして計画を立案する
+- 初回モードでは過去の test/review レポートがディスクに残っていても参照しない（古いサイクルのものなので）
 
 ## 実行モードの判定
 
-作業開始時、まず以下を確認してモードを決定する:
+レポートファイルは過去の作業履歴として残り続けるため、「ファイルの有無」ではなく
+**「最新の plan-report より新しい requirements/architecture が存在するか」** でモードを判定する。
+
+作業開始時、以下の手順でモードを決定する:
 
 ```
-Glob で .claude/reports/plan-report-*.md を検索
-  → ファイルが存在しない → 【初回モード】で実行
-  → ファイルが存在する  → 【更新モード】で実行
+Step 1. Glob で .claude/reports/plan-report-*.md を検索
+  → ファイルが存在しない → 【初回モード】（本当の最初の計画立案）
+  → ファイルが存在する  → Step 2 へ
+
+Step 2. 最新 plan-report のタイムスタンプを取得
+  ※ ファイル名の YYYYMMDD-HHmmss 部分を文字列比較すれば最新が分かる
+    （ファイル名形式: plan-report-YYYYMMDD-HHmmss.md）
+
+Step 3. 入力レポートの最新タイムスタンプを取得
+  - Glob で .claude/reports/requirements-report-*.md を検索 → 最新のタイムスタンプを T_req に
+  - Glob で .claude/reports/architecture-report-*.md を検索 → 最新のタイムスタンプを T_arch に
+  - T_input = max(T_req, T_arch)（どちらも存在しない場合は無し）
+
+Step 4. 比較
+  - T_input が plan-report より新しい → 【初回モード】（新しい要件・設計で仕切り直し）
+  - そうでなければ                    → 【更新モード】（既存サイクル継続）
 ```
+
+> **なぜこの判定にするか**: 一度フルワークフローを通すと plan-report は履歴として残り続けるため、
+> 「plan-report の有無」だけで判定すると、新しい要件で仕切り直したケースでも永久に更新モードになってしまう。
+> requirements/architecture の方が新しければ「ユーザーが新しいサイクルを始めた」と判定する。
 
 ## レポート読み込み順序
 
-### 【初回モード】（plan-report がまだ存在しない場合）
-requirements-report と architecture-report のみを基に初回計画を立案する。
-test/review レポートはまだ存在しないためスキップする。
+### 【初回モード】
+requirements-report と architecture-report のみを基に新規計画を立案する。
+test/review レポートが過去に存在していても、それらは古いサイクルのものなので参照しない。
 
 1. Glob で `.claude/reports/requirements-report-*.md` を検索 → 存在すれば最新を Read
 2. Glob で `.claude/reports/architecture-report-*.md` を検索 → 存在すれば最新を Read
 3. `.claude/reports/approvals.jsonl` を Read（存在すれば）
 
-### 【更新モード】（前回の plan-report が存在する場合）
+### 【更新モード】（既存サイクル継続）
 全レポートを読み込んで差分・未解決事項を反映した計画に更新する。
 
 1. Glob で `.claude/reports/requirements-report-*.md` を検索 → 存在すれば最新を Read

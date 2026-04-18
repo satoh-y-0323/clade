@@ -4,33 +4,53 @@
 - `.claude/skills/project/project-plan` (if present)
 
 ## Planning Principles
-- **Determine the execution mode first**, then read only the reports that exist
+- **Determine the execution mode first**, then read only the reports needed for that mode
 - Define tasks atomically (1 task = a unit completable by 1 agent)
 - State dependencies explicitly ("after T1 completes", "after T2 is approved", etc.)
 - Always include unresolved issues in the next cycle's tasks
-- In initial mode, the absence of test/review reports is normal — skip and proceed with planning
+- In initial mode, even if old test/review reports remain on disk, do not reference them (they belong to a previous cycle)
 
 ## Execution Mode Determination
 
-At the start of work, first check the following to determine mode:
+Report files accumulate as historical records, so do not judge mode by mere presence.
+Instead, judge by **whether a requirements/architecture report newer than the latest plan-report exists**.
+
+At the start of work, follow these steps:
 
 ```
-Search for .claude/reports/plan-report-*.md with Glob
-  → Files do not exist → Run in [Initial Mode]
-  → Files exist        → Run in [Update Mode]
+Step 1. Search for .claude/reports/plan-report-*.md with Glob
+  → No files                  → [Initial Mode] (truly the first plan)
+  → At least one file exists  → Go to Step 2
+
+Step 2. Get the timestamp of the latest plan-report
+  ※ Compare the YYYYMMDD-HHmmss portion of the filename as a string
+    (filename format: plan-report-YYYYMMDD-HHmmss.md)
+
+Step 3. Get the latest timestamp among the input reports
+  - Search for .claude/reports/requirements-report-*.md with Glob → latest timestamp = T_req
+  - Search for .claude/reports/architecture-report-*.md with Glob → latest timestamp = T_arch
+  - T_input = max(T_req, T_arch) (if neither exists, T_input is none)
+
+Step 4. Compare
+  - T_input is newer than the plan-report → [Initial Mode] (a new cycle started with new requirements/design)
+  - Otherwise                              → [Update Mode] (continuing the existing cycle)
 ```
+
+> **Why this rule**: Once a full workflow runs, plan-report stays on disk forever. Judging by presence alone
+> means "Update Mode" forever, even when the user starts a fresh cycle. If requirements/architecture
+> are newer than the latest plan-report, treat it as a new cycle.
 
 ## Report Reading Order
 
-### [Initial Mode] (when no plan-report exists yet)
-Create the initial plan based only on requirements-report and architecture-report.
-test/review reports do not yet exist, so skip them.
+### [Initial Mode]
+Create a fresh plan based only on requirements-report and architecture-report.
+Even if old test/review reports exist on disk, do not reference them — they belong to the previous cycle.
 
 1. Search for `.claude/reports/requirements-report-*.md` with Glob → Read the latest if it exists
 2. Search for `.claude/reports/architecture-report-*.md` with Glob → Read the latest if it exists
 3. Read `.claude/reports/approvals.jsonl` (if it exists)
 
-### [Update Mode] (when a previous plan-report exists)
+### [Update Mode] (continuing the existing cycle)
 Read all reports and update the plan to reflect differences and unresolved items.
 
 1. Search for `.claude/reports/requirements-report-*.md` with Glob → Read the latest if it exists
