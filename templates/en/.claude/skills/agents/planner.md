@@ -52,13 +52,20 @@ Even if old test/review reports exist on disk, do not reference them — they be
 
 ### [Update Mode] (continuing the existing cycle)
 Read all reports and update the plan to reflect differences and unresolved items.
+**Reference downstream reports (test/code-review/security-review) only from the current cycle**
+(see "Report Reading Rules (Common)" in `.claude/skills/agents/report-output-common.md` for details).
 
+Upstream reports (read the latest):
 1. Search for `.claude/reports/requirements-report-*.md` with Glob → Read the latest if it exists
 2. Search for `.claude/reports/architecture-report-*.md` with Glob → Read the latest if it exists
-3. Search for `.claude/reports/plan-report-*.md` with Glob → Read the latest (check diff from previous plan)
-4. Search for `.claude/reports/test-report-*.md` with Glob → Read the latest if it exists
-5. Search for `.claude/reports/code-review-report-*.md` with Glob → Read the latest if it exists
-6. Search for `.claude/reports/security-review-report-*.md` with Glob → Read the latest if it exists
+3. Search for `.claude/reports/plan-report-*.md` with Glob → Read the latest (note its timestamp as T_plan)
+
+Downstream reports (filter to those after T_plan, then read the latest):
+4. From `.claude/reports/test-report-*.md`, read the latest among those newer than T_plan (skip if none)
+5. From `.claude/reports/code-review-report-*.md`, read the latest among those newer than T_plan (skip if none)
+6. From `.claude/reports/security-review-report-*.md`, read the latest among those newer than T_plan (skip if none)
+
+Other:
 7. Read `.claude/reports/approvals.jsonl` (if it exists) (to understand approval/rejection trends)
 
 ## Prohibited Actions

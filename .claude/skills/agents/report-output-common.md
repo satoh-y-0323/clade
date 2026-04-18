@@ -36,3 +36,52 @@ node .claude/hooks/write-report.js <baseName> append <fileName> --file .claude/t
 1. レポートの全内容をそのままインラインで出力する
 2. 以下のメッセージを明記して終了する:
    「Bash による書き込みが失敗しました。上記の内容を `.claude/reports/<baseName>-{タイムスタンプ}.md` に Write ツールで保存してください。」
+
+---
+
+## レポート参照ルール（共通）
+
+各エージェントが `.claude/reports/` から過去レポートを読み込む際は、以下のルールに従う。
+レポートファイルは履歴として蓄積されるため、ファイルの有無ではなく**タイムスタンプで「現サイクル」を判定する**。
+
+### 「現サイクル」の定義
+**現サイクル** = 最新の plan-report のタイムスタンプ T_plan 以降に作成されたレポート。
+T_plan より古い test/review レポートは前サイクルの遺物なので参照しない。
+
+### 上流レポート（最新を Read）
+- `requirements-report-*.md`
+- `architecture-report-*.md`
+- `plan-report-*.md`
+
+これらは plan-report より古いか、plan-report 自身。Glob で検索して最新を Read すればよい。
+
+### 下流レポート（T_plan 以降の最新を Read）
+- `test-report-*.md`
+- `code-review-report-*.md`
+- `security-review-report-*.md`
+
+これらは「現サイクルで作成されたもの」のみを参照する。手順:
+
+```
+Step 1. Glob で .claude/reports/plan-report-*.md を検索 → 最新のタイムスタンプ T_plan を取得
+        plan-report が存在しない場合 → 下流レポートは「現サイクル未作成」として扱う
+
+Step 2. Glob で対象レポート（例: test-report-*.md）を検索
+        ファイル名のタイムスタンプ（YYYYMMDD-HHmmss 部分）が T_plan より新しいもののみフィルタ
+
+Step 3. フィルタ後のリストから最新を Read
+        フィルタ後が空なら「現サイクルでは未作成」として扱う
+```
+
+### エージェント別の参照対象
+
+| エージェント | 上流（最新） | 下流（T_plan 以降の最新） |
+|---|---|---|
+| planner（初回モード） | requirements + architecture | — |
+| planner（更新モード） | requirements + architecture + plan | test + code-review + security-review |
+| tester | requirements + architecture + plan | — |
+| developer | requirements + architecture + plan | test + code-review + security-review |
+| code-reviewer | requirements + architecture + plan | — |
+| security-reviewer | requirements + architecture + plan | — |
+
+`approvals.jsonl` は履歴ファイル全体を Read する（フィルタ不要・追記専用ファイル）。

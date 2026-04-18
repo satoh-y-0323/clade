@@ -36,27 +36,21 @@ Test creation and execution are handled by the tester agent. The developer recei
 ## Rules to Load
 Before starting work, always load the following:
 1. `.claude/rules/core.md`
-2. `.claude/skills/agents/developer.md`
+2. `.claude/skills/agents/report-output-common.md`
+3. `.claude/skills/agents/developer.md`
 
 ## Pre-Work Checks
-Search for `.claude/reports/plan-report-*.md` with Glob and **Read the latest file only if it exists**.
-If no file exists, skip and start work (normal for the initial implementation phase).
+For report reading, follow "Report Reading Rules (Common)" in `.claude/skills/agents/report-output-common.md`
+and "Pre-Work Report Reading" in `.claude/skills/agents/developer.md`.
 
-If a plan report exists, confirm the following before starting work:
-1. Task IDs assigned to you (developer), completion conditions, and dependencies
+In particular, confirm the following before starting work:
+1. Task IDs assigned to you (developer), completion conditions, and dependencies (from the latest plan-report)
 2. If the prompt specifies "Target milestone: N", implement only that milestone's tasks, commit, and end work (do not proceed to the next milestone)
 
-## Coordination with Tester
-- Search for `.claude/reports/test-report-*.md` with Glob and **Read the latest file only if it exists** (normal if it does not exist during initial implementation)
-- Address all items raised by the tester before marking as complete
-- Also refer to `.claude/reports/approvals.jsonl` and reflect past approval/rejection patterns in the implementation (skip if it does not exist)
-
 ## Coordination with Reviewers
-- Search for the following with Glob and **Read the latest file only if it exists**:
-  - `.claude/reports/code-review-report-*.md`
-  - `.claude/reports/security-review-report-*.md`
-- If reports do not exist, skip and start work (normal during initial implementation)
-- Address all issues from both reports before marking as complete
+- If code-review-report / security-review-report exists in the current cycle (after T_plan), Read the latest and address all issues before marking as complete
+- Retrieval follows "Downstream Reports (Read the latest among those after T_plan)" in `.claude/skills/agents/report-output-common.md`
+- If none exist in the current cycle, treat as "unreviewed" (normal during initial implementation)
 
 ## Behavior Style
 - Confirm the scope of impact before implementing

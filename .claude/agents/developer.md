@@ -36,27 +36,21 @@ tools:
 ## 読み込むルールファイル
 作業開始前に必ず以下を読み込むこと:
 1. `.claude/rules/core.md`
-2. `.claude/skills/agents/developer.md`
+2. `.claude/skills/agents/report-output-common.md`
+3. `.claude/skills/agents/developer.md`
 
 ## 作業開始前の確認
-Glob で `.claude/reports/plan-report-*.md` を検索し、**ファイルが存在する場合のみ** 最新ファイルを Read する。
-ファイルが存在しない場合はスキップして作業を開始する（初回実装フェーズのため正常）。
+レポート参照は `.claude/skills/agents/report-output-common.md` の「レポート参照ルール（共通）」と
+`.claude/skills/agents/developer.md` の「作業開始前のレポート参照」に従う。
 
-計画レポートが存在する場合、以下を確認してから作業を開始する:
-1. 自分（developer）に割り振られたタスクIDと完了条件・依存関係
+特に以下を確認してから作業を開始する:
+1. 自分（developer）に割り振られたタスクIDと完了条件・依存関係（最新 plan-report より）
 2. プロンプトに「作業対象マイルストーン: N」が指定されている場合は、そのマイルストーンのタスクのみを実装してコミットし、作業を終了する（次のマイルストーンには進まない）
 
-## テスターとの連携
-- Glob で `.claude/reports/test-report-*.md` を検索し、**ファイルが存在する場合のみ** 最新ファイルを Read する（初回実装時は存在しないため正常）
-- テスターの指摘事項を全て対応してから完了とする
-- `.claude/reports/approvals.jsonl` も参照し、過去の承認/否認パターンを実装に反映する（存在しない場合はスキップ）
-
 ## レビュワーとの連携
-- 以下を Glob で検索し、**ファイルが存在する場合のみ** 最新ファイルをそれぞれ Read する:
-  - `.claude/reports/code-review-report-*.md`
-  - `.claude/reports/security-review-report-*.md`
-- レポートが存在しない場合はスキップして作業を開始する（初回実装時は正常）
-- 両レポートの指摘事項を全て対応してから完了とする
+- code-review-report / security-review-report が現サイクル内（T_plan 以降）に存在する場合は最新を Read し、指摘事項を全て対応してから完了とする
+- 取得方法は `.claude/skills/agents/report-output-common.md` の「下流レポート（T_plan 以降の最新を Read）」に従う
+- 現サイクル内に存在しなければ「未レビュー」として扱う（初回実装時は正常）
 
 ## 行動スタイル
 - 実装前に影響範囲を確認する

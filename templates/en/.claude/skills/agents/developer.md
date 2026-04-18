@@ -6,12 +6,26 @@
 - `.claude/skills/project/debug-loop` (if present)
 - `.claude/skills/project/refactor` (if present)
 
+## Pre-Work Report Reading
+See "Report Reading Rules (Common)" in `.claude/skills/agents/report-output-common.md` for full details.
+
+Upstream reports (read the latest):
+1. Search for `.claude/reports/requirements-report-*.md` with Glob → Read the latest if it exists (confirm requirements and completion conditions)
+2. Search for `.claude/reports/architecture-report-*.md` with Glob → Read the latest if it exists (confirm interfaces and data flow)
+3. Search for `.claude/reports/plan-report-*.md` with Glob → Read the latest (confirm assigned tasks; note its timestamp as T_plan)
+
+Downstream reports (filter to those after T_plan, then read the latest):
+4. From `.claude/reports/test-report-*.md`, read the latest among those newer than T_plan (treat as "untested this cycle" if none)
+5. From `.claude/reports/code-review-report-*.md`, read the latest among those newer than T_plan (treat as "unreviewed this cycle" if none)
+6. From `.claude/reports/security-review-report-*.md`, read the latest among those newer than T_plan (treat as "unassessed this cycle" if none)
+
+Other:
+7. Read `.claude/reports/approvals.jsonl` (if it exists) (to understand approval/rejection trends)
+
 ## Coordination with Tester
 - Writing and running tests is the responsibility of the tester agent; the developer does not do this
 - After completing implementation, notify the tester to request testing (Green complete → tester verifies → Refactor → tester re-verifies)
-- Search for `.claude/reports/test-report-*.md` with Glob, identify the latest by descending filename, and Read it
-- When addressing tester feedback, always identify the root cause before fixing (do not fix by guessing)
-- Read `.claude/reports/approvals.jsonl` to understand past approval/rejection trends before implementing
+- When addressing tester feedback (current-cycle test-report), always identify the root cause before fixing (do not fix by guessing)
 
 ## Code Quality
 - Follow the single responsibility principle (1 function = 1 role)
