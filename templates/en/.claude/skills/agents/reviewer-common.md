@@ -9,28 +9,26 @@ Review the following in order before starting work (**read only files that exist
 
 ## Report Output Flow (Common)
 
-### Standard size: single heredoc
-```
-node .claude/hooks/write-report.js <baseName> new <<'CLADE_REPORT_EOF'
-{full report content}
-CLADE_REPORT_EOF
-```
-> **Syntax note**: Write `CLADE_REPORT_EOF` at the **start of the line (no indentation)**. Do not include the terminator string as a standalone line in the content.
+> ⚠️ **Always use split output. Each Bash command (including heredoc content) must be 2000 characters or fewer.**
+> This is a constraint of Claude Code's permission checker — commands exceeding this limit are unconditionally denied.
 
-### Large reports: append mode for split output
-If the report is too large to write in one heredoc, split it by section and append:
+### Step 1: Output the header with `new` mode (note the returned filename)
 ```
-# Section 1 (create new → note the returned filename)
 node .claude/hooks/write-report.js <baseName> new <<'CLADE_REPORT_EOF'
-{opening sections (header, summary, etc.)}
+{Header / summary (title, date, referenced reports, target, summary table)}
 CLADE_REPORT_EOF
 # → e.g.: [write-report] .claude/reports/code-review-report-20260401-143022.md
+```
 
-# Section 2+ (append, use the filename from above)
+### Step 2+: Append detail sections with `append` mode (2000 chars max per call)
+```
 node .claude/hooks/write-report.js <baseName> append code-review-report-20260401-143022.md <<'CLADE_REPORT_EOF'
-{next section}
+{Detail sections (findings, fix requests, overall assessment, etc.)}
 CLADE_REPORT_EOF
 ```
+If any section exceeds 2000 characters, split it further across multiple append calls.
+
+> **Syntax note**: Write `CLADE_REPORT_EOF` at the **start of the line (no indentation)**. Do not include the terminator string as a standalone line in the content.
 
 ### ⚠️ If Bash fails with a permission error (last resort)
 **Never give up silently.** Delegate to the parent Claude instead:

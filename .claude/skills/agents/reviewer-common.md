@@ -9,28 +9,26 @@
 
 ## レポート出力フロー（共通）
 
-### 通常サイズ: ヒアドキュメントで一括出力
-```
-node .claude/hooks/write-report.js <baseName> new <<'CLADE_REPORT_EOF'
-{レポート内容の全て}
-CLADE_REPORT_EOF
-```
-> **構文の注意**: `CLADE_REPORT_EOF` は**行頭から書くこと（インデント禁止）**。本文中に同じ文字列を単独行で含めないこと。
+> ⚠️ **必ず分割出力すること。1回の Bash コマンド（ヒアドキュメント含む）は 2000 文字以内に収めること。**
+> これは Claude Code の権限チェックの制約であり、超過すると Bash が無条件に拒否される。
 
-### 大規模レポート向け: 追記モードで分割出力
-レポートが大きく一度に書けない場合は、セクションごとに分けて追記する:
+### Step 1: ヘッダー部分を `new` モードで出力（返却されたファイル名を控える）
 ```
-# セクション1（新規作成 → 返却されたファイル名を控える）
 node .claude/hooks/write-report.js <baseName> new <<'CLADE_REPORT_EOF'
-{冒頭のセクション（ヘッダー・サマリ等）}
+{ヘッダー・サマリ等（タイトル・日時・参照レポート・対象・サマリテーブル）}
 CLADE_REPORT_EOF
 # → 例: [write-report] .claude/reports/code-review-report-20260401-143022.md
+```
 
-# セクション2以降（append で追記、ファイル名は上で控えたもの）
+### Step 2 以降: 詳細セクションを `append` モードで追記（1回 2000 文字以内）
+```
 node .claude/hooks/write-report.js <baseName> append code-review-report-20260401-143022.md <<'CLADE_REPORT_EOF'
-{続きのセクション}
+{詳細セクション（指摘事項・修正依頼・総評など）}
 CLADE_REPORT_EOF
 ```
+2000 文字を超えるセクションはさらに分割して複数回 append する。
+
+> **構文の注意**: `CLADE_REPORT_EOF` は**行頭から書くこと（インデント禁止）**。本文中に同じ文字列を単独行で含めないこと。
 
 ### ⚠️ Bash が権限エラーで失敗した場合（最終手段）
 **単独で諦めることは禁止。** 以下の手順で親Claudeに委譲すること:
