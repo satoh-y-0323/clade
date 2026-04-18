@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.18.2] - 2026-04-18
+
+### Fix
+
+- `code-reviewer` / `security-reviewer` のスキルファイルが参照するチェックリストパスが古いままだった問題を修正。チェックリストをサブフォルダへ移動した際に `skills/agents/` 側の参照パスが更新されておらず、レビュー時にチェックリストが読み込まれない状態だった
+
+---
+
 ## [v1.18.1] - 2026-04-17
 
 ### Fix
