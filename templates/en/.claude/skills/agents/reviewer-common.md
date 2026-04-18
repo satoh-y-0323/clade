@@ -11,6 +11,9 @@ Review the following in order before starting work (**read only files that exist
 
 > ⚠️ **Always use split output. Each Bash command (including heredoc content) must be 2000 characters or fewer.**
 > This is a constraint of Claude Code's permission checker — commands exceeding this limit are unconditionally denied.
+>
+> ⚠️ **Always call using the relative path `node .claude/hooks/write-report.js`. Absolute paths are forbidden.**
+> Absolute paths do not match the `permissions.allow` pattern (`Bash(node .claude/hooks/write-report.js*)`), and may be denied even for short commands.
 
 ### Step 1: Output the header with `new` mode (note the returned filename)
 ```

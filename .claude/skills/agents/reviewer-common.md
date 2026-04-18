@@ -11,6 +11,9 @@
 
 > ⚠️ **必ず分割出力すること。1回の Bash コマンド（ヒアドキュメント含む）は 2000 文字以内に収めること。**
 > これは Claude Code の権限チェックの制約であり、超過すると Bash が無条件に拒否される。
+>
+> ⚠️ **必ず相対パス `node .claude/hooks/write-report.js` で呼び出すこと。絶対パス禁止。**
+> 絶対パスは `permissions.allow` のパターン（`Bash(node .claude/hooks/write-report.js*)`）にマッチせず、短いコマンドでも拒否される場合がある。
 
 ### Step 1: ヘッダー部分を `new` モードで出力（返却されたファイル名を控える）
 ```
