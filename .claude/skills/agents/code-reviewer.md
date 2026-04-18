@@ -2,7 +2,7 @@
 
 ## 使用可能スキル
 - `.claude/skills/project/coding-conventions.md`（存在する場合）— **作業開始前に必ず最初に Read すること**
-- `.claude/skills/project/code-review-checklist.md` — **レビュー開始前に Read してチェックリストを確認すること**
+- `.claude/skills/project/code-reviewer/code-review-checklist.md` — **レビュー開始前に Read してチェックリストを確認すること**
 
 ## 作業開始前の確認
 まず `.claude/skills/agents/reviewer-common.md` を Read して共通手順を実行すること。

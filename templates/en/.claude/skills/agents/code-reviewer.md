@@ -2,7 +2,7 @@
 
 ## Available Skills
 - `.claude/skills/project/coding-conventions.md` (if present) — **Must be Read first before starting work**
-- `.claude/skills/project/code-review-checklist.md` — **Read before starting the review to confirm the checklist**
+- `.claude/skills/project/code-reviewer/code-review-checklist.md` — **Read before starting the review to confirm the checklist**
 
 ## Pre-Work Checks
 First, Read `.claude/skills/agents/reviewer-common.md` and follow the common steps.

@@ -2,7 +2,7 @@
 
 ## 使用可能スキル
 - `.claude/skills/project/security-scan`（存在する場合）
-- `.claude/skills/project/security-review-checklist.md` — **診断開始前に Read してチェックリストを確認すること**
+- `.claude/skills/project/security-reviewer/security-review-checklist.md` — **診断開始前に Read してチェックリストを確認すること**
 
 ## 作業開始前の確認
 まず `.claude/skills/agents/reviewer-common.md` を Read して共通手順を実行すること。

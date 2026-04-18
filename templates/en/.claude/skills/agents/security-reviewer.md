@@ -2,7 +2,7 @@
 
 ## Available Skills
 - `.claude/skills/project/security-scan` (if present)
-- `.claude/skills/project/security-review-checklist.md` — **Read before starting the assessment to confirm the checklist**
+- `.claude/skills/project/security-reviewer/security-review-checklist.md` — **Read before starting the assessment to confirm the checklist**
 
 ## Pre-Work Checks
 First, Read `.claude/skills/agents/reviewer-common.md` and follow the common steps.
