@@ -9,26 +9,27 @@ Review the following in order before starting work (**read only files that exist
 
 ## Report Output Flow (Common)
 
-> ⚠️ **Always use split output. Each Bash command (including heredoc content) must be 2000 characters or fewer.**
+> ⚠️ **Always use split output. Each Bash command's heredoc body must be 2000 characters or fewer, counting newlines as characters.**
 > This is a constraint of Claude Code's permission checker — commands exceeding this limit are unconditionally denied.
 >
 > ⚠️ **Always call using the relative path `node .claude/hooks/write-report.js`. Absolute paths are forbidden.**
 > Absolute paths do not match the `permissions.allow` pattern (`Bash(node .claude/hooks/write-report.js*)`), and may be denied even for short commands.
 
-### Step 1: Output the header with `new` mode (note the returned filename)
+### Step 1: Output the first chunk with `new` mode (note the returned filename)
+If the heredoc body exceeds 2000 characters (counting newlines), cut it at the 2000-character boundary and continue with `append` in Step 2.
 ```
 node .claude/hooks/write-report.js <baseName> new <<'CLADE_REPORT_EOF'
-{Header / summary (title, date, referenced reports, target, summary table)}
+{First part of the report (2000 characters or fewer, counting newlines)}
 CLADE_REPORT_EOF
 # → e.g.: [write-report] .claude/reports/code-review-report-20260401-143022.md
 ```
 
-### Step 2+: Append detail sections with `append` mode
-**Each append command's heredoc body must be 2000 characters or fewer.**
-When combining multiple sections into one call, split into the next append command if the total exceeds 2000 characters.
+### Step 2+: Append the rest with `append` mode (repeat until the report is complete)
+**Each heredoc body must be 2000 characters or fewer, counting newlines.**
+When combining multiple sections into one call, split into the next `append` command if the total (including newlines) exceeds 2000 characters.
 ```
 node .claude/hooks/write-report.js <baseName> append code-review-report-20260401-143022.md <<'CLADE_REPORT_EOF'
-{Detail sections (findings, fix requests, overall assessment, etc.) — 2000 chars max}
+{Next chunk (2000 characters or fewer, counting newlines)}
 CLADE_REPORT_EOF
 ```
 
