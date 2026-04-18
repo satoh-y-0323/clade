@@ -23,13 +23,14 @@ CLADE_REPORT_EOF
 # → e.g.: [write-report] .claude/reports/code-review-report-20260401-143022.md
 ```
 
-### Step 2+: Append detail sections with `append` mode (2000 chars max per call)
+### Step 2+: Append detail sections with `append` mode
+**Each append command's heredoc body must be 2000 characters or fewer.**
+When combining multiple sections into one call, split into the next append command if the total exceeds 2000 characters.
 ```
 node .claude/hooks/write-report.js <baseName> append code-review-report-20260401-143022.md <<'CLADE_REPORT_EOF'
-{Detail sections (findings, fix requests, overall assessment, etc.)}
+{Detail sections (findings, fix requests, overall assessment, etc.) — 2000 chars max}
 CLADE_REPORT_EOF
 ```
-If any section exceeds 2000 characters, split it further across multiple append calls.
 
 > **Syntax note**: Write `CLADE_REPORT_EOF` at the **start of the line (no indentation)**. Do not include the terminator string as a standalone line in the content.
 

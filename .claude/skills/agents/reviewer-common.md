@@ -23,13 +23,14 @@ CLADE_REPORT_EOF
 # → 例: [write-report] .claude/reports/code-review-report-20260401-143022.md
 ```
 
-### Step 2 以降: 詳細セクションを `append` モードで追記（1回 2000 文字以内）
+### Step 2 以降: 詳細セクションを `append` モードで追記
+**1回の append コマンドのヒアドキュメント本文は必ず 2000 文字以内に収めること。**
+複数のセクションをまとめて書く場合でも、合計が 2000 文字を超えたら次の append コマンドに分割する。
 ```
 node .claude/hooks/write-report.js <baseName> append code-review-report-20260401-143022.md <<'CLADE_REPORT_EOF'
-{詳細セクション（指摘事項・修正依頼・総評など）}
+{詳細セクション（指摘事項・修正依頼・総評など）2000文字以内}
 CLADE_REPORT_EOF
 ```
-2000 文字を超えるセクションはさらに分割して複数回 append する。
 
 > **構文の注意**: `CLADE_REPORT_EOF` は**行頭から書くこと（インデント禁止）**。本文中に同じ文字列を単独行で含めないこと。
 
