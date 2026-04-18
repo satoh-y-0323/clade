@@ -1,5 +1,13 @@
 # 変更履歴
 
+## [v1.18.4] - 2026-04-18
+
+### Fix
+
+- バックグラウンドエージェントが `write-report.js` を絶対パスで呼び出すと `permissions.allow` のパターン（`Bash(node .claude/hooks/write-report.js*)`）にマッチせず拒否される問題を修正。`reviewer-common.md` に「相対パス必須・絶対パス禁止」の明示ルールを追加
+
+---
+
 ## [v1.18.3] - 2026-04-18
 
 ### Fix
