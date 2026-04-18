@@ -1,5 +1,20 @@
 # 変更履歴
 
+## [v1.20.0] - 2026-04-19
+
+### Changed
+
+- レポート出力フローを全レポート出力エージェント（interviewer / architect / planner / tester / code-reviewer / security-reviewer）で共通化。`Write` ツールで `.claude/tmp/<baseName>.md` に書き込み、`write-report.js --file` で読み込ませる二段階方式に統一。OS の引数文字数制限（目安 8,000 文字）に左右されず、長大なレポートも安定して保存できる
+- planner の実行モード判定を「plan-report の有無」から「最新 plan-report と requirements/architecture のタイムスタンプ比較」に変更。新しい要件で仕切り直したとき、自動的に初回モードに戻るようになった
+
+### New
+
+- 「現サイクル」の概念を導入。最新 plan-report のタイムスタンプ T_plan を基準に、下流レポート（test / code-review / security-review）は T_plan より新しいもののみを参照するルールを追加。前サイクルの古いレポートが次サイクルに混入することを防ぐ
+
+### Fix
+
+- v1.19.0 で削除した並列開発関連ファイル（`agents/merger.md` / `agents/worktree-developer.md` / `hooks/check-group-isolation.js`）を `clade-manifest.json` の `removed_files` に追加。既存ユーザーが `/update` を実行すると古いファイルが自動削除される
+
 ## [v1.19.0] - 2026-04-18
 
 ### Changed
