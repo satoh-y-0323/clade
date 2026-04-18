@@ -9,31 +9,32 @@
 
 ## レポート出力フロー（共通）
 
-> ⚠️ **必ず分割出力すること。1回の Bash コマンドのヒアドキュメント本文は、改行を含めて 2000 文字以内に収めること。**
-> これは Claude Code の権限チェックの制約であり、超過すると Bash が無条件に拒否される。
+> ⚠️ **必ず Write ツールで一時ファイルに本文を保存してから、`write-report.js --file <path>` で読み込ませること。**
+> Bash のヒアドキュメント経由（`<<'CLADE_REPORT_EOF'`）は Claude Code の permissions チェッカーで拒否されることがある。`--file` 方式は Bash コマンドを 100 文字程度に保つため、この問題を回避できる。
 >
 > ⚠️ **必ず相対パス `node .claude/hooks/write-report.js` で呼び出すこと。絶対パス禁止。**
-> 絶対パスは `permissions.allow` のパターン（`Bash(node .claude/hooks/write-report.js*)`）にマッチせず、短いコマンドでも拒否される場合がある。
+> 絶対パスは `permissions.allow` のパターン（`Bash(node .claude/hooks/write-report.js*)`）にマッチせず拒否される場合がある。
 
-### Step 1: 最初の塊を `new` モードで出力（返却されたファイル名を控える）
-ヒアドキュメント本文が改行を含めて 2000 文字を超える場合は、2000 文字以内に収まる位置で切り、続きは Step 2 の `append` で追記する。
+### Step 1: レポート本文を一時ファイルに Write
+Write ツールで `.claude/tmp/<baseName>.md` にレポート全文を書き込む。
+- **長さ制約なし。何文字でも書ける**（heredoc を使わないため）
+- baseName 例: `code-review-report` / `security-review-report` / `test-report`
+- `.claude/tmp/` は .gitignore 対象なので、作業中に作成されたファイルは git に含まれない
+
+### Step 2: write-report.js --file で実レポートに保存
 ```
-node .claude/hooks/write-report.js <baseName> new <<'CLADE_REPORT_EOF'
-{レポートの冒頭部分（改行を含めて 2000 文字以内）}
-CLADE_REPORT_EOF
+node .claude/hooks/write-report.js <baseName> new --file .claude/tmp/<baseName>.md
 # → 例: [write-report] .claude/reports/code-review-report-20260401-143022.md
 ```
 
-### Step 2 以降: 残りを `append` モードで追記（レポートが終わるまで繰り返す）
-**1回のヒアドキュメント本文は、改行を含めて 2000 文字以内に収めること。**
-複数のセクションをまとめて書く場合でも、改行込みの合計が 2000 文字を超えたら次の `append` コマンドに分割する。
-```
-node .claude/hooks/write-report.js <baseName> append code-review-report-20260401-143022.md <<'CLADE_REPORT_EOF'
-{続きの内容（改行を含めて 2000 文字以内）}
-CLADE_REPORT_EOF
-```
+返却されたファイル名（`code-review-report-20260401-143022.md` の部分）を控えておく。
 
-> **構文の注意**: `CLADE_REPORT_EOF` は**行頭から書くこと（インデント禁止）**。本文中に同じ文字列を単独行で含めないこと。
+### 追記する場合（既存レポートに追加）
+追記内容を Write ツールで `.claude/tmp/<baseName>.md` に上書き保存してから:
+```
+node .claude/hooks/write-report.js <baseName> append <fileName> --file .claude/tmp/<baseName>.md
+```
+`<fileName>` は Step 2 で控えたファイル名（タイムスタンプ付き）。
 
 ### ⚠️ Bash が権限エラーで失敗した場合（最終手段）
 **単独で諦めることは禁止。** 以下の手順で親Claudeに委譲すること:

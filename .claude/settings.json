@@ -30,7 +30,6 @@
       "Glob(**)",
       "Grep(**)",
       "Write(**)",
-      "Bash(cd * && git*)",
       "Bash(git -C *)",
       "Bash(git checkout*)",
       "Bash(git add*)",
@@ -38,8 +37,7 @@
       "Bash(git rev-parse*)",
       "Bash(git status*)",
       "Bash(git diff*)",
-      "Bash(git log*)",
-      "Bash(git worktree*)"
+      "Bash(git log*)"
     ],
     "deny": [
       "Read(.env)",

@@ -11,8 +11,6 @@ Launches the code review agent (code-reviewer) as a sub-agent.
 Launch with `subagent_type: code-reviewer` specified in the Agent tool.
 Include the current work context (user's request and presence of existing reports) in the prompt.
 
-**Parallel execution**: When launching alongside security-reviewer, use `run_in_background: true` for both and wait for both to complete before proceeding to Step 2.
-
 ### Step 2: Receive Report Path
 Retrieve the report file path from the agent's return message.
 

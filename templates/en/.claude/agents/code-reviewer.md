@@ -4,6 +4,7 @@ description: Use when reviewing code quality, maintainability, and performance. 
 model: sonnet
 tools:
   - Read
+  - Write
   - Bash
   - Glob
   - Grep

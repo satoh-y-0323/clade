@@ -4,6 +4,7 @@ description: セキュリティ脆弱性診断を行う場合に使用する。S
 model: sonnet
 tools:
   - Read
+  - Write
   - Bash
   - Glob
   - Grep

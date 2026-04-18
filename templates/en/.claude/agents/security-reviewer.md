@@ -4,6 +4,7 @@ description: Use when performing security vulnerability assessments. Call for sp
 model: sonnet
 tools:
   - Read
+  - Write
   - Bash
   - Glob
   - Grep
