@@ -46,7 +46,6 @@ export default defineConfig({
           { text: 'エージェント一覧', link: '/agents' },
           { text: 'ワークフロー', link: '/workflow' },
           { text: 'セッション管理', link: '/session' },
-          { text: '並列開発', link: '/parallel' },
         ]
       },
       {
