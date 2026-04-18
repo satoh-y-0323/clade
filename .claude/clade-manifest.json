@@ -64,7 +64,6 @@
     "hooks": [
       "package.json",
       "apply-diff.js",
-      "check-group-isolation.js",
       "clade-update.js",
       "clear-file-history.js",
       "cluster-promote-core.js",
