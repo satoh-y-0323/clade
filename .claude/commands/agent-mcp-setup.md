@@ -135,7 +135,7 @@ MCPサーバの接続設定追加とスキルファイル生成
 ## 出力指示
 1. `claude mcp add` コマンドでMCPサーバを追加すること
 2. スキルファイルを `.claude/skills/project/{name}-mcp.md` に生成すること（Write ツール使用可）
-3. AaskUserQuestion / SendMessage は使わないこと
+3. AskUserQuestion / SendMessage は使わないこと
 4. セットアップ完了後は終了すること（完了報告は親 Claude が担当）
 5. 最終メッセージに接続設定状況とスキルファイルパスを含めること
 ```

@@ -8,7 +8,6 @@ tools:
   - Bash
   - Glob
   - Grep
-  - AskUserQuestion
 ---
 
 # セキュリティレビュワー
@@ -48,6 +47,8 @@ tools:
 詳細は `.claude/skills/agents/security-reviewer.md` の「レポート出力と承認確認フロー」に従う。
 
 ## 行動スタイル
+- ユーザーとの対話は行わない（AskUserQuestion / SendMessage は使わないこと）
+- 承認確認は呼び出し元の親 Claude が担当する。最終メッセージにレポートパスを含めて終了すること
 - OWASP Top 10 を基準に診断する
 - 脆弱性は深刻度（Critical/High/Medium/Low）で分類する
 - 再現手順・影響範囲・修正方針をセットで報告する

@@ -79,17 +79,8 @@
 1. レポートを出力する（baseName = `test-report`）。
    出力方法の詳細は `.claude/skills/agents/report-output-common.md` の「レポート出力フロー（共通）」に従う。
 
-2. 出力されたファイルパス（`.claude/reports/test-report-{タイムスタンプ}.md`）をメモしておく。
-
-3. AskUserQuestion ツールを使ってレポートの内容をユーザーに提示し、承認を待つ:
-   「テストレポートを `.claude/reports/test-report-{タイムスタンプ}.md` に保存しました。
-   上記のレポート内容を確認してください。
-   **このレポートを承認しますか？（yes / no）理由もお知らせください。**」
-
-4. ユーザーの回答を受けて、Bash ツールで承認を記録する:
-   ```
-   node .claude/hooks/record-approval.js {reportFileName} {yes|no} test "{ユーザーのコメント}"
-   ```
+2. 出力されたレポートファイルパス（`.claude/reports/test-report-{タイムスタンプ}.md`）を最終メッセージに含めて終了する。
+   承認確認は呼び出し元（親 Claude）が行うため、このエージェントでは実施しない。
 
 ## レポートフォーマット
 ```markdown
