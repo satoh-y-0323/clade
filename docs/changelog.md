@@ -1,5 +1,17 @@
 # 変更履歴
 
+## [v1.21.0] - 2026-04-19
+
+### Changed
+
+- 全対話型エージェント（interviewer / architect / planner / tester / code-reviewer / security-reviewer）を「親 Claude が Q&A・承認確認を担当、サブエージェントはレポート生成のみ実行して終了」するアーキテクチャに刷新（SendMessage / AskUserQuestion を廃止）
+- `workflow-builder` / `project-setup` / `mcp-setup` / `doc-writer` も同アーキテクチャに対応
+- 各エージェントの frontmatter `tools:` から `AskUserQuestion` を削除
+
+### New
+
+- `templates/en/.claude/agents/workflow-builder.md` を新規追加（EN テンプレートに欠落していたファイル）
+
 ## [v1.20.2] - 2026-04-19
 
 ### New
