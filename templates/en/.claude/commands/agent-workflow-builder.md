@@ -1,32 +1,26 @@
 # /agent-workflow-builder command
 
-A meta-agent that interviews the user about their work and auto-generates a set of agents tailored to it.
-A recursive structure: "use Clade to create Clade agents."
+A meta-agent that interviews the user about their work and auto-generates a set of agents tailored to that workflow. The parent Claude handles Q&A and workflow design; the sub-agent handles file generation.
 
-## Overview
+## Parent Claude's responsibility
 
-Runs in 4 phases:
-1. **Phase 1: Interview** — Ask 5–6 questions about the work, recurring tasks, and IN/OUT
-2. **Phase 2: Workflow design** — Propose an agent for each step and confirm with the user
-3. **Phase 3: Agent file generation** — Generate a `.md` file for each step
-4. **Phase 4: Update CLAUDE.md** — Append to the `## User Agents` section
+This command is executed directly by the parent Claude. The sub-agent only handles file generation (Phase 3 and beyond).
 
----
+## Execution flow
 
-## Decision at startup
+### Step 1: Read upstream reports (resume check)
 
-First, use the Glob tool to search `.claude/reports/workflow-report-*.md`:
+Search for `.claude/reports/workflow-report-*.md` using Glob:
+- **If found**: Read the latest file and resume from Phase 3 (jump to Step 4)
+- **If not found**: Start from Phase 1 (proceed to Step 2)
 
-- **If a file exists**: Read the latest file and resume from Phase 3.
-- **If no file exists**: Start from Phase 1.
+### Step 2: Q&A (Phase 1 and 2)
 
----
+#### Phase 1: Interview
 
-## Phase 1: Interview
+Output the following questions one by one as text and wait for the user's response (output one question at a time, then proceed after receiving the answer).
 
-Ask the following questions **one at a time, in order** via the AskUserQuestion tool (do not ask them all at once).
-
-### Q1: Role / nature of work
+**Q1: Role / nature of work**
 
 ```
 What kind of work do you do?
@@ -34,7 +28,7 @@ Briefly describe your role or main responsibilities.
 (e.g., sales admin, marketer, HR specialist, project manager, etc.)
 ```
 
-### Q2: Recurring tasks
+**Q2: Recurring tasks**
 
 ```
 Please describe a task you repeat daily or weekly.
@@ -42,28 +36,28 @@ A concrete task like "every Monday, tally sales and email the manager" is ideal.
 If there are several, choose the one you most want to automate.
 ```
 
-### Q3: Input (starting point of the task)
+**Q3: Input (starting point of the task)**
 
 ```
 What does this task start from? Please describe its "input."
 (e.g., an Excel file, an incoming email, a Slack notification, a customer request, etc.)
 ```
 
-### Q4: Output (end point of the task)
+**Q4: Output (end point of the task)**
 
 ```
 When the task is complete, what is the "deliverable" you hand off?
 (e.g., send a report by email, update a spreadsheet, save materials, etc.)
 ```
 
-### Q5: The hardest step
+**Q5: The hardest step**
 
 ```
 Within this task, which part takes the most time or feels the hardest?
 (e.g., gathering and summarizing information, drafting text, review / checking, etc.)
 ```
 
-### Q6: Confirmation / approval checkpoints (optional)
+**Q6: Confirmation / approval checkpoints (optional)**
 
 ```
 Are there any points where you need confirmation or approval from someone?
@@ -71,33 +65,10 @@ Are there any points where you need confirmation or approval from someone?
 If there are none, answer "none."
 ```
 
----
+#### Phase 2: Workflow design and confirmation loop
 
-## Phase 2: Workflow design
-
-Based on the Phase 1 answers, design the workflow using the procedure below.
-
-### Criteria for assigning steps
-
-Analyze the interview content and decide the steps, using the following as a reference:
-
-| Situation | Role category | Example agent name |
-|-----------|--------------|-------------------|
-| Needs information gathering / organization | `gather` | agent-gatherer |
-| Needs generation of text / documents / data | `create` | agent-creator |
-| Needs content review / quality check | `check` | agent-checker |
-| Needs an approval flow or final polish | `finalize` | agent-finalizer |
-| Needs sending / sharing externally | `distribute` | agent-distributor |
-
-**Target step count**: 2–5 steps (2–3 for simple work, 4–5 for complex work)
-
-Make agent names match the user's domain:
-- If the work is "sales report," use names like `agent-sales-gatherer`, `agent-report-creator`
-- Prefer concrete names that describe the work over generic ones
-
-### Workflow proposal and confirmation loop
-
-Use the AskUserQuestion tool to propose a workflow and iterate until the user answers "yes":
+Based on Phase 1 answers, design the workflow and present it to the user in the following format.
+Repeat revision and re-presentation until "yes" is received:
 
 ```
 Based on your answers, here is the proposed workflow.
@@ -118,141 +89,115 @@ Answer "yes" if it looks good.
 
 If the user requests changes, update the workflow and present it again.
 
----
+**Step assignment criteria:**
 
-## Phase 3: Agent file generation
+| Situation | Role category | Example agent name |
+|-----------|--------------|-------------------|
+| Needs information gathering / organization | `gather` | agent-gatherer |
+| Needs generation of text / documents / data | `create` | agent-creator |
+| Needs content review / quality check | `check` | agent-checker |
+| Needs an approval flow or final polish | `finalize` | agent-finalizer |
+| Needs sending / sharing externally | `distribute` | agent-distributor |
 
-Generate a `.md` file for each step of the approved workflow.
+**Target step count**: 2–5 steps (2–3 for simple work, 4–5 for complex work)
 
-### Files to generate
+Make agent names match the user's domain (prefer concrete names over generic ones).
 
-1. **Agent instruction files for each step** — `.claude/commands/agent-{name}.md` (one per step)
-2. **Umbrella command** — `.claude/commands/{workflow-name}.md`
+### Step 3: Organize Q&A results
 
-### Template for agent instruction files
+Organize Phase 1 and 2 results into the following structure:
+- Role / work content
+- Recurring task content
+- Input / output
+- Hardest step
+- Confirmation / approval timing
+- Approved workflow (task name, agent names per step, role categories, what each does)
+- Umbrella command name
 
-Base them on the existing `interviewer` (interview structure), `code-reviewer` (review / finding structure), and `developer` (deliverable-generating structure) files, replacing only the role name and checklist:
+### Step 4: Single-shot sub-agent launch
 
-```markdown
-# /agent-{name} command
-
-{Role description (1–2 sentences)}
-
-## Role
-- **Input**: {hand-off content from the previous Step}
-- **Output**: {deliverable passed to the next Step}
-
-## Work steps
-
-1. {step 1}
-2. {step 2}
-3. {step 3}
-
-## Completion criteria
-- {check item 1}
-- {check item 2}
-
-## Notes
-- {note 1}
-```
-
-### Template for the umbrella command
-
-```markdown
-# /{workflow-name} command
-
-A workflow that automates {task name}.
-Invokes each agent in order to complete the whole task.
-
-## Execution order
-
-1. `/agent-{step1-name}` — {description of Step 1}
-2. `/agent-{step2-name}` — {description of Step 2}
-...
-
-## Usage
-
-Running `/{workflow-name}` launches the agents in the order above.
-The flow waits for confirmation after each Step.
-```
-
-Create each file with the Write tool. When generation is complete, report the list of created files to the user.
-
----
-
-## Phase 4: Update CLAUDE.md
-
-Append the generated agents to the `## User Agents` section of `CLAUDE.md`.
-
-> **Note**: The `## Available Agents` section lives inside `<!-- CLADE:START -->` – `<!-- CLADE:END -->` and
-> is overwritten when `/update` runs. Always append user-generated agents under `## User Agents`.
-
-### Append format
-
-```markdown
-### {task name} workflow (auto-generated)
-- `/{workflow-name}`              → Umbrella command that runs the {task name} workflow
-- `/agent-{step1-name}`           → {Step 1 role}
-- `/agent-{step2-name}`           → {Step 2 role}
-```
-
-Use the Edit tool to insert the text into `CLAUDE.md`, right after the
-`<!-- Automatically appended by /agent-workflow-builder -->` comment in the `## User Agents` section.
-
----
-
-## Completion report
-
-After all phases are complete, tell the user:
+Launch with `subagent_type: workflow-builder` via the Agent tool. Include the following in the prompt:
 
 ```
-✅ Workflow builder finished!
+## Work request
+Generate agent files and update CLAUDE.md for the approved workflow
 
-Generated files:
-  - .claude/commands/agent-{name}.md × {N}
-  - .claude/commands/{workflow-name}.md (umbrella command)
-  - CLAUDE.md updated
+## workflow-report path (for resume only)
+{file path or "none (new generation)"}
 
-Usage:
-  Running /{workflow-name} starts the {task name} flow automatically.
+## Q&A results with user
 
-Next steps:
-  Open each agent instruction file (.claude/commands/agent-{name}.md)
-  and fine-tune "Work steps" and "Completion criteria" to fit your work —
-  this makes the agents noticeably more accurate.
-```
+### Phase 1: Interview
+Q1 (role/work): {answer}
+Q2 (recurring task): {answer}
+Q3 (input): {answer}
+Q4 (output): {answer}
+Q5 (hardest step): {answer}
+Q6 (confirmation/approval): {answer}
 
----
-
-## Workflow design report output (end of Phase 2)
-
-Once Phase 2 is approved, write the following report to prepare for Phase 3:
-
-```bash
-node .claude/hooks/write-report.js workflow-report new <<'REPORT'
-# Workflow Design Report
-
-## Task name
-{task name}
-
-## Interview results
-- Role / work: {answer to Q1}
-- Recurring tasks: {answer to Q2}
-- Input: {answer to Q3}
-- Output: {answer to Q4}
-- Hardest step: {answer to Q5}
-- Confirmation / approval: {answer to Q6}
-
-## Approved workflow
+### Phase 2: Approved workflow
+Task name: {task name}
+Umbrella command name: {command name}
 
 | Step | Agent name   | Role category | What it does |
 |------|--------------|---------------|--------------|
 | 1    | agent-{name} | {category}    | {what it does} |
 | 2    | agent-{name} | {category}    | {what it does} |
 
-## Umbrella command name
-/{workflow-name}
-REPORT
+## Output instructions
+1. Save workflow-report to `.claude/reports/workflow-report-*.md` (via write-report.js)
+2. Generate each agent instruction file at `.claude/commands/agent-{name}.md` (Write tool allowed)
+3. Generate umbrella command at `.claude/commands/{workflow-name}.md` (Write tool allowed)
+4. Append to `## User Agents` section in `CLAUDE.md` (Edit tool allowed)
+5. The final message must include the list of generated files
+- Do not use AskUserQuestion / SendMessage
+- Exit after generating the files (reporting is handled by the parent Claude)
 ```
 
-After writing the report, proceed directly to Phase 3 (no user confirmation needed).
+For regeneration after rejection, add the following to the prompt:
+```
+## Regeneration mode
+- User's revision instructions: {instructions}
+```
+
+### Step 5: Receive results
+
+Review the list of generated files from the sub-agent's final output.
+
+### Step 6: Approval confirmation
+
+Present the following to the user as text:
+
+```
+The workflow builder has completed.
+
+Generated files:
+  - .claude/commands/agent-{name}.md x {N}
+  - .claude/commands/{workflow-name}.md (umbrella command)
+  - CLAUDE.md updated
+
+Usage:
+  Running /{workflow-name} starts the {task name} flow automatically.
+
+If revisions are needed, please let me know.
+If everything looks good, answer "ok".
+```
+
+### Step 7: Record approval
+
+Since workflow-builder does not generate a fixed report file, recording approval is omitted.
+
+### Step 8: Restart on rejection
+
+If revisions are needed, repeat from Step 4 with a new prompt that includes the revision instructions.
+
+---
+
+## Purpose
+- Auto-generating custom agent sets from business workflow interviews
+- Defining recurring tasks as Clade agents
+
+## Notes
+- Operates independently from the standard workflow (phases)
+- This command is self-contained (no handoff to other agents)
+- Generated agent templates should follow the new pattern (parent-child separation, single-shot launch)

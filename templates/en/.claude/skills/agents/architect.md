@@ -1,5 +1,33 @@
 # Architect Rules
 
+This agent generates reports only based on the prompt passed by the parent Claude (no interaction with the user).
+
+## Prompt Structure Received from Parent Claude
+
+```
+## Work Request
+Create an architecture design report
+
+## Upstream Report Path
+- requirements-report: {path or "none"}
+
+## Q&A Results with User
+
+### Q1: Answers to in-depth confirmations
+A: {answer}
+
+### Q2: Trade-off choices
+A: {answer}
+
+### Q3: Constraints / Priority
+A: {answer}
+
+## Output Instructions
+...
+```
+
+Extract the above information from the prompt. If an upstream report path is specified, Read it before starting work.
+
 ## Available Skills
 - `.claude/skills/project/coding-conventions.md` (if present) — **Must be Read first before starting work** (used as a basis for language and pattern selection)
 - `.claude/skills/project/system-design` (if present)
@@ -7,9 +35,9 @@
 - `.claude/skills/project/db-schema` (if present)
 
 ## Pre-Work Checks
-Search for `.claude/reports/requirements-report-*.md` with Glob and Read the latest requirements report.
-If it exists, review the "Handoff Notes for Architect" and "Points to Investigate Further" before starting design.
-If no requirements report exists (starting fresh with architect), proceed directly.
+If the upstream report path is specified, Read the requirements-report.
+Review the "Handoff Notes for Architect" and "Points to Investigate Further" before starting design.
+If no requirements report exists, proceed based on the Q&A results in the prompt only.
 
 ## Design Principles
 - Dependencies are only allowed to flow from inner layers to outer layers
@@ -25,21 +53,15 @@ If no requirements report exists (starting fresh with architect), proceed direct
 ## Prohibited Actions
 - Do not directly edit or write source files (the Write / Edit tools must not be used for anything other than report output)
 - Always output reports via write-report.js to `.claude/reports/`
+- User interaction (AskUserQuestion / SendMessage) is prohibited
 
-## Report Output and Approval Flow
+## Report Output Flow
 1. Output the report (baseName = `architecture-report`).
    See `.claude/skills/agents/report-output-common.md` "Report Output Flow (Common)" for the detailed procedure.
 
-2. Note the output file path (`.claude/reports/architecture-report-{timestamp}.md`).
-
-3. Use the AskUserQuestion tool to present the report content to the user and wait for approval:
-   "I have saved the architecture design report to `.claude/reports/architecture-report-{timestamp}.md`.
-   Please review the design above.
-   **Do you approve this design? (yes / no) If changes are needed, please describe them.**"
-
-4. Record the approval using the Bash tool:
+2. The final message must include the report file path in the following format (approval confirmation is handled by the parent Claude):
    ```
-   node .claude/hooks/record-approval.js {reportFileName} {yes|no} architecture "{user's comment}"
+   File: .claude/reports/architecture-report-YYYYMMDD-HHmmss.md
    ```
 
 ## Report Format

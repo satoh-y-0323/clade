@@ -8,7 +8,6 @@ tools:
   - Bash
   - Glob
   - Grep
-  - AskUserQuestion
 ---
 
 # Security Reviewer

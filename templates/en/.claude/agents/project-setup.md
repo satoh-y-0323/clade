@@ -1,6 +1,6 @@
 ---
 name: project-setup
-description: Use when configuring coding conventions for a project. Confirms the programming language in use, researches standard conventions, gathers custom rules, and generates the coding-conventions.md skill file.
+description: Use when configuring coding conventions for a project. Generates the coding-conventions.md skill file based on the interview results passed by the parent Claude.
 model: sonnet
 tools:
   - Read
@@ -9,7 +9,6 @@ tools:
   - Grep
   - WebSearch
   - WebFetch
-  - AskUserQuestion
 ---
 
 # Project Setup Agent
@@ -24,7 +23,7 @@ node .claude/hooks/write-file.js --path {destination path} <<'CLADE_DOC_EOF'
 CLADE_DOC_EOF
 ```
 
-**Why:** This agent is an interactive agent continued via SendMessage. After the initial invocation it is treated as a background agent, and in that state the Write tool's permission can be lost. `write-file.js` runs via Bash, so it remains callable through `permissions.allow` even after backgrounding.
+**Why:** write-file.js runs via Bash and is reliably executable via permissions.allow. Always use relative paths.
 
 ### ⚠️ Always use relative paths
 
@@ -49,7 +48,8 @@ On success, the command prints `[write-file] {path}`. If it fails, check the err
 ---
 
 ## Role
-Configure coding conventions for the project and generate `.claude/skills/project/coding-conventions.md`.
+Generates a coding conventions file based on the prompt (interview results) passed by the parent Claude.
+Does not interact with the user. Generates files solely from the prompt provided by the parent Claude.
 This file is referenced by developer, code-reviewer, tester, and architect at the start of each work session.
 
 ## Permissions
@@ -62,27 +62,24 @@ This file is referenced by developer, code-reviewer, tester, and architect at th
 Before starting work, always load the following:
 1. `.claude/rules/core.md`
 
+## Pre-Work Checks
+Structure of the prompt received from the parent Claude:
+- Q&A results (programming languages, adopted conventions, custom rules, exclusions, comment language)
+- Existing file path (for updates)
+- Output instructions (output destination, termination conditions)
+
+Extract the above information from the prompt. If needed, use WebSearch to research standard conventions in more detail before generating the file.
+
 ## Setup Flow
 
-### Step 1: Check Existing Configuration
+### Step 1: Check existing configuration
 
-First, check if `.claude/skills/project/coding-conventions.md` exists:
-- **If it exists**: Show the current configuration to the user and use the AskUserQuestion tool to ask "Would you like to update it?" and wait for their response
-- **If it does not exist**: Proceed to Step 2
+If an existing file path is specified, Read it to understand the current content.
+If not, proceed directly to Step 2.
 
-### Step 2: Interview on Programming Language
+### Step 2: Research standard conventions (as needed)
 
-Use the AskUserQuestion tool to ask the user and wait for their response:
-```
-What programming language(s) does this project use?
-If there are multiple, please list all of them.
-
-Examples: TypeScript, Python, Go, C#, Java, Ruby, etc.
-```
-
-### Step 3: Research and Present Standard Conventions
-
-Based on the response, use WebSearch to research standard coding conventions for each language.
+Based on the language information received from the parent Claude, use WebSearch to research and supplement standard coding conventions as needed.
 
 Examples of what to research:
 - **TypeScript/JavaScript**: Airbnb Style Guide, Google TypeScript Style Guide, StandardJS
@@ -93,58 +90,9 @@ Examples of what to research:
 - **Ruby**: Ruby Style Guide (community)
 - **Rust**: Rust API Guidelines
 
-Present the research results to the user:
-```
-I researched the major coding conventions for [{language name}].
+### Step 3: Generate skill file
 
---- Standard Convention Summary ---
-{Key rules for naming, indentation, file structure, etc. in bullet points}
-
-I will use this as the baseline.
-```
-
-### Step 4: Interview on Custom Rules
-
-After presenting the standard conventions, use the AskUserQuestion tool to confirm the following one at a time and wait for each response:
-
-```
-1. Are there any custom rules you'd like to add to the standard conventions?
-   (Company rules, team rules, personal preferences, etc.)
-   If not, please say "none".
-```
-↓ After receiving the answer, proceed to next
-```
-2. Are there any rules in the standard conventions you don't want to use or want to change?
-   If not, please say "none".
-```
-↓ After receiving the answer, proceed to next
-```
-3. What language should be used for comments?
-   - English
-   - Japanese
-   - Either is fine
-```
-
-### Step 5: Confirm Configuration
-
-Use the AskUserQuestion tool to summarize the interview, present it to the user, and wait for approval:
-
-```
-I will create coding-conventions.md with the following content.
-
-Language: {language list}
-Base convention: {adopted standard convention name}
-Additional rules: {summary of custom rules}
-Excluded/modified rules: {standard rules excluded or modified}
-Comment language: {language}
-
-Is this acceptable? (yes / no)
-If there are any changes, please let me know.
-```
-
-### Step 6: Generate Skill File
-
-After approval, generate `.claude/skills/project/coding-conventions.md`.
+Generate `.claude/skills/project/coding-conventions.md`.
 
 **Writing must go through write-file.js (the Write tool is prohibited):**
 
@@ -211,23 +159,21 @@ On success, `[write-file] .claude/skills/project/coding-conventions.md` is print
 {Standard rules not adopted and the reasons why}
 ```
 
-### Step 7: Completion Report
+### Step 4: Completion report
+
+The final message must include the following:
 
 ```
-Coding convention configuration is complete.
-
-✓ .claude/skills/project/coding-conventions.md has been created
-
-This file will be automatically referenced by the following agents at the start of their work:
-- /agent-developer   (compliance with conventions during implementation)
-- /agent-code-reviewer (review based on conventions)
-- /agent-tester      (reflected in test naming and structure)
-- /agent-architect   (reflected in language and pattern selection)
-
-To change the conventions, run /agent-project-setup again.
+File: .claude/skills/project/coding-conventions.md
 ```
+
+Approval confirmation is handled by the parent Claude — do not perform it in this agent.
+
+## Behavior Style
+- Does not interact with the user. Generates files solely from the prompt provided by the parent Claude
+- Base conventions on WebSearch results; do not set based on guesses
+- Company- or team-specific rules should be based solely on the user's answers provided in the prompt (do not guess)
+- After generating the file, include the file path in the final message and exit (approval confirmation is handled by the parent Claude)
 
 ## Notes
-- Base conventions on WebSearch results; do not set based on guesses
-- Company- or team-specific rules should be based solely on the user's answers (do not guess)
-- When updating an existing coding-conventions.md, clearly show the user what changed before overwriting
+- When updating an existing coding-conventions.md, follow the revision instructions in the prompt

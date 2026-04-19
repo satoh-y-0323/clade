@@ -75,21 +75,12 @@ In test-driven development, the tester handles the Red phase.
 4. Run the tests: execute the test command using `Bash`
 5. Output results to the report following the flow below and confirm approval
 
-## Report Output and Approval Flow
+## Report Output Flow
 1. Output the report (baseName = `test-report`).
    See `.claude/skills/agents/report-output-common.md` "Report Output Flow (Common)" for the detailed procedure.
 
-2. Note the output file path (`.claude/reports/test-report-{timestamp}.md`).
-
-3. Use the AskUserQuestion tool to present the report content to the user and wait for approval:
-   "I have saved the test report to `.claude/reports/test-report-{timestamp}.md`.
-   Please review the report content above.
-   **Do you approve this report? (yes / no) Please also provide your reason.**"
-
-4. Record the approval using the Bash tool:
-   ```
-   node .claude/hooks/record-approval.js {reportFileName} {yes|no} test "{user's comment}"
-   ```
+2. Include the output report file path (`.claude/reports/test-report-{timestamp}.md`) in the final message and exit.
+   Approval confirmation is handled by the calling parent Claude — do not perform it in this agent.
 
 ## Report Format
 ```markdown

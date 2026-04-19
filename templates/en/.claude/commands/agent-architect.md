@@ -1,58 +1,129 @@
-# /agent-architect Command
+# /agent-architect command
 
-Launches the architecture and design agent (architect) as a sub-agent.
+Starts the architecture and design agent (architect). The parent Claude handles Q&A with the user, then launches the sub-agent in a single shot to generate the report.
 
-## Rules
-**As the first action upon launch**, Read `.claude/skills/agents/architect.md` to review the rules before starting work.
+## Parent Claude's responsibility
 
-## Execution Flow
+This command is executed directly by the parent Claude. The sub-agent is launched in a single shot after Q&A is complete.
 
-The architect requires user approval after outputting the report.
-**Do NOT spawn a new Agent for each user response.** Use SendMessage to continue the same agent.
+## Execution flow
 
-### Step 1: Initial Launch
-Launch with `subagent_type: architect` specified in the Agent tool.
-Include the following in the prompt:
-- Current work context (paths of existing reports, user's request)
-- Do not use the AskUserQuestion tool; return questions and confirmations as plain text (the parent Claude will relay them to the user)
-- agentId output instructions (write without placeholder format, as shown below):
-  "Whenever you output something that requires a response (approval confirmation, etc.), output your actual agentId at the end of your response in this format:
-  `agentId: <actual-ID> (use SendMessage with to: '<actual-ID>' to continue this agent)`
-  Replace `<actual-ID>` with the real ID string assigned to you by Agent Teams.
-  Do not output placeholders or 'undefined'."
+### Step 1: Read upstream reports
 
-### Step 2: Save agentId
-If the agent's output contains the following pattern, record the agentId:
+Search for `.claude/reports/requirements-report-*.md` using Glob and read the latest file.
+If no requirements-report exists, skip and confirm requirements directly during Q&A.
+
+### Step 2: Q&A
+
+Based on the contents of the requirements-report (especially the "handover to architect" and "points to dig deeper into" sections), output the following questions one by one and wait for the user's response (output one question at a time, then proceed after receiving the answer).
+
+**Q1: Clarification**
+
+Confirm the points listed in the requirements-report's "handover to architect" section with the user:
+
 ```
-agentId: <id> (use SendMessage with to: '<id>' to continue this agent)
-```
-**Important:**
-- If multiple agentId lines are output, **use the last one** (the real ID assigned by Agent Teams always appears last)
-- Once a valid agentId is saved, do not overwrite or discard it even if subsequent responses do not include an agentId. Keep using the saved one.
+I've reviewed the requirements definition report. Before proceeding with the design, let me confirm a few points.
 
-### Step 3: Display Question or Confirmation
-Display the question or approval confirmation from the agent's output to the user and wait for a response.
+{Compose and present questions based on each item in the handover section}
 
-### Step 4: Continue with SendMessage
-When the user responds, **do NOT spawn a new Agent**. Use the SendMessage tool to continue:
-- `to`: the saved agentId
-- `message`: the user's response
-
-### Step 5: Repeat
-Return to Step 3 when the agent outputs the next question or confirmation.
-**Termination condition:** End when the agent has output the report and the user has approved it.
-Do NOT use the presence or absence of agentId as the termination signal.
-
-### Step 6: Session Termination (on error or interruption)
-If the user requests cancellation or an error occurs, send the following via SendMessage to terminate the agent:
-```
-The session is being cancelled at the user's request.
+If no requirements-report exists, ask: "What feature or system are you designing?"
 ```
 
-## Use Cases
+**Q2: Tradeoff selection**
+
+Confirm the major technical choices:
+
+```
+There are several options to consider for the design. Which approach would you like to adopt?
+
+{Present the main tradeoffs derived from the requirements. For example:}
+- Performance-first vs. development speed-first
+- Monolithic vs. microservices
+- etc.
+```
+
+**Q3: Constraints and priorities**
+
+```
+Let me confirm the design constraints and priorities.
+
+- Are there any quality characteristics you particularly want to prioritize (performance, security, maintainability, etc.)?
+- Are there any existing technology stacks or libraries that must be kept?
+```
+
+### Step 3: Organize Q&A results
+
+Organize the user's answers into the following structure:
+- Confirmed technical requirements and constraints
+- Tradeoff selection results
+- Priority quality characteristics
+- Design premises
+
+### Step 4: Single-shot sub-agent launch
+
+Launch with `subagent_type: architect` via the Agent tool. Include the following in the prompt:
+
+```
+## Work request
+Create architecture design report
+
+## Upstream report path
+- requirements-report: {path or "none"}
+
+## Q&A results with user
+
+### Q1: Clarification answers
+A: {answer}
+
+### Q2: Tradeoff selection
+A: {answer}
+
+### Q3: Constraints and priorities
+A: {answer}
+
+## Output instructions
+- Output destination: `.claude/reports/architecture-report-*.md` (via write-report.js)
+- The final message must include the report file path (format: `File: .claude/reports/architecture-report-YYYYMMDD-HHmmss.md`)
+- Do not use AskUserQuestion / SendMessage
+- Exit after generating the report (approval confirmation is handled by the parent Claude)
+```
+
+For regeneration after rejection, add the following to the prompt:
+```
+## Regeneration mode
+- Previous report: {previous report path}
+- User's revision instructions: {instructions}
+```
+
+### Step 5: Receive report path
+
+Extract the report file path from the sub-agent's final output using the regex `.claude/reports/architecture-report-\d{8}-\d{6}\.md`.
+
+### Step 6: Approval confirmation
+
+Present the following to the user as text:
+
+```
+The architecture design report has been saved to `{file path}`. Please review the content — do you approve this design? (yes / no)
+If revisions are needed, please describe them.
+```
+
+### Step 7: Record approval
+
+```bash
+node .claude/hooks/record-approval.js {filename} {yes|no} architecture "{comment}"
+```
+
+### Step 8: Restart on rejection
+
+If rejected, repeat from Step 4 with a new prompt that includes the revision instructions and the previous report path.
+
+---
+
+## Purpose
 - System design, architecture decisions, and technology selection
 - Creating ADRs (Architecture Decision Records)
 - Creating architecture design reports (`architecture-report-*.md`)
 
 ## Notes
-- Always check the latest `requirements-report-*.md` before starting work
+- Always check the latest `requirements-report-*.md` before starting work (Step 1)

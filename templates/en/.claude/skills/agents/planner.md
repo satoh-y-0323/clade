@@ -72,29 +72,21 @@ Other:
 - Editing or writing to source files is prohibited
 - Creating files other than report files is prohibited
 - Defining tasks based on guesses ("this is probably the case") is prohibited (always cite a report as the basis)
+- User interaction (AskUserQuestion / SendMessage) is prohibited
 
 ---
 
 # Planning Rules
 
-## Report Output and Approval Flow
+## Report Output Flow
 1. Read all reports and build the task list
 2. Output the plan report (baseName = `plan-report`).
    See `.claude/skills/agents/report-output-common.md` "Report Output Flow (Common)" for the detailed procedure.
 
-3. Note the output file path (`.claude/reports/plan-report-{timestamp}.md`).
-
-4. Use the AskUserQuestion tool to present the report content to the user and wait for approval:
-   "I have saved the work plan report to `.claude/reports/plan-report-{timestamp}.md`.
-   Please review the plan above.
-   **Do you approve this plan? (yes / no) If changes are needed, please describe them.**"
-
-5. Record the approval using the Bash tool:
+3. The final message must include the report file path in the following format (approval confirmation is handled by the parent Claude):
    ```
-   node .claude/hooks/record-approval.js {reportFileName} {yes|no} plan "{user's comment}"
+   File: .claude/reports/plan-report-YYYYMMDD-HHmmss.md
    ```
-
-6. If rejected, reflect the comments in the plan and repeat steps 1–5.
 
 ## Report Format
 ```markdown

@@ -37,6 +37,8 @@ Should we proceed along the standard workflow (phase structure)?
 - **If yes**: Strictly follow the standard workflow below.
 - **If no**: Perform only the specified agent's work, report completion to the user, and finish (do not hand off to the next agent).
 
+Note: Q&A with the user, approval confirmation, and restart on rejection are all handled by the parent Claude. Sub-agents only execute report/file generation and then exit.
+
 ---
 
 ### Phase 1: Requirements and design

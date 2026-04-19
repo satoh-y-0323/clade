@@ -1,55 +1,129 @@
-# /agent-planner Command
+# /agent-planner command
 
-Launches the planning agent (planner) as a sub-agent.
+Starts the planning agent (planner). The parent Claude handles Q&A with the user, then launches the sub-agent in a single shot to generate the plan-report.
 
-## Rules
-**As the first action upon launch**, Read `.claude/skills/agents/planner.md` to review the rules before starting work.
+## Parent Claude's responsibility
 
-## Execution Flow
+This command is executed directly by the parent Claude. The sub-agent is launched in a single shot after Q&A is complete.
 
-The planner requires user interaction for milestone confirmation and report approval.
-**Do NOT spawn a new Agent for each user response.** Use SendMessage to continue the same agent.
+## Execution flow
 
-### Step 1: Initial Launch
-Launch with `subagent_type: planner` specified in the Agent tool.
-Include the following in the prompt:
-- Current work context (paths of existing reports, user's request)
-- Do not use the AskUserQuestion tool; return questions and confirmations as plain text (the parent Claude will relay them to the user)
-- agentId output instructions (write without placeholder format, as shown below):
-  "Whenever you output something that requires a response (approval confirmation, etc.), output your actual agentId at the end of your response in this format:
-  `agentId: <actual-ID> (use SendMessage with to: '<actual-ID>' to continue this agent)`
-  Replace `<actual-ID>` with the real ID string assigned to you by Agent Teams.
-  Do not output placeholders or 'undefined'."
+### Step 1: Read upstream reports
 
-### Step 2: Save agentId
-If the agent's output contains the following pattern, record the agentId:
+Search and read the latest reports in the following order:
+
+1. Search for `.claude/reports/requirements-report-*.md` using Glob → read the latest if found
+2. Search for `.claude/reports/architecture-report-*.md` using Glob → read the latest if found
+
+### Step 2: Q&A
+
+Output the following questions one by one as text and wait for the user's response (output one question at a time, then proceed after receiving the answer).
+
+**Q1: Milestone mode confirmation**
+
+(Ask only for large-scale development with many tasks or multiple phases. Skip for small-scale plans.)
+
 ```
-agentId: <id> (use SendMessage with to: '<id>' to continue this agent)
-```
-**Important:**
-- If multiple agentId lines are output, **use the last one** (the real ID assigned by Agent Teams always appears last)
-- Once a valid agentId is saved, do not overwrite or discard it even if subsequent responses do not include an agentId. Keep using the saved one.
-
-### Step 3: Display Question or Confirmation
-Display the question or approval confirmation from the agent's output to the user and wait for a response.
-
-### Step 4: Continue with SendMessage
-When the user responds, **do NOT spawn a new Agent**. Use the SendMessage tool to continue:
-- `to`: the saved agentId
-- `message`: the user's response
-
-### Step 5: Repeat
-Return to Step 3 when the agent outputs the next question or confirmation.
-**Termination condition:** End when the agent has output the report and the user has approved it.
-Do NOT use the presence or absence of agentId as the termination signal.
-
-### Step 6: Session Termination (on error or interruption)
-If the user requests cancellation or an error occurs, send the following via SendMessage to terminate the agent:
-```
-The session is being cancelled at the user's request.
+Choose the behavior after completing each milestone:
+  [confirm] After each milestone completes and is committed, show a "continue?" confirmation dialog
+            (choose this if you may want to stop partway through)
+  [auto]    After each milestone completes and is committed, automatically proceed to the next milestone without asking
+            (choose this if you want to finish the whole thing today)
 ```
 
-## Use Cases
+**Q2: Priority and order of work**
+
+```
+Are there any particular priorities for this plan?
+
+- Is there a feature or task you want tackled first?
+- Are there any tasks that can be deferred?
+- Are there any items that can be out of scope for this cycle?
+```
+
+**Q3: Notes for each agent**
+
+```
+Are there any special notes for each agent?
+
+- Notes for the developer (things to be careful about during implementation)
+- Notes for the tester (areas to test thoroughly)
+- Notes for reviewers (areas to review thoroughly)
+
+If none, answer "none".
+```
+
+### Step 3: Organize Q&A results
+
+Organize the user's answers into the following structure:
+- milestone_mode (confirm / auto / none)
+- Priority tasks and tasks that can be deferred
+- Special notes for each agent
+
+### Step 4: Single-shot sub-agent launch
+
+Launch with `subagent_type: planner` via the Agent tool. Include the following in the prompt:
+
+```
+## Work request
+Create work plan report (plan-report)
+
+## Upstream report paths
+- requirements-report: {path or "none"}
+- architecture-report: {path or "none"}
+
+## Q&A results with user
+
+### Q1: Milestone mode
+A: {confirm / auto / not applicable for small scale}
+
+### Q2: Priority and order
+A: {answer}
+
+### Q3: Notes for each agent
+A: {answer}
+
+## Output instructions
+- Output destination: `.claude/reports/plan-report-*.md` (via write-report.js)
+- If milestones exist, the plan-report must include `milestone_mode: {confirm|auto}` at the top in the meta-info section
+- The final message must include the report file path (format: `File: .claude/reports/plan-report-YYYYMMDD-HHmmss.md`)
+- Do not use AskUserQuestion / SendMessage
+- Exit after generating the report (approval confirmation is handled by the parent Claude)
+```
+
+For regeneration after rejection, add the following to the prompt:
+```
+## Regeneration mode
+- Previous report: {previous report path}
+- User's revision instructions: {instructions}
+```
+
+### Step 5: Receive report path
+
+Extract the report file path from the sub-agent's final output using the regex `.claude/reports/plan-report-\d{8}-\d{6}\.md`.
+
+### Step 6: Approval confirmation
+
+Present the following to the user as text:
+
+```
+The work plan report has been saved to `{file path}`. Please review the content — do you approve this plan? (yes / no)
+If revisions are needed, please describe them.
+```
+
+### Step 7: Record approval
+
+```bash
+node .claude/hooks/record-approval.js {filename} {yes|no} plan "{comment}"
+```
+
+### Step 8: Restart on rejection
+
+If rejected, repeat from Step 4 with a new prompt that includes the revision instructions and the previous report path.
+
+---
+
+## Purpose
 - Creating work plans based on requirements and architecture reports
 - Assigning tasks to each agent
 - Creating work plan reports (`plan-report-*.md`)
@@ -57,4 +131,4 @@ The session is being cancelled at the user's request.
 ## Notes
 - Does not edit or write to source files
 - On first call, only reference `requirements-report` and `architecture-report` (test/review reports do not yet exist, so skip them)
-- On update calls, reference all reports to reflect differences
+- On update calls, reference all reports to reflect differences (follow the execution mode detection logic in the planner skill file)
