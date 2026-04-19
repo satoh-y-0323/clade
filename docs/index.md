@@ -83,6 +83,10 @@ VS Code 拡張には現在既知のバグがあり、プロジェクトレベル
 
 ## 最近の更新
 
+### [v1.20.2] - 2026-04-19
+
+`clear-tmp-file.js` フックを追加。レポート出力フローの Step 0 として `.claude/tmp/<baseName>.md` を事前削除することで、2回目以降の実行で発生する「既存ファイル上書き確認プロンプト」を防止する。
+
 ### [v1.20.1] - 2026-04-19
 
 `/agent-project-setup` が SendMessage で対話を継続した後にバックグラウンド化し、`Write` ツールの権限を失って `coding-conventions.md` の生成に失敗する問題を修正。書き込みフローを `write-file.js`（Bash 経由）に切り替えた。`project-setup` / `doc-writer` に「相対パス必須」警告ブロックも追加。
@@ -90,9 +94,5 @@ VS Code 拡張には現在既知のバグがあり、プロジェクトレベル
 ### [v1.20.0] - 2026-04-19
 
 レポート出力フローを全エージェント共通化（`Write` → `.claude/tmp/<baseName>.md` → `write-report.js --file` の二段階方式）。planner の実行モード判定をタイムスタンプ比較に変更し、新しい要件で仕切り直したとき自動的に初回モードに戻るように。さらに「現サイクル」の概念を導入し、下流レポート（test / code-review / security-review）は最新 plan-report より新しいもののみを参照するルールを追加。
-
-### [v1.19.0] - 2026-04-18
-
-並列実行サポートを廃止し、直列実行に一本化。`worktree-developer`・`merger` エージェントと `check-group-isolation.js` フックを削除。Claude Code の permissions チェッカーで並列 subagent 起動時に race condition が発生し、全 tool が 76% の確率で DENIED される問題が根本原因。
 
 [すべての変更履歴を見る →](/changelog)

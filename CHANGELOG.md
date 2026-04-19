@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.20.2] - 2026-04-19
+
+### New
+
+- `clear-tmp-file.js` フックを追加: レポート出力フローの Step 0 として `.claude/tmp/<baseName>.md` を事前削除することで、2回目以降の実行で発生する「既存ファイル上書き確認プロンプト」を防止する
+
+---
+
 ## [v1.20.1] - 2026-04-19
 
 ### Fix
