@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.20.1] - 2026-04-19
+
+### Fix
+
+- `/agent-project-setup` が対話を SendMessage で継続した後、バックグラウンド扱いになって `Write` ツールの権限を失い、`coding-conventions.md` の生成に失敗する問題を修正。`project-setup` エージェントの書き込みフローを `Write` から `write-file.js`（Bash 経由）に切り替えた
+
+### Changed
+
+- `project-setup` / `doc-writer` エージェント定義に「書き込み時は必ず相対パスで呼び出す」警告ブロックを追加。絶対パスに変換されると `permissions.allow` のパターン（`Bash(node .claude/hooks/write-file.js*)`）にマッチせず DENIED / 確認プロンプトが出る問題を未然に防止
+
+---
+
 ## [v1.20.0] - 2026-04-19
 
 ### Changed
