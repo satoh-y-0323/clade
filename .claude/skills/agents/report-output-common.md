@@ -10,6 +10,19 @@
 > ⚠️ **必ず相対パス `node .claude/hooks/write-report.js` で呼び出すこと。絶対パス禁止。**
 > 絶対パスは `permissions.allow` のパターン（`Bash(node .claude/hooks/write-report.js*)`）にマッチせず拒否される場合がある。
 
+### Step 0: 既存の tmp ファイルを事前削除する
+
+レポート本文を Write する前に、必ず以下を実行して `.claude/tmp/<baseName>.md` を削除する:
+
+```
+node .claude/hooks/clear-tmp-file.js --path .claude/tmp/<baseName>.md
+```
+
+- 既存ファイルがある場合: `[clear-tmp-file] .claude/tmp/<baseName>.md (removed)` が出力される
+- 存在しない場合: `[clear-tmp-file] .claude/tmp/<baseName>.md (not exist)` が出力される（エラーではない）
+
+**Why:** 2 回目以降の実行では `.claude/tmp/<baseName>.md` が残っているため、Step 1 の Write が「既存ファイルの上書き」と判定されて確認プロンプトが出る。事前削除することでこれを防ぐ。
+
 ### Step 1: レポート本文を一時ファイルに Write
 Write ツールで `.claude/tmp/<baseName>.md` にレポート全文を書き込む。
 - **長さ制約なし。何文字でも書ける**（heredoc を使わないため）
@@ -25,17 +38,36 @@ node .claude/hooks/write-report.js <baseName> new --file .claude/tmp/<baseName>.
 返却されたファイル名（`<baseName>-20260401-143022.md` の部分）を控えておく。後続の承認記録（`record-approval.js`）で使う。
 
 ### 追記する場合（既存レポートに追加）
-追記内容を Write ツールで `.claude/tmp/<baseName>.md` に上書き保存してから:
+Step 0 で tmp を削除してから、追記内容を Write ツールで `.claude/tmp/<baseName>.md` に保存する:
 ```
+node .claude/hooks/clear-tmp-file.js --path .claude/tmp/<baseName>.md
+# ↑ tmp を事前削除
+# ↓ Write ツールで追記内容を書き込み、その後:
 node .claude/hooks/write-report.js <baseName> append <fileName> --file .claude/tmp/<baseName>.md
 ```
 `<fileName>` は Step 2 で控えたファイル名（タイムスタンプ付き）。
 
-### ⚠️ Bash が権限エラーで失敗した場合（最終手段）
-**単独で諦めることは禁止。** 以下の手順で親Claudeに委譲すること:
+### ⚠️ Bash / Write が失敗した場合（最終手段）
+
+サブエージェントが Bash / Write で失敗した場合（SendMessage 対話継続後に発生しやすい）、以下の手順で親 Claude に委譲する。
+
+**サブエージェント側の手順:**
 1. レポートの全内容をそのままインラインで出力する
 2. 以下のメッセージを明記して終了する:
-   「Bash による書き込みが失敗しました。上記の内容を `.claude/reports/<baseName>-{タイムスタンプ}.md` に Write ツールで保存してください。」
+   「Bash / Write が失敗しました。親 Claude が Step 0 → Step 1 → Step 2 の本フローに従って保存してください。」
+
+**親 Claude 側の手順（委譲された時）:**
+
+親 Claude は SendMessage の影響を受けず Bash / Write が両方使える。**必ず Step 0 → Step 1 → Step 2 の本フローに従って保存すること。**
+
+- **Step 0**: `node .claude/hooks/clear-tmp-file.js --path .claude/tmp/<baseName>.md` で tmp を削除
+- **Step 1**: Write ツールでサブエージェントから受け取ったレポート全文を `.claude/tmp/<baseName>.md` に書き込む
+- **Step 2**: `node .claude/hooks/write-report.js <baseName> new --file .claude/tmp/<baseName>.md` で実レポート生成
+
+**⚠️ 親 Claude がやってはいけないこと:**
+- `.claude/reports/<baseName>-YYYYMMDD-HHMMSS.md` に **直接 Write しない**（タイムスタンプ衝突による上書き確認プロンプトを誘発する）
+- `write-report.js` を回避する独自の方式を発案しない（親 Claude は `write-report.js` を問題なく実行できる）
+- サブエージェント向けの初回起動プロンプトで「write-report.js を使うな」「直接 `.claude/reports/` に Write しろ」など、本フローに反する独自指示を入れない
 
 ---
 

@@ -18,6 +18,8 @@
       "Bash(node **/.claude/hooks/enable-sandbox.js*)",
       "Bash(node .claude/hooks/manage-playwright-origins.js*)",
       "Bash(node **/.claude/hooks/manage-playwright-origins.js*)",
+      "Bash(node .claude/hooks/clear-tmp-file.js*)",
+      "Bash(node **/.claude/hooks/clear-tmp-file.js*)",
       "Bash(gh issue list*)",
       "Bash(gh issue view*)",
       "Bash(gh pr list*)",

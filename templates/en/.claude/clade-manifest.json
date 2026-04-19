@@ -65,6 +65,7 @@
       "apply-diff.js",
       "clade-update.js",
       "clear-file-history.js",
+      "clear-tmp-file.js",
       "cluster-promote-core.js",
       "enable-sandbox.js",
       "hook-utils.js",

@@ -10,6 +10,19 @@ Common flow used by every agent that writes reports to `.claude/reports/` (inter
 > ⚠️ **Always call using the relative path `node .claude/hooks/write-report.js`. Absolute paths are forbidden.**
 > Absolute paths do not match the `permissions.allow` pattern (`Bash(node .claude/hooks/write-report.js*)`) and may be denied.
 
+### Step 0: Remove any existing tmp file first
+
+Before writing the report body, always run the following to delete `.claude/tmp/<baseName>.md`:
+
+```
+node .claude/hooks/clear-tmp-file.js --path .claude/tmp/<baseName>.md
+```
+
+- If the file exists: `[clear-tmp-file] .claude/tmp/<baseName>.md (removed)` is printed.
+- If it does not: `[clear-tmp-file] .claude/tmp/<baseName>.md (not exist)` is printed (not an error).
+
+**Why:** On the second and later runs, `.claude/tmp/<baseName>.md` is left over, so Step 1's Write is treated as "overwriting an existing file" and triggers a confirmation prompt. Removing it first prevents this.
+
 ### Step 1: Write the report body to a temporary file
 Write the full report content to `.claude/tmp/<baseName>.md` using the Write tool.
 - **No length limit. Write as many characters as needed** (no heredoc involved).
@@ -25,17 +38,36 @@ node .claude/hooks/write-report.js <baseName> new --file .claude/tmp/<baseName>.
 Note the returned filename (the `<baseName>-20260401-143022.md` part). It is needed later for `record-approval.js`.
 
 ### Appending to an existing report
-Overwrite `.claude/tmp/<baseName>.md` with the new chunk via Write, then:
+After clearing the tmp via Step 0, write the new chunk to `.claude/tmp/<baseName>.md` with the Write tool, then:
 ```
+node .claude/hooks/clear-tmp-file.js --path .claude/tmp/<baseName>.md
+# ↑ clear tmp first
+# ↓ Write the append chunk with the Write tool, then:
 node .claude/hooks/write-report.js <baseName> append <fileName> --file .claude/tmp/<baseName>.md
 ```
 `<fileName>` is the timestamped filename noted in Step 2.
 
-### ⚠️ If Bash fails with a permission error (last resort)
-**Never give up silently.** Delegate to the parent Claude instead:
+### ⚠️ If Bash / Write fails (last resort)
+
+If the subagent fails to run Bash / Write (common after SendMessage resumption), delegate to the parent Claude.
+
+**Subagent's steps:**
 1. Output the full report content inline.
 2. End with this message:
-   "Bash write failed. Please save the above content to `.claude/reports/<baseName>-{timestamp}.md` using the Write tool."
+   "Bash / Write failed. Parent Claude, please save this content following Step 0 → Step 1 → Step 2."
+
+**Parent Claude's steps (when delegated to):**
+
+The parent Claude is not affected by SendMessage and can use both Bash and Write. **Always follow Step 0 → Step 1 → Step 2 exactly.**
+
+- **Step 0**: `node .claude/hooks/clear-tmp-file.js --path .claude/tmp/<baseName>.md` to delete the tmp file
+- **Step 1**: Use the Write tool to write the received report content into `.claude/tmp/<baseName>.md`
+- **Step 2**: `node .claude/hooks/write-report.js <baseName> new --file .claude/tmp/<baseName>.md` to create the real report file
+
+**⚠️ What the parent Claude must NOT do:**
+- Do NOT Write directly to `.claude/reports/<baseName>-YYYYMMDD-HHMMSS.md` (timestamp collisions trigger the overwrite confirmation prompt).
+- Do NOT invent an alternative that bypasses `write-report.js` (the parent Claude can run `write-report.js` without issue).
+- Do NOT include instructions like "do not use write-report.js" or "Write directly to `.claude/reports/`" in the subagent's initial prompt — that contradicts this flow.
 
 ---
 
