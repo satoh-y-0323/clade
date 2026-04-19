@@ -47,30 +47,6 @@ node .claude/hooks/write-report.js <baseName> append <fileName> --file .claude/t
 ```
 `<fileName>` は Step 2 で控えたファイル名（タイムスタンプ付き）。
 
-### ⚠️ Bash / Write が失敗した場合（最終手段）
-
-サブエージェントが Bash / Write で失敗した場合（SendMessage 対話継続後に発生しやすい）、以下の手順で親 Claude に委譲する。
-
-**サブエージェント側の手順:**
-1. レポートの全内容をそのままインラインで出力する
-2. 以下のメッセージを明記して終了する:
-   「Bash / Write が失敗しました。親 Claude が Step 0 → Step 1 → Step 2 の本フローに従って保存してください。」
-
-**親 Claude 側の手順（委譲された時）:**
-
-親 Claude は SendMessage の影響を受けず Bash / Write が両方使える。**必ず Step 0 → Step 1 → Step 2 の本フローに従って保存すること。**
-
-- **Step 0**: `node .claude/hooks/clear-tmp-file.js --path .claude/tmp/<baseName>.md` で tmp を削除
-- **Step 1**: Write ツールでサブエージェントから受け取ったレポート全文を `.claude/tmp/<baseName>.md` に書き込む
-- **Step 2**: `node .claude/hooks/write-report.js <baseName> new --file .claude/tmp/<baseName>.md` で実レポート生成
-
-**⚠️ 親 Claude がやってはいけないこと:**
-- `.claude/reports/<baseName>-YYYYMMDD-HHMMSS.md` に **直接 Write しない**（タイムスタンプ衝突による上書き確認プロンプトを誘発する）
-- `write-report.js` を回避する独自の方式を発案しない（親 Claude は `write-report.js` を問題なく実行できる）
-- サブエージェント向けの初回起動プロンプトで「write-report.js を使うな」「直接 `.claude/reports/` に Write しろ」など、本フローに反する独自指示を入れない
-
----
-
 ## レポート参照ルール（共通）
 
 各エージェントが `.claude/reports/` から過去レポートを読み込む際は、以下のルールに従う。

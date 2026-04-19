@@ -47,30 +47,6 @@ node .claude/hooks/write-report.js <baseName> append <fileName> --file .claude/t
 ```
 `<fileName>` is the timestamped filename noted in Step 2.
 
-### ⚠️ If Bash / Write fails (last resort)
-
-If the subagent fails to run Bash / Write (common after SendMessage resumption), delegate to the parent Claude.
-
-**Subagent's steps:**
-1. Output the full report content inline.
-2. End with this message:
-   "Bash / Write failed. Parent Claude, please save this content following Step 0 → Step 1 → Step 2."
-
-**Parent Claude's steps (when delegated to):**
-
-The parent Claude is not affected by SendMessage and can use both Bash and Write. **Always follow Step 0 → Step 1 → Step 2 exactly.**
-
-- **Step 0**: `node .claude/hooks/clear-tmp-file.js --path .claude/tmp/<baseName>.md` to delete the tmp file
-- **Step 1**: Use the Write tool to write the received report content into `.claude/tmp/<baseName>.md`
-- **Step 2**: `node .claude/hooks/write-report.js <baseName> new --file .claude/tmp/<baseName>.md` to create the real report file
-
-**⚠️ What the parent Claude must NOT do:**
-- Do NOT Write directly to `.claude/reports/<baseName>-YYYYMMDD-HHMMSS.md` (timestamp collisions trigger the overwrite confirmation prompt).
-- Do NOT invent an alternative that bypasses `write-report.js` (the parent Claude can run `write-report.js` without issue).
-- Do NOT include instructions like "do not use write-report.js" or "Write directly to `.claude/reports/`" in the subagent's initial prompt — that contradicts this flow.
-
----
-
 ## Report Reading Rules (Common)
 
 When agents read past reports from `.claude/reports/`, follow these rules.
