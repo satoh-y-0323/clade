@@ -35,6 +35,24 @@ src/add.js に定義された加算ユーティリティ関数です。
 CLADE_DOC_EOF
 ```
 
+### ⚠️ パスは必ず相対パスで指定すること
+
+スクリプトパス・保存先パスは **相対パス** を使うこと。絶対パス（`C:/Users/.../...` や `/home/.../...`）は禁止。
+
+```bash
+# 正しい（相対パス）
+node .claude/hooks/write-file.js --path docs/architecture.md <<'CLADE_DOC_EOF'
+...
+CLADE_DOC_EOF
+
+# 間違い（絶対パス — permissions.allow のパターン不一致で DENIED / 確認プロンプトが出る）
+node /absolute/path/to/project/.claude/hooks/write-file.js --path /absolute/path/to/project/docs/architecture.md <<'CLADE_DOC_EOF'
+...
+CLADE_DOC_EOF
+```
+
+**Why:** `settings.json` の `permissions.allow` は `Bash(node .claude/hooks/write-file.js*)` のように相対パス前提で登録されている。絶対パスに変換するとパターンにマッチしない。
+
 このコマンドが成功すると `[write-file] {パス}` が出力される。失敗した場合はエラーメッセージを確認すること。
 
 ---

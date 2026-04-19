@@ -35,6 +35,24 @@ A simple addition utility function defined in src/add.js.
 CLADE_DOC_EOF
 ```
 
+### ⚠️ Always use relative paths
+
+Both the script path and the destination path must be **relative**. Absolute paths (e.g. `C:/Users/.../...` or `/home/.../...`) are forbidden.
+
+```bash
+# Correct (relative)
+node .claude/hooks/write-file.js --path docs/architecture.md <<'CLADE_DOC_EOF'
+...
+CLADE_DOC_EOF
+
+# Wrong (absolute — mismatches permissions.allow patterns and leads to DENIED / confirmation prompts)
+node /absolute/path/to/project/.claude/hooks/write-file.js --path /absolute/path/to/project/docs/architecture.md <<'CLADE_DOC_EOF'
+...
+CLADE_DOC_EOF
+```
+
+**Why:** `permissions.allow` in `settings.json` is registered against relative paths such as `Bash(node .claude/hooks/write-file.js*)`. An absolute-path form will not match the pattern.
+
 On success, the command prints `[write-file] {path}`. If it fails, check the error message.
 
 ---
