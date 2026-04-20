@@ -117,8 +117,14 @@ A: {回答}
 
 ### Step 7: 承認記録
 
+シェルインジェクション対策としてコメントは tmp ファイル経由で渡す:
+
+1. `node .claude/hooks/clear-tmp-file.js --path .claude/tmp/approval-comment.md` を実行
+2. Write ツールで `.claude/tmp/approval-comment.md` にユーザーの承認コメントを書き込む（コメントなしの場合は空文字列）
+3. 以下を実行:
+
 ```bash
-node .claude/hooks/record-approval.js {ファイル名} {yes|no} plan "{コメント}"
+node .claude/hooks/record-approval.js {ファイル名} {yes|no} plan --comment-file .claude/tmp/approval-comment.md
 ```
 
 ### Step 8: 否認時の再起動

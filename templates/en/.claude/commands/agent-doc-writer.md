@@ -182,10 +182,14 @@ Are there any sections that need revision?
 ### Step 7: Record approval
 
 Since doc-writer may not always generate a report file, recording approval is optional.
-If saved to `.claude/reports/doc-*.md`, run the following:
+If saved to `.claude/reports/doc-*.md`, pass the comment via a tmp file to prevent shell injection:
+
+1. Run `node .claude/hooks/clear-tmp-file.js --path .claude/tmp/approval-comment.md`
+2. Use the Write tool to save the user's approval comment to `.claude/tmp/approval-comment.md` (empty string if no comment)
+3. Run:
 
 ```bash
-node .claude/hooks/record-approval.js {filename} {yes|no} doc "{comment}"
+node .claude/hooks/record-approval.js {filename} {yes|no} doc --comment-file .claude/tmp/approval-comment.md
 ```
 
 ### Step 8: Restart on rejection

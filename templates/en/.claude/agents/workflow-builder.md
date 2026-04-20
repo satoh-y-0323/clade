@@ -147,8 +147,14 @@ If revisions are needed, please describe them.
 
 ### Step 7: Record approval
 
+To prevent shell injection, pass the comment via a tmp file:
+
+1. Run `node .claude/hooks/clear-tmp-file.js --path .claude/tmp/approval-comment.md`
+2. Use the Write tool to save the user's approval comment to `.claude/tmp/approval-comment.md` (empty string if no comment)
+3. Run:
+
 ```bash
-node .claude/hooks/record-approval.js {filename} {yes|no} {agent name} "{comment}"
+node .claude/hooks/record-approval.js {filename} {yes|no} {agent name} --comment-file .claude/tmp/approval-comment.md
 ```
 
 ### Step 8: Restart on rejection

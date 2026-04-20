@@ -5,27 +5,58 @@
  * Called by tester / code-reviewer / security-reviewer after requesting approval.
  *
  * Usage:
+ *   # Recommended (shell injection safe): pass comment via tmp file
+ *   node .claude/hooks/clear-tmp-file.js --path .claude/tmp/approval-comment.md
+ *   # → Write the comment to .claude/tmp/approval-comment.md with the Write tool, then:
+ *   node .claude/hooks/record-approval.js <reportFile> <yes|no> <reportType> --comment-file .claude/tmp/approval-comment.md
+ *
+ *   # Legacy: pass comment as a positional argument (short, fixed comments only — watch for shell metacharacters)
  *   node .claude/hooks/record-approval.js <reportFile> <yes|no> <reportType> "<comment>"
  *
  * Examples:
- *   node .claude/hooks/record-approval.js test-report-20260401-143022.md yes test "All tests passed. Approved."
- *   node .claude/hooks/record-approval.js test-report-20260401-143022.md no test "Boundary value tests are insufficient."
+ *   node .claude/hooks/record-approval.js test-report-20260401-143022.md yes test --comment-file .claude/tmp/approval-comment.md
  */
 
 'use strict';
 const fs   = require('fs');
 const path = require('path');
 
-const [, , reportFile, approvedArg, reportType, ...commentParts] = process.argv;
+const args = process.argv.slice(2);
+
+// Detect and extract --comment-file <path> option
+const commentFileIdx = args.indexOf('--comment-file');
+let commentFromFile = null;
+let positionalArgs = args;
+
+if (commentFileIdx !== -1) {
+  const commentFilePath = args[commentFileIdx + 1];
+  if (!commentFilePath) {
+    console.error('[record-approval] --comment-file option requires a file path.');
+    process.exit(1);
+  }
+  try {
+    commentFromFile = fs.readFileSync(commentFilePath, 'utf-8').replace(/\r?\n$/, '');
+  } catch (err) {
+    console.error(`[record-approval] Failed to read comment file: ${err.message}`);
+    process.exit(1);
+  }
+  // Remove the two tokens (--comment-file <path>) from positionalArgs
+  positionalArgs = args.filter((_, i) => i !== commentFileIdx && i !== commentFileIdx + 1);
+}
+
+const [reportFile, approvedArg, reportType, ...commentParts] = positionalArgs;
 
 if (!reportFile || !approvedArg || !reportType) {
-  console.error('[record-approval] Usage: node record-approval.js <reportFile> <yes|no> <reportType> "<comment>"');
+  console.error('[record-approval] Usage:');
+  console.error('  Recommended: node record-approval.js <reportFile> <yes|no> <reportType> --comment-file <commentFile>');
+  console.error('  Legacy:      node record-approval.js <reportFile> <yes|no> <reportType> "<comment>"');
   process.exit(1);
 }
 
-const approved    = approvedArg.toLowerCase() === 'yes';
-const comment     = commentParts.join(' ') || '';
-const reportsDir  = path.join(process.cwd(), '.claude', 'reports');
+const approved = approvedArg.toLowerCase() === 'yes';
+const comment  = commentFromFile !== null ? commentFromFile : (commentParts.join(' ') || '');
+
+const reportsDir    = path.join(process.cwd(), '.claude', 'reports');
 const approvalsFile = path.join(reportsDir, 'approvals.jsonl');
 
 const record = {
