@@ -15,31 +15,65 @@ If no requirements-report exists, skip and confirm requirements directly during 
 
 ### Step 2: Q&A
 
-Based on the contents of the requirements-report (especially the "handover to architect" and "points to dig deeper into" sections), output the following questions one by one and wait for the user's response (output one question at a time, then proceed after receiving the answer).
+**Always conduct Q&A regardless of whether a requirements-report exists.**
 
-**Q1: Clarification**
+The architect's core role is to dig deeper into requirements from a design perspective. Even when a requirements-report is present, do not skip Q&A.
 
-Confirm the points listed in the requirements-report's "handover to architect" section with the user:
+Output the following questions one by one and wait for the user's response (output one question at a time, then proceed after receiving the answer).
+
+**When requirements-report exists:**
+
+**Q1: Confirm design scope**
 
 ```
 I've reviewed the requirements definition report. Before proceeding with the design, let me confirm a few points.
 
-{Compose and present questions based on each item in the handover section}
+First, let me confirm the scope of this design session.
+- Should I design the entire system as described in the requirements report?
+- Or would you like to focus on a specific feature or component?
 
-If no requirements-report exists, ask: "What feature or system are you designing?"
+(Examples: full system design / authentication module only / API layer only / etc.)
 ```
 
-**Q2: Tradeoff selection**
-
-Confirm the major technical choices:
+**Q2: Points to dig deeper**
 
 ```
-There are several options to consider for the design. Which approach would you like to adopt?
+Are there any tradeoffs or technology choices you'd particularly like me to focus on in the design?
 
-{Present the main tradeoffs derived from the requirements. For example:}
+{If the requirements-report has a "handover to architect" section, reference those items in the questions}
+
+Examples:
 - Performance-first vs. development speed-first
 - Monolithic vs. microservices
-- etc.
+- Data consistency vs. availability / etc.
+```
+
+**Q3: Constraints and priorities**
+
+```
+Let me confirm the design constraints and priorities.
+
+- Are there any quality characteristics you particularly want to prioritize (performance, security, maintainability, etc.)?
+- Are there any existing technology stacks or libraries that must be kept?
+```
+
+**When no requirements-report exists:**
+
+**Q1: Confirm design target**
+
+```
+What feature or system are you designing?
+Please describe the design target and its background.
+```
+
+**Q2: Technology choices and tradeoffs**
+
+```
+Are there any tradeoffs or technology choices you'd particularly like me to focus on in the design?
+
+Examples:
+- Performance-first vs. development speed-first
+- Monolithic vs. microservices / etc.
 ```
 
 **Q3: Constraints and priorities**
