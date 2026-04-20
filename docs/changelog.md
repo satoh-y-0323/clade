@@ -1,5 +1,16 @@
 # 変更履歴
 
+## [v1.21.1] - 2026-04-20
+
+### Fix
+
+- `agent-architect` が既存の requirements-report がある場合に Q&A をスキップして設計に進む問題を修正。architect の本来の役割（掘り下げ）を保つため、常に最低限の Q&A（設計スコープ確認・深堀り点確認）を実施してからサブエージェントを起動するよう変更
+
+### Changed
+
+- `doc-writer` / `project-setup` のサブエージェントを `Write` ツール直接使用に変更。v1.20.1 で導入された write-file.js 経由ルールは SendMessage 継続後の Write DENIED 対策だったが、v1.21.0 の新アーキテクチャ（一発起動型）では不要になったため
+- `mcp-setup` の write-file.js 関連記述をクリーンアップ（既に Write 権限はあった）
+
 ## [v1.21.0] - 2026-04-19
 
 ### Changed

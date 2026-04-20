@@ -83,6 +83,10 @@ VS Code 拡張には現在既知のバグがあり、プロジェクトレベル
 
 ## 最近の更新
 
+### [v1.21.1] - 2026-04-20
+
+`agent-architect` が既存の requirements-report がある場合に Q&A をスキップする問題を修正。常に最低限の Q&A（設計スコープ確認・深堀り点確認）を実施してからサブエージェントを起動するよう変更。`doc-writer` / `project-setup` を `Write` ツール直接使用に変更（write-file.js 経由の廃止）。
+
 ### [v1.21.0] - 2026-04-19
 
 全対話型エージェントを「親 Claude が Q&A・承認確認を担当、サブエージェントはレポート生成のみ実行して終了」するアーキテクチャに刷新。SendMessage / AskUserQuestion を廃止し、コマンドファイルがヒアリングとシングルショット起動を担う構造に変更。
@@ -90,9 +94,5 @@ VS Code 拡張には現在既知のバグがあり、プロジェクトレベル
 ### [v1.20.2] - 2026-04-19
 
 `clear-tmp-file.js` フックを追加。レポート出力フローの Step 0 として `.claude/tmp/<baseName>.md` を事前削除することで、2回目以降の実行で発生する「既存ファイル上書き確認プロンプト」を防止する。
-
-### [v1.20.1] - 2026-04-19
-
-`/agent-project-setup` が SendMessage で対話を継続した後にバックグラウンド化し、`Write` ツールの権限を失って `coding-conventions.md` の生成に失敗する問題を修正。書き込みフローを `write-file.js`（Bash 経由）に切り替えた。`project-setup` / `doc-writer` に「相対パス必須」警告ブロックも追加。
 
 [すべての変更履歴を見る →](/changelog)
