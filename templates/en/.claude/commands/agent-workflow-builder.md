@@ -146,7 +146,9 @@ Umbrella command name: {command name}
 
 ## Output instructions
 1. Save workflow-report to `.claude/reports/workflow-report-*.md` (via write-report.js)
-2. Generate each agent instruction file at `.claude/commands/agent-{name}.md` (Write tool allowed)
+2. For each step, generate the following 2 files as a set (Write tool allowed):
+   - `.claude/commands/agent-{name}.md` (parent-Claude Q&A command file)
+   - `.claude/agents/{name}.md` (sub-agent definition file)
 3. Generate umbrella command at `.claude/commands/{workflow-name}.md` (Write tool allowed)
 4. Append to `## User Agents` section in `CLAUDE.md` (Edit tool allowed)
 5. The final message must include the list of generated files
@@ -172,7 +174,8 @@ Present the following to the user as text:
 The workflow builder has completed.
 
 Generated files:
-  - .claude/commands/agent-{name}.md x {N}
+  - .claude/commands/agent-{name}.md x {N} (parent-Claude command files)
+  - .claude/agents/{name}.md x {N} (sub-agent definition files)
   - .claude/commands/{workflow-name}.md (umbrella command)
   - CLAUDE.md updated
 

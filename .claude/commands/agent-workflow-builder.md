@@ -146,7 +146,9 @@ Q6（確認・承認）: {回答}
 
 ## 出力指示
 1. workflow-report を `.claude/reports/workflow-report-*.md`（write-report.js 経由）に保存すること
-2. 各エージェント指示書を `.claude/commands/agent-{name}.md` に生成すること（Write ツール使用可）
+2. 各ステップごとに以下の 2 ファイルをセットで生成すること（Write ツール使用可）:
+   - `.claude/commands/agent-{name}.md`（親 Claude 用の Q&A コマンドファイル）
+   - `.claude/agents/{name}.md`（サブエージェント定義ファイル）
 3. 統括コマンドを `.claude/commands/{workflow-name}.md` に生成すること（Write ツール使用可）
 4. `CLAUDE.md` の `## User Agents` セクションに追記すること（Edit ツール使用可）
 5. 最終メッセージに生成したファイル一覧を含めること
@@ -172,7 +174,8 @@ Q6（確認・承認）: {回答}
 ワークフロービルダーが完了しました。
 
 生成したファイル:
-  - .claude/commands/agent-{name}.md × {N} 件
+  - .claude/commands/agent-{name}.md × {N} 件（親 Claude 用コマンド）
+  - .claude/agents/{name}.md × {N} 件（サブエージェント定義）
   - .claude/commands/{workflow-name}.md（統括コマンド）
   - CLAUDE.md 更新済み
 

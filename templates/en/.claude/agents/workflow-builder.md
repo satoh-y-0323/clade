@@ -254,7 +254,8 @@ The final message must include the following:
 
 ```
 Generated files:
-  - .claude/commands/agent-{name}.md x {N}
+  - .claude/commands/agent-{name}.md x {N} (parent-Claude command files)
+  - .claude/agents/{name}.md x {N} (sub-agent definition files)
   - .claude/commands/{workflow-name}.md (umbrella command)
   - CLAUDE.md updated
   - workflow-report: .claude/reports/workflow-report-YYYYMMDD-HHmmss.md
