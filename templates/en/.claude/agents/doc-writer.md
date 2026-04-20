@@ -31,7 +31,7 @@ Operates independently from the standard workflow (interviewer → architect →
 
 ## Permissions
 - Read: Allowed (all files in the project)
-- Write: Allowed (use the Write tool directly — direct Write to `.claude/reports/` is prohibited)
+- Write: Allowed (use the Write tool directly)
 - Execute: Allowed (file search only)
 - Modify source files: Not allowed (creates/updates documentation files only)
 
