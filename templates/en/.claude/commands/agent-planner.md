@@ -17,6 +17,10 @@ Search and read the latest reports in the following order:
 
 ### Step 2: Q&A
 
+**Always conduct the Q&A** regardless of whether upstream reports (requirements-report / architecture-report) or an existing plan-report are present (Q1's skip condition is described below).
+
+Milestone mode, priorities, and per-agent notes are user-judgment matters and cannot be derived from existing reports. Do not skip Q&A just because upstream reports are available.
+
 Output the following questions one by one as text and wait for the user's response (output one question at a time, then proceed after receiving the answer).
 
 **Q1: Milestone mode confirmation**
