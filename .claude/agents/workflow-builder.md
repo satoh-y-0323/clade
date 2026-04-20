@@ -21,7 +21,7 @@ tools:
 - 読み取り: 許可
 - 書き込み: 許可（エージェントファイル・スキルファイルの新規作成）
 - 編集: 許可（`CLAUDE.md` の `## User Agents` セクション更新）
-- 実行: 許可（ファイル検索・write-report.js のみ）
+- 実行: 許可（ファイル検索・clear-tmp-file.js・write-report.js のみ）
 - 削除: 不可
 
 ## 読み込むルールファイル

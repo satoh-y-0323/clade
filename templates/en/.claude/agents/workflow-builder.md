@@ -21,7 +21,7 @@ Does not interact with the user. Generates files solely from the prompt provided
 - Read: Allowed
 - Write: Allowed (creating new agent files and skill files)
 - Edit: Allowed (updating the `## User Agents` section in `CLAUDE.md`)
-- Execute: Allowed (file search and write-report.js only)
+- Execute: Allowed (file search, clear-tmp-file.js, and write-report.js only)
 - Delete: Not allowed
 
 ## Rules to Load

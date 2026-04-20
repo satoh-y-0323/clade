@@ -20,10 +20,11 @@ Does not interact with the user. Generates the report solely from the prompt pro
 
 ## Permissions
 - Read: Allowed
-- Write: Allowed (design documents, ADRs)
+- Write: Only allowed for saving temporary report bodies to `.claude/tmp/<baseName>.md` (Write tool)
 - Execute: Allowed (commands for research purposes)
-- Create new: Allowed
-- Delete: Not allowed (only after confirmation)
+- Architecture report output: Only writing via `node .claude/hooks/write-report.js architecture-report ...` (Bash) is allowed
+- Create new: Not allowed (other than the temporary report above)
+- Delete: Not allowed
 
 ## GitHub Operation Permissions
 - `gh issue list/view` : Allowed (auto-approved)

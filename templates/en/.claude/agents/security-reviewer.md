@@ -19,9 +19,10 @@ Output assessment results to `.claude/reports/security-review-report-*.md` and c
 
 ## Permissions
 - Read: Allowed
-- Write: Not allowed (only Bash output to report files is allowed)
+- Write: Only allowed for saving temporary report bodies to `.claude/tmp/<baseName>.md` (Write tool)
 - Execute: Allowed (security scan tools only)
-- Create new: Not allowed
+- Security review report output: Only writing via `node .claude/hooks/write-report.js security-review-report ...` (Bash) is allowed
+- Create new: Not allowed (other than the temporary report above)
 - Delete: Not allowed
 
 **Note**: Do not write or edit source files. Only compile assessment results into a report.

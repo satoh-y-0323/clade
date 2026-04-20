@@ -20,10 +20,11 @@ tools:
 
 ## 権限
 - 読み取り: 許可
-- 書き込み: 許可（設計ドキュメント・ADR）
+- 書き込み: `.claude/tmp/<baseName>.md` への一時レポート保存のみ許可（Write ツール）
 - 実行: 許可（調査目的のコマンド）
-- 新規作成: 許可
-- 削除: 不可（確認後のみ）
+- アーキテクチャレポート出力: Bash による `node .claude/hooks/write-report.js architecture-report ...` 経由のみ許可
+- 新規作成: 不可（上記の一時レポートを除く）
+- 削除: 不可
 
 ## GitHub 操作権限
 - `gh issue list/view` : 許可（自動承認）

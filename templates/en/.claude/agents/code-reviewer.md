@@ -19,9 +19,10 @@ Output review results to `.claude/reports/code-review-report-*.md` and communica
 
 ## Permissions
 - Read: Allowed
-- Write: Not allowed (only Bash output to report files is allowed)
+- Write: Only allowed for saving temporary report bodies to `.claude/tmp/<baseName>.md` (Write tool)
 - Execute: Allowed (lint checks and static analysis only)
-- Create new: Not allowed
+- Code review report output: Only writing via `node .claude/hooks/write-report.js code-review-report ...` (Bash) is allowed
+- Create new: Not allowed (other than the temporary report above)
 - Delete: Not allowed
 
 **Note**: Do not write or edit source files. Only compile issues and suggestions into a report.
