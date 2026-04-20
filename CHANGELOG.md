@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.21.2] - 2026-04-20
+
+### Fix
+
+- `record-approval.js` にシェルインジェクション対策の `--comment-file <path>` オプションを追加。承認コメントに含まれるシェルメタ文字（`"`、`$`、`;` など）がコマンド文字列経由で渡されて実行される脆弱性を防ぐ。7 エージェントの呼び出し側（architect / code-reviewer / security-reviewer / planner / interviewer / doc-writer / workflow-builder テンプレート）を tmp ファイル経由方式に更新。レガシーの位置引数方式も後方互換で維持
+- `workflow-builder` が生成するエージェントファイル一式で、サブエージェント定義ファイル（`.claude/agents/{name}.md`）が生成指示から抜けていた問題を修正。漏れがあると `/agent-{name}` 実行時に `subagent_type` が解決できずエラーになる
+- `agent-planner` に「上流レポート・既存 plan-report の有無に関わらず必ず Q&A を実施する」予防ガードを追加（v1.21.1 の `agent-architect` と同パターン）
+- `doc-writer` の権限セクションに残っていた「`.claude/reports/` への直接 Write は禁止」の矛盾を削除（v1.21.1 で Output セクションは修正済みだったが冒頭警告と権限欄に残存していた）
+- `code-reviewer` / `security-reviewer` / `architect` の権限セクションを `report-output-common.md` フロー（tmp への Write + write-report.js 経由）に整合。interviewer/planner/tester と同じ書式に統一
+- `workflow-builder` の実行許可リストに `clear-tmp-file.js` を追記（report-output-common.md のフローで必要）
+- `architect` の frontmatter から未使用の `Edit` ツール宣言を削除（skills/architect.md の禁止事項と整合）
+
+### New
+
+- サブエージェント逐次実行ルールを `.claude/rules/core.md` に追加。Claude Code の permissions チェッカーが並列実行に構造的に対応していないため、並列サブエージェント起動は race condition で許可/拒否が非決定的になる。特に Phase 4 の Step 6（code-reviewer）と Step 7（security-reviewer）を依存関係なしと判断して並列化してしまう誤用パターンを明示して禁止
+
+---
+
 ## [v1.21.1] - 2026-04-20
 
 ### Fix
