@@ -25,6 +25,16 @@
 When the AI autonomously selects and chains agents, it **must strictly follow** the workflow below.
 Skipping phases or reordering them is forbidden.
 
+### Sub-agents must always run sequentially (parallel execution prohibited)
+
+**Never invoke multiple sub-agents in parallel within the same message.** Always invoke them one at a time, and complete the result handoff / approval flow before invoking the next sub-agent.
+
+**Why:** Claude Code's permission checker does not support concurrent execution. When sub-agents are invoked in parallel, permission checks for all tools (Bash, Write, etc.) become subject to a race condition, and whether a tool is allowed or denied depends on timing in a non-deterministic way. **Even when it appears to work, the permission check is merely passing by coincidence** — the behavior is not reproducible.
+
+**Typical misuse pattern (Phase 4):**
+- Treating Step 6 (code-reviewer) and Step 7 (security-reviewer) as "independent, so they can be parallelized" and invoking both Agent tools in the same message
+- The correct pattern is strict sequential execution: **Step 6 completes and is approved → then Step 7 begins**
+
 ### Confirmation rule when the user invokes an agent directly
 When the user calls `/agent-xxx` directly, confirm the following before starting:
 
