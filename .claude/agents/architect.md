@@ -6,7 +6,6 @@ background: false
 tools:
   - Read
   - Write
-  - Edit
   - Bash
   - Glob
   - Grep
