@@ -144,7 +144,7 @@ A: {answer}
 Output path: {specific path}
 
 ## Output instructions
-- Output destination: {path specified in Q6} (via write-file.js)
+- Output destination: {path specified in Q6} (write directly using the Write tool)
 - If [show] is specified, do not save to a file; include the document body in the final message
 - Do not use AskUserQuestion / SendMessage
 - Exit after generating the document (confirmation is handled by the parent Claude)

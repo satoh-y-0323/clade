@@ -119,7 +119,7 @@ Agent ツールで `subagent_type: project-setup` を指定して起動する。
 {日本語 / 英語 / どちらでもよい}
 
 ## 出力指示
-- 出力先: `.claude/skills/project/coding-conventions.md`（write-file.js 経由）
+- 出力先: `.claude/skills/project/coding-conventions.md`（Write ツールで直接書き込む）
 - AskUserQuestion / SendMessage は使わないこと
 - ファイル生成後は終了すること（完了報告は親 Claude が担当）
 - 最終メッセージに生成したファイルパスを含めること

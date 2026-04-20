@@ -119,7 +119,7 @@ Generate coding conventions file (coding-conventions.md)
 {English / Japanese / Either is fine}
 
 ## Output instructions
-- Output destination: `.claude/skills/project/coding-conventions.md` (via write-file.js)
+- Output destination: `.claude/skills/project/coding-conventions.md` (write directly using the Write tool)
 - Do not use AskUserQuestion / SendMessage
 - Exit after generating the file (completion report is handled by the parent Claude)
 - The final message must include the generated file path

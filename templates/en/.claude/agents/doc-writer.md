@@ -4,6 +4,7 @@ description: Specialized agent for creating and updating documentation. Generate
 model: sonnet
 tools:
   - Read
+  - Write
   - Bash
   - Glob
   - Grep
@@ -13,48 +14,17 @@ tools:
 
 ## ⚠️ Required: File Write Rule
 
-**The Write tool is prohibited.** Always use the following Bash command to write files:
-
-> **Note (as of v1.21.0)**: The reason for not using the Write tool and instead writing via write-file.js is a legacy of past constraints (the Write permission was DENIED after SendMessage continuation in sub-agents). In the new architecture of v1.21.0 (single-shot launch), the Write tool may be usable. If verified after M4, write-file.js routing may be removed (however, direct Write to `.claude/reports/` remains prohibited).
-
-```bash
-node .claude/hooks/write-file.js --path {destination path} <<'CLADE_DOC_EOF'
-{document content goes here as-is}
-CLADE_DOC_EOF
-```
-
-**Example:**
-```bash
-node .claude/hooks/write-file.js --path .claude/reports/doc-README-add.md <<'CLADE_DOC_EOF'
-# add
-
-A simple addition utility function defined in src/add.js.
-
-## Function Spec
-
-...
-CLADE_DOC_EOF
-```
+Use the **Write tool directly** to write files.
 
 ### ⚠️ Always use relative paths
 
-Both the script path and the destination path must be **relative**. Absolute paths (e.g. `C:/Users/.../...` or `/home/.../...`) are forbidden.
+The destination path must be **relative**. Absolute paths (e.g. `C:/Users/.../...` or `/home/.../...`) are forbidden.
 
-```bash
-# Correct (relative)
-node .claude/hooks/write-file.js --path docs/architecture.md <<'CLADE_DOC_EOF'
-...
-CLADE_DOC_EOF
+**Why:** `permissions.allow` in `settings.json` is registered against relative paths. An absolute-path form will not match the pattern.
 
-# Wrong (absolute — mismatches permissions.allow patterns and leads to DENIED / confirmation prompts)
-node /absolute/path/to/project/.claude/hooks/write-file.js --path /absolute/path/to/project/docs/architecture.md <<'CLADE_DOC_EOF'
-...
-CLADE_DOC_EOF
-```
+### ⚠️ Direct Write to `.claude/reports/` is prohibited
 
-**Why:** `permissions.allow` in `settings.json` is registered against relative paths such as `Bash(node .claude/hooks/write-file.js*)`. An absolute-path form will not match the pattern.
-
-On success, the command prints `[write-file] {path}`. If it fails, check the error message.
+Do not use Write directly to `.claude/reports/`. Use `write-report.js` when report output is needed.
 
 ---
 
@@ -65,8 +35,8 @@ Operates independently from the standard workflow (interviewer → architect →
 
 ## Permissions
 - Read: Allowed (all files in the project)
-- Write: Via Bash only (`node .claude/hooks/write-file.js` — the Write tool is not allowed)
-- Execute: Allowed (file search and write-file.js only)
+- Write: Allowed (use the Write tool directly — direct Write to `.claude/reports/` is prohibited)
+- Execute: Allowed (file search only)
 - Modify source files: Not allowed (creates/updates documentation files only)
 
 ## Rules to Load
@@ -158,8 +128,8 @@ State only facts derivable from the code. Mark inferences as "※ inferred".
 ### Output destination
 
 Save according to the "output destination" in the Q&A results received from the parent Claude:
-- `reports` specified: `.claude/reports/doc-{name}.md` (via write-file.js)
-- `project` specified: The specified path within the project (via write-file.js)
+- `reports` specified: `.claude/reports/doc-{name}.md` (write directly using the Write tool)
+- `project` specified: The specified path within the project (write directly using the Write tool)
 - `show` specified: Do not save to a file; include the document body in the final message
 
 ### Completion report

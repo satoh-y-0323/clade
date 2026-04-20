@@ -4,6 +4,7 @@ description: Use when configuring coding conventions for a project. Generates th
 model: sonnet
 tools:
   - Read
+  - Write
   - Bash
   - Glob
   - Grep
@@ -15,35 +16,13 @@ tools:
 
 ## ⚠️ Required: File Write Rule
 
-**The Write tool is prohibited.** Always use the following Bash command to write files:
-
-```bash
-node .claude/hooks/write-file.js --path {destination path} <<'CLADE_DOC_EOF'
-{file content goes here as-is}
-CLADE_DOC_EOF
-```
-
-**Why:** write-file.js runs via Bash and is reliably executable via permissions.allow. Always use relative paths.
+Use the **Write tool directly** to write files.
 
 ### ⚠️ Always use relative paths
 
-Both the script path and the destination path must be **relative**. Absolute paths (e.g. `C:/Users/.../...` or `/home/.../...`) are forbidden.
+The destination path must be **relative**. Absolute paths (e.g. `C:/Users/.../...` or `/home/.../...`) are forbidden.
 
-```bash
-# Correct (relative)
-node .claude/hooks/write-file.js --path .claude/skills/project/coding-conventions.md <<'CLADE_DOC_EOF'
-...
-CLADE_DOC_EOF
-
-# Wrong (absolute — mismatches permissions.allow patterns and leads to DENIED / confirmation prompts)
-node /absolute/path/to/project/.claude/hooks/write-file.js --path /absolute/path/to/project/.claude/skills/project/coding-conventions.md <<'CLADE_DOC_EOF'
-...
-CLADE_DOC_EOF
-```
-
-**Why:** `permissions.allow` in `settings.json` is registered against relative paths such as `Bash(node .claude/hooks/write-file.js*)`. An absolute-path form will not match the pattern.
-
-On success, the command prints `[write-file] {path}`. If it fails, check the error message.
+**Why:** `permissions.allow` in `settings.json` is registered against relative paths. An absolute-path form will not match the pattern.
 
 ---
 
@@ -54,8 +33,8 @@ This file is referenced by developer, code-reviewer, tester, and architect at th
 
 ## Permissions
 - Read: Allowed
-- Write: Via Bash only (`node .claude/hooks/write-file.js` — the Write tool is not allowed)
-- Execute: Allowed (for checking existing files and running write-file.js only)
+- Write: Allowed (use the Write tool directly)
+- Execute: Allowed (for checking existing files only)
 - Web search / fetch: Allowed (for researching standard conventions for each language)
 
 ## Rules to Load
@@ -94,22 +73,12 @@ Examples of what to research:
 
 Generate `.claude/skills/project/coding-conventions.md`.
 
-**Writing must go through write-file.js (the Write tool is prohibited):**
+**Use the Write tool directly to write the file:**
 
-```bash
-node .claude/hooks/write-file.js --path .claude/skills/project/coding-conventions.md <<'CLADE_DOC_EOF'
-# Coding Conventions
-
-## Target Languages
-{language list}
-
-## Base Convention
-...
-(continue below with the full skill file content following the format below)
-CLADE_DOC_EOF
 ```
-
-On success, `[write-file] .claude/skills/project/coding-conventions.md` is printed.
+Use the Write tool to write .claude/skills/project/coding-conventions.md.
+Always specify the path as a relative path.
+```
 
 **Skill file format:**
 ```markdown
