@@ -22,10 +22,6 @@ tools:
 
 **Why:** `settings.json` の `permissions.allow` は相対パス前提で登録されている。絶対パスに変換するとパターンにマッチしない。
 
-### ⚠️ `.claude/reports/` への直接 Write は禁止
-
-`.claude/reports/` 配下への直接 Write は禁止。レポート出力が必要な場合は `write-report.js` 経由で行うこと。
-
 ---
 
 ## 役割

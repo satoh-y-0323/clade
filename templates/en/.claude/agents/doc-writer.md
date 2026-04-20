@@ -22,10 +22,6 @@ The destination path must be **relative**. Absolute paths (e.g. `C:/Users/.../..
 
 **Why:** `permissions.allow` in `settings.json` is registered against relative paths. An absolute-path form will not match the pattern.
 
-### ⚠️ Direct Write to `.claude/reports/` is prohibited
-
-Do not use Write directly to `.claude/reports/`. Use `write-report.js` when report output is needed.
-
 ---
 
 ## Role
