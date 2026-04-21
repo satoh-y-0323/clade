@@ -93,6 +93,59 @@ A: {回答}
 - 最終メッセージにレポートファイルパスを必ず含めること（形式: `ファイル: .claude/reports/plan-report-YYYYMMDD-HHmmss.md`）
 - AskUserQuestion / SendMessage は使わないこと
 - レポート生成後は終了すること（承認確認は親 Claude が担当）
+
+## YAML フロントマターの出力ルール
+
+以下の3条件を**全て満たす**場合のみ、plan-report の**冒頭**（Markdown 本文より前）に
+YAML フロントマターを出力する。満たさない場合はフロントマター自体を省略する。
+
+**条件:**
+1. 独立して実装できるタスクグループが 2つ以上存在する（互いに依存しない）
+2. 各グループが担当するファイルが明確に分離できる
+3. 共有インターフェース・型定義が事前に確定できる
+
+**フォーマット:**
+
+```yaml
+---
+parallel_groups:
+  pre_implementation:          # 先行着手グループ（不要な場合はキーごと省略）
+    tasks: [T0]
+    agent: worktree-developer
+    writes:
+      - src/types/shared.ts
+  group-a:
+    name: {グループ名}
+    tasks: [T1, T2]
+    agent: worktree-developer
+    depends_on: [pre_implementation]   # pre_implementation がある場合のみ
+    writes:
+      - src/user/**
+  group-b:
+    name: {グループ名}
+    tasks: [T3, T4]
+    agent: worktree-developer
+    depends_on: [pre_implementation]
+    writes:
+      - src/auth/**
+---
+```
+
+**フィールド説明:**
+
+| フィールド | 内容 |
+|---|---|
+| `parallel_groups` | グループのマップ。キーは `pre_implementation` / `group-a` / `group-b` / ... |
+| `group-*.name` | グループの表示名 |
+| `group-*.tasks` | そのグループが担当するタスクID のリスト（インライン記法 `[T1, T2]` を使用）|
+| `group-*.agent` | 実行エージェント（並列開発は `worktree-developer` 固定）|
+| `group-*.writes` | そのグループが書き込むファイルパターン（**グループ間で重複禁止**）|
+| `group-*.depends_on` | 依存グループのキー名リスト（インライン記法 `[pre_implementation]` を使用）|
+
+**ファイルパターンの記法:**
+- `src/user/**` — `src/user/` 配下の全ファイル
+- `src/types/user.ts` — 特定の1ファイル
+- `src/**/*.ts` — `src/` 配下の全 `.ts` ファイル
 ```
 
 否認後の再生成時はプロンプトに以下を追加する:
