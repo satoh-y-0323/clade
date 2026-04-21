@@ -16,33 +16,47 @@ const { readHookInput } = require('./hook-utils');
 const hookInput = readHookInput();
 const toolName  = hookInput.tool_name || '';
 const toolInput = hookInput.tool_input || {};
-const cwd       = hookInput.cwd || process.cwd();
 
-// worktree-writes.json を読む（なければ非並列モード → 通過）
-const configPath = path.join(cwd, '.claude', 'tmp', 'worktree-writes.json');
-let allowedPatterns;
-try {
-  const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-  allowedPatterns = Array.isArray(config.writes) ? config.writes : [];
-} catch (_) {
+// cwd を検証してから使用する（改ざん対策）
+const rawCwd = hookInput.cwd || process.cwd();
+if (!path.isAbsolute(rawCwd)) {
+  // cwd が相対パスなら不正入力とみなして通過させる（安全側フォールバック）
   process.exit(0);
 }
-if (allowedPatterns.length === 0) process.exit(0);
+const cwd = path.resolve(rawCwd);
+
+// worktree-writes.json を読む（なければ非並列モード → 通過）
+// configPath は cwd から固定パスで算出する（cwd 細工で別ファイルを読まれないよう resolve 済み cwd を使用）
+const configPath = path.join(cwd, '.claude', 'tmp', 'worktree-writes.json');
+
+function loadAllowedPatterns(cfgPath) {
+  try {
+    const config = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+    // config.reads は読み取り制限（将来拡張用）。このフックでは参照しない。
+    // 非文字列要素はクラッシュ防止のため除外する
+    return Array.isArray(config.writes)
+      ? config.writes.filter(p => typeof p === 'string')
+      : [];
+  } catch (_) {
+    return null; // null = 非並列モード
+  }
+}
+
+const allowedPatterns = loadAllowedPatterns(configPath);
+if (allowedPatterns === null || allowedPatterns.length === 0) process.exit(0);
 
 // チェック対象ファイルパスを収集
 let targetFiles = [];
 
 if (toolName === 'Write' || toolName === 'Edit') {
+  // Write と Edit のどちらも file_path フィールドを使用する
   const fp = toolInput.file_path || '';
   if (fp) targetFiles.push(fp);
 
 } else if (toolName === 'Bash') {
   const cmd = toolInput.command || '';
-  // rm コマンドのターゲットを簡易抽出
-  const rmMatch = cmd.match(/\brm\s+(?:-[^\s]*\s+)*([^\s|&;<>]+(?:\s+[^\s|&;<>]+)*)/);
-  if (!rmMatch) process.exit(0);
-  const args = rmMatch[1].split(/\s+/).filter(a => !a.startsWith('-'));
-  targetFiles = args.filter(a => a.length > 0);
+  // rm コマンドのターゲットを抽出（クォート・複数コマンド対応）
+  targetFiles = extractRmTargets(cmd);
   if (targetFiles.length === 0) process.exit(0);
 
 } else {
@@ -53,51 +67,186 @@ if (toolName === 'Write' || toolName === 'Edit') {
 const normalizedCwd = cwd.replace(/\\/g, '/');
 const normalizedCwdSlash = normalizedCwd.endsWith('/') ? normalizedCwd : normalizedCwd + '/';
 
+const violations = [];
+
 for (const rawPath of targetFiles) {
-  let fp = rawPath.replace(/\\/g, '/');
+  // 相対パスは cwd を基準に絶対パスへ変換し、.. を解決する
+  const absPath = path.isAbsolute(rawPath)
+    ? path.normalize(rawPath)
+    : path.resolve(cwd, rawPath);
 
-  // 絶対パスを worktree root からの相対パスに変換
-  if (path.isAbsolute(rawPath)) {
-    if (fp.startsWith(normalizedCwdSlash)) {
-      fp = fp.slice(normalizedCwdSlash.length);
-    } else {
-      block(rawPath, allowedPatterns, 'PATH_OUTSIDE_WORKTREE');
-    }
+  let fp = absPath.replace(/\\/g, '/');
+
+  // worktree root からの相対パスに変換（worktree 外なら即ブロック）
+  if (!fp.startsWith(normalizedCwdSlash)) {
+    violations.push({ file: rawPath, reason: 'PATH_OUTSIDE_WORKTREE' });
+    continue;
   }
+  fp = fp.slice(normalizedCwdSlash.length);
 
-  // .claude/ 配下は常に許可（worktree-writes.json 自身の書き込みなど）
-  if (fp.startsWith('.claude/')) continue;
+  // .claude/ 配下への書き込みは必要最小限のパスのみ許可する
+  // hooks・settings ファイルの改ざんによるフック無効化・権限昇格を防ぐため
+  if (fp.startsWith('.claude/')) {
+    if (isDangerousClaudePath(fp)) {
+      violations.push({ file: rawPath, reason: 'CLAUDE_PROTECTED_PATH' });
+    }
+    // 危険でない .claude/ 配下は通過
+    continue;
+  }
 
   if (!isAllowed(fp, allowedPatterns)) {
-    block(fp, allowedPatterns, 'WRITES_ISOLATION_VIOLATION');
+    violations.push({ file: rawPath, reason: 'WRITES_ISOLATION_VIOLATION' });
   }
+}
+
+if (violations.length > 0) {
+  block(violations);
 }
 
 process.exit(0);
 
 // ===== ヘルパー関数 =====
 
+/**
+ * .claude/ 配下のパスのうち、worktree-developer が書き込んではいけないパスを判定する。
+ * hooks・settings ファイルへの書き込みは権限昇格やフック無効化につながるためブロックする。
+ */
+function isDangerousClaudePath(fp) {
+  // .claude/hooks/ 配下のスクリプト改ざん防止
+  if (fp.startsWith('.claude/hooks/')) return true;
+  // .claude/settings*.json の改ざん防止
+  if (/^\.claude\/settings[^/]*\.json$/.test(fp)) return true;
+  // worktree-writes.json 自身の書き換えによる許可パターン拡張を防止
+  if (fp === '.claude/tmp/worktree-writes.json') return true;
+  return false;
+}
+
 function isAllowed(filePath, patterns) {
   return patterns.some(pattern => matchGlob(filePath, pattern));
 }
 
+/**
+ * glob パターンを安全な正規表現に変換してマッチングする。
+ *
+ * ReDoS 対策:
+ *   - パターン長を 200 文字以内に制限する
+ *   - ** 以外の連続する * の繰り返しを禁止する（例: a*b*c*d はOK、a*** はNG）
+ *   - 変換後の正規表現は線形時間で動作するシンプルな置換のみ使用する
+ */
 function matchGlob(filePath, pattern) {
   const normalized = filePath.replace(/\\/g, '/');
   const pat        = pattern.replace(/\\/g, '/');
+
+  // ReDoS 対策: パターン長チェック
+  if (pat.length > 200) return false;
+
+  // ReDoS 対策: *** 以上の連続 * を禁止する（** は合法、*** 以上は不正）
+  if (/\*{3,}/.test(pat)) return false;
+
   const regexStr = pat
-    .replace(/[.+^${}()|[\]]/g, '\\$&')
-    .replace(/\*\*/g, '\x00')   // ** を一時プレースホルダーに
-    .replace(/\*/g,   '[^/]*')  // * は単一セグメント内
-    .replace(/\x00/g, '.*');    // ** は任意パス
+    // 先に glob 特殊文字をプレースホルダーに変換する（正規表現エスケープより前に処理）
+    .replace(/\*\*/g, '\x00')    // ** → placeholder-A（任意パス）
+    .replace(/\*/g,   '\x01')    // *  → placeholder-B（単一セグメント）
+    .replace(/\?/g,   '\x02')    // ?  → placeholder-C（1文字）
+    // 正規表現のメタ文字をエスケープ（* ? はプレースホルダー済みなので対象外）
+    .replace(/[.+^${}()|[\]-]/g, '\\$&')
+    // プレースホルダーを正規表現に変換
+    .replace(/\x00/g, '.*')      // ** → 任意パス
+    .replace(/\x01/g, '[^/]*')   // *  → 単一セグメント
+    .replace(/\x02/g, '[^/]');   // ?  → / 以外の1文字
+
   return new RegExp('^' + regexStr + '$').test(normalized);
 }
 
-function block(filePath, patterns, reason) {
+/**
+ * rm コマンドの引数からターゲットファイルパスを抽出する。
+ * セミコロン・&&・|| でコマンドを分割し、それぞれから rm のターゲットを収集する。
+ * シングル/ダブルクォートを除去してパスを取得する。
+ */
+function extractRmTargets(cmd) {
+  // コマンドをセミコロン・&&・|| で分割して各セグメントを処理
+  const segments = cmd.split(/[;&|]+/);
+  const targets = [];
+
+  for (const seg of segments) {
+    const trimmed = seg.trim();
+    // rm で始まるセグメントを対象とする
+    const m = trimmed.match(/^rm\s+([\s\S]+)$/);
+    if (!m) continue;
+
+    // クォートを考慮したトークン分割
+    const tokens = tokenizeShellArgs(m[1]);
+    for (const token of tokens) {
+      // オプション（-で始まる）と空文字列を除外
+      if (token.length > 0 && !token.startsWith('-')) {
+        // サブシェル展開 $(...) や変数展開 $VAR を含む場合はスキップ（解析不能）
+        if (token.includes('$') || token.includes('`')) continue;
+        targets.push(token);
+      }
+    }
+  }
+
+  return targets;
+}
+
+/**
+ * シェル引数文字列を簡易トークン分割する。
+ * シングルクォート・ダブルクォートで囲まれた文字列を1トークンとして扱う。
+ */
+function tokenizeShellArgs(argsStr) {
+  const tokens = [];
+  let current = '';
+  let i = 0;
+
+  while (i < argsStr.length) {
+    const ch = argsStr[i];
+
+    if (ch === "'") {
+      // シングルクォート: 次の ' まで
+      i++;
+      while (i < argsStr.length && argsStr[i] !== "'") {
+        current += argsStr[i];
+        i++;
+      }
+      i++; // 閉じクォートをスキップ
+
+    } else if (ch === '"') {
+      // ダブルクォート: 次の " まで（バックスラッシュエスケープを考慮）
+      i++;
+      while (i < argsStr.length && argsStr[i] !== '"') {
+        if (argsStr[i] === '\\' && i + 1 < argsStr.length) {
+          i++; // バックスラッシュをスキップ
+          current += argsStr[i];
+        } else {
+          current += argsStr[i];
+        }
+        i++;
+      }
+      i++; // 閉じクォートをスキップ
+
+    } else if (ch === ' ' || ch === '\t') {
+      // スペース: トークン区切り
+      if (current.length > 0) {
+        tokens.push(current);
+        current = '';
+      }
+      i++;
+
+    } else {
+      current += ch;
+      i++;
+    }
+  }
+
+  if (current.length > 0) tokens.push(current);
+  return tokens;
+}
+
+function block(violations) {
+  // allowed_patterns はセキュリティ上 stderr に出力しない（バイパス情報漏洩防止）
   const msg = JSON.stringify({
-    type:             reason,
-    file:             filePath,
-    allowed_patterns: patterns,
-    action:           'BLOCKED',
+    violations: violations.map(v => ({ type: v.reason, file: v.file })),
+    action: 'BLOCKED',
   });
   process.stderr.write(msg + '\n');
   process.exit(2);
