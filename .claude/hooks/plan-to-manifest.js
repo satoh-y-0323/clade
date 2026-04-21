@@ -128,6 +128,85 @@ if (!parsed.parallel_groups) {
   process.exit(1);
 }
 
+// ===== 静的衝突チェック =====
+
+function hasWildcard(pattern) {
+  return pattern.includes('*') || pattern.includes('?');
+}
+
+function getFixedPrefix(pattern) {
+  const p = pattern.replace(/\\/g, '/');
+  const starIdx = p.includes('*') ? p.indexOf('*') : Infinity;
+  const questIdx = p.includes('?') ? p.indexOf('?') : Infinity;
+  const idx = Math.min(starIdx, questIdx);
+  return idx === Infinity ? p : p.slice(0, idx);
+}
+
+// check-writes-isolation.js と同じロジック（依存なしで再実装）
+function matchGlob(filePath, pattern) {
+  const normalized = filePath.replace(/\\/g, '/');
+  const pat        = pattern.replace(/\\/g, '/');
+  if (pat.length > 200) return false;
+  if (/\*{3,}/.test(pat)) return false;
+  const regexStr = pat
+    .replace(/\*\*/g, '\x00')
+    .replace(/\*/g,   '\x01')
+    .replace(/\?/g,   '\x02')
+    .replace(/[.+^${}()|[\]-]/g, '\\$&')
+    .replace(/\x00/g, '.*')
+    .replace(/\x01/g, '[^/]*')
+    .replace(/\x02/g, '[^/]');
+  return new RegExp('^' + regexStr + '$').test(normalized);
+}
+
+function patternsConflict(p1, p2) {
+  const n1 = p1.replace(/\\/g, '/');
+  const n2 = p2.replace(/\\/g, '/');
+  if (n1 === n2) return true;
+  // 一方が具体パス → 他方の glob にマッチするか
+  if (!hasWildcard(n1) && matchGlob(n1, n2)) return true;
+  if (!hasWildcard(n2) && matchGlob(n2, n1)) return true;
+  // 両方ワイルドカードあり → 固定プレフィックスの包含関係で判定
+  if (hasWildcard(n1) && hasWildcard(n2)) {
+    const prefix1 = getFixedPrefix(n1);
+    const prefix2 = getFixedPrefix(n2);
+    return prefix1.startsWith(prefix2) || prefix2.startsWith(prefix1);
+  }
+  return false;
+}
+
+function checkWriteConflicts(groups) {
+  const entries = Object.entries(groups).map(([id, group]) => ({
+    id,
+    writes: Array.isArray(group.writes) ? group.writes : [],
+  }));
+
+  const conflicts = [];
+  for (let i = 0; i < entries.length; i++) {
+    for (let j = i + 1; j < entries.length; j++) {
+      const a = entries[i];
+      const b = entries[j];
+      for (const pa of a.writes) {
+        for (const pb of b.writes) {
+          if (patternsConflict(pa, pb)) {
+            conflicts.push({ groupA: a.id, groupB: b.id, patternA: pa, patternB: pb });
+          }
+        }
+      }
+    }
+  }
+  return conflicts;
+}
+
+const conflicts = checkWriteConflicts(parsed.parallel_groups);
+if (conflicts.length > 0) {
+  console.error('Error: 並列グループ間で writes パターンの衝突が検出されました:');
+  for (const c of conflicts) {
+    console.error(`  [${c.groupA}] "${c.patternA}"  ⟷  [${c.groupB}] "${c.patternB}"`);
+  }
+  process.exit(1);
+}
+
 // ===== マニフェスト生成 =====
 function getTimestamp() {
   const now = new Date();

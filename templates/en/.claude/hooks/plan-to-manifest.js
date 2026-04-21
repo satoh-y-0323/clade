@@ -128,6 +128,76 @@ if (!parsed.parallel_groups) {
   process.exit(1);
 }
 
+// ===== Static conflict check =====
+
+function hasWildcard(p) { return p.includes('*') || p.includes('?'); }
+
+function getFixedPrefix(pattern) {
+  const p = pattern.replace(/\\/g, '/');
+  const starIdx = p.includes('*') ? p.indexOf('*') : Infinity;
+  const questIdx = p.includes('?') ? p.indexOf('?') : Infinity;
+  const idx = Math.min(starIdx, questIdx);
+  return idx === Infinity ? p : p.slice(0, idx);
+}
+
+// Same logic as check-writes-isolation.js (reimplemented without dependency)
+function matchGlob(filePath, pattern) {
+  const normalized = filePath.replace(/\\/g, '/');
+  const pat        = pattern.replace(/\\/g, '/');
+  if (pat.length > 200) return false;
+  if (/\*{3,}/.test(pat)) return false;
+  const regexStr = pat
+    .replace(/\*\*/g, '\x00').replace(/\*/g, '\x01').replace(/\?/g, '\x02')
+    .replace(/[.+^${}()|[\]-]/g, '\\$&')
+    .replace(/\x00/g, '.*').replace(/\x01/g, '[^/]*').replace(/\x02/g, '[^/]');
+  return new RegExp('^' + regexStr + '$').test(normalized);
+}
+
+function patternsConflict(p1, p2) {
+  const n1 = p1.replace(/\\/g, '/'), n2 = p2.replace(/\\/g, '/');
+  if (n1 === n2) return true;
+  // One is a concrete path matched by the other's glob
+  if (!hasWildcard(n1) && matchGlob(n1, n2)) return true;
+  if (!hasWildcard(n2) && matchGlob(n2, n1)) return true;
+  // Both have wildcards: check if fixed prefixes overlap
+  if (hasWildcard(n1) && hasWildcard(n2)) {
+    const pref1 = getFixedPrefix(n1), pref2 = getFixedPrefix(n2);
+    return pref1.startsWith(pref2) || pref2.startsWith(pref1);
+  }
+  return false;
+}
+
+function checkWriteConflicts(groups) {
+  const entries = Object.entries(groups).map(([id, group]) => ({
+    id,
+    writes: Array.isArray(group.writes) ? group.writes : [],
+  }));
+
+  const conflicts = [];
+  for (let i = 0; i < entries.length; i++) {
+    for (let j = i + 1; j < entries.length; j++) {
+      const a = entries[i], b = entries[j];
+      for (const pa of a.writes) {
+        for (const pb of b.writes) {
+          if (patternsConflict(pa, pb)) {
+            conflicts.push({ groupA: a.id, groupB: b.id, patternA: pa, patternB: pb });
+          }
+        }
+      }
+    }
+  }
+  return conflicts;
+}
+
+const conflicts = checkWriteConflicts(parsed.parallel_groups);
+if (conflicts.length > 0) {
+  console.error('Error: Write pattern conflicts detected between parallel groups:');
+  for (const c of conflicts) {
+    console.error(`  [${c.groupA}] "${c.patternA}"  ⟷  [${c.groupB}] "${c.patternB}"`);
+  }
+  process.exit(1);
+}
+
 // ===== Generate manifest =====
 function getTimestamp() {
   const now = new Date();
