@@ -188,6 +188,25 @@ function extractRmTargets(cmd) {
   }
   if (current.length > 0) subcommands.push(current);
 
+  // リダイレクトトークンかどうかを判定するヘルパー
+  // 例: '>', '>>', '<', '2>', '2>>', '1>', '&>' などのスペースあり分離形式
+  // スペースなし結合形式（'2>/dev/null' 等）は tokenizeShellArgs がトークン内に含むため
+  // isRedirectOperator でスペースあり形式の演算子トークンを認識する
+  function isRedirectOperator(token) {
+    // 単独の演算子: > >> < &>
+    if (/^[0-9]*>>?$/.test(token)) return true;
+    if (/^[0-9]*<$/.test(token)) return true;
+    if (/^&>$/.test(token)) return true;
+    return false;
+  }
+
+  // リダイレクトが結合形式かどうかを判定するヘルパー
+  // 例: '2>/dev/null', '>/tmp/log', '>>/tmp/log', '</dev/stdin'
+  // fd 付き・なし・追記・入力のすべてを対象とする
+  function isRedirectCombined(token) {
+    return /^[0-9]*>>?[^>]/.test(token) || /^[0-9]*<[^<]/.test(token) || /^&>[^>]/.test(token);
+  }
+
   const targets = [];
 
   for (const tokens of subcommands) {
@@ -202,6 +221,16 @@ function extractRmTargets(cmd) {
       if (token === '--') {
         // -- はオプション終端マーカー。ファイル名ではないのでスキップする
         endOfOptions = true;
+        continue;
+      }
+      // リダイレクト: スペースあり分離形式（'>' '2>' 等）は演算子トークンを読み飛ばし
+      // さらに次のトークン（リダイレクト先ファイル）も読み飛ばす
+      if (isRedirectOperator(token)) {
+        idx++; // リダイレクト先トークンをスキップ
+        continue;
+      }
+      // リダイレクト: スペースなし結合形式（'2>/dev/null' '>/tmp/log' 等）はトークンごとスキップ
+      if (isRedirectCombined(token)) {
         continue;
       }
       if (!endOfOptions && token.startsWith('-')) {
