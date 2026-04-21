@@ -12,7 +12,8 @@
       "planner.md",
       "project-setup.md",
       "security-reviewer.md",
-      "tester.md"
+      "tester.md",
+      "worktree-developer.md"
     ],
     "commands": [
       "agent-architect.md",
@@ -78,7 +79,9 @@
       "stop.js",
       "update-clade-section.js",
       "write-file.js",
-      "write-report.js"
+      "write-report.js",
+      "check-writes-isolation.js",
+      "plan-to-manifest.js"
     ],
     "rules": [
       "core.md"
@@ -101,7 +104,6 @@
       "skills/project/code-review-checklist.md",
       "skills/project/security-review-checklist.md",
       "agents/merger.md",
-      "agents/worktree-developer.md",
       "hooks/check-group-isolation.js"
     ],
     "ja_only": [],
