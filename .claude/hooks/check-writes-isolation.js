@@ -196,7 +196,7 @@ function extractRmTargets(cmd) {
     // 単独の演算子: > >> < &>
     if (/^[0-9]*>>?$/.test(token)) return true;
     if (/^[0-9]*<$/.test(token)) return true;
-    if (/^&>$/.test(token)) return true;
+    if (/^&>>?$/.test(token)) return true;
     return false;
   }
 
@@ -204,7 +204,7 @@ function extractRmTargets(cmd) {
   // 例: '2>/dev/null', '>/tmp/log', '>>/tmp/log', '</dev/stdin'
   // fd 付き・なし・追記・入力のすべてを対象とする
   function isRedirectCombined(token) {
-    return /^[0-9]*>>?[^>]/.test(token) || /^[0-9]*<[^<]/.test(token) || /^&>[^>]/.test(token);
+    return /^[0-9]*>>?[^>]/.test(token) || /^[0-9]*<[^<]/.test(token) || /^&>>?[^>]/.test(token);
   }
 
   const targets = [];
