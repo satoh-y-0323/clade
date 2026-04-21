@@ -49,7 +49,7 @@ if (allowedPatterns === null || allowedPatterns.length === 0) process.exit(0);
 let targetFiles = [];
 
 if (toolName === 'Write' || toolName === 'Edit') {
-  // Write と Edit のどちらも file_path フィールドを使用する
+  // Write と Edit のどちらも tool_input.file_path を使用する（Claude Code hook 仕様）
   const fp = toolInput.file_path || '';
   if (fp) targetFiles.push(fp);
 
@@ -160,29 +160,58 @@ function matchGlob(filePath, pattern) {
 
 /**
  * rm コマンドの引数からターゲットファイルパスを抽出する。
- * セミコロン・&&・|| でコマンドを分割し、それぞれから rm のターゲットを収集する。
- * シングル/ダブルクォートを除去してパスを取得する。
+ *
+ * アルゴリズム:
+ *   1. コマンド文字列全体を tokenizeShellArgs でトークン化する
+ *      （クォート内の ; | && を分割対象から外すため、先にトークン化する）
+ *   2. トークン列を &&・||・; のトークンで区切り、サブコマンドに分割する
+ *   3. 各サブコマンドが rm で始まる場合にターゲットを収集する
  */
 function extractRmTargets(cmd) {
-  // コマンドをセミコロン・&&・|| で分割して各セグメントを処理
-  const segments = cmd.split(/[;&|]+/);
+  // コマンド全体をクォート対応でトークン化する
+  // ここで分割することでクォート内の ; | が誤って区切り文字として扱われなくなる
+  const allTokens = tokenizeShellArgs(cmd);
+
+  // トークン列を &&・||・;・| で区切りサブコマンドに分割する
+  // | はパイプ（出力リダイレクト）だが、パイプ後のコマンドを rm 引数と誤検出しないよう区切る
+  const subcommands = [];
+  let current = [];
+  for (const token of allTokens) {
+    if (token === '&&' || token === '||' || token === ';' || token === '|') {
+      if (current.length > 0) {
+        subcommands.push(current);
+        current = [];
+      }
+    } else {
+      current.push(token);
+    }
+  }
+  if (current.length > 0) subcommands.push(current);
+
   const targets = [];
 
-  for (const seg of segments) {
-    const trimmed = seg.trim();
-    // rm で始まるセグメントを対象とする
-    const m = trimmed.match(/^rm\s+([\s\S]+)$/);
-    if (!m) continue;
+  for (const tokens of subcommands) {
+    // rm コマンドで始まるサブコマンドを対象とする
+    if (tokens.length === 0 || tokens[0] !== 'rm') continue;
 
-    // クォートを考慮したトークン分割
-    const tokens = tokenizeShellArgs(m[1]);
-    for (const token of tokens) {
-      // オプション（-で始まる）と空文字列を除外
-      if (token.length > 0 && !token.startsWith('-')) {
-        // サブシェル展開 $(...) や変数展開 $VAR を含む場合はスキップ（解析不能）
-        if (token.includes('$') || token.includes('`')) continue;
-        targets.push(token);
+    // rm 以降のトークンを処理する
+    // -- 以降はオプション終端なのでダッシュ始まりトークンもファイル名として扱う
+    let endOfOptions = false;
+    for (let idx = 1; idx < tokens.length; idx++) {
+      const token = tokens[idx];
+      if (token === '--') {
+        // -- はオプション終端マーカー。ファイル名ではないのでスキップする
+        endOfOptions = true;
+        continue;
       }
+      if (!endOfOptions && token.startsWith('-')) {
+        // -- より前のダッシュ始まりトークンはオプションとして除外する
+        continue;
+      }
+      if (token.length === 0) continue;
+      // サブシェル展開 $(...) や変数展開 $VAR を含む場合はスキップ（解析不能）
+      if (token.includes('$') || token.includes('`')) continue;
+      targets.push(token);
     }
   }
 
@@ -192,6 +221,8 @@ function extractRmTargets(cmd) {
 /**
  * シェル引数文字列を簡易トークン分割する。
  * シングルクォート・ダブルクォートで囲まれた文字列を1トークンとして扱う。
+ * クォート外のバックスラッシュエスケープにも対応する（次の1文字をリテラルとして扱う）。
+ * &&・||・; はシェルの演算子として独立したトークンとして返す。
  */
 function tokenizeShellArgs(argsStr) {
   const tokens = [];
@@ -202,13 +233,13 @@ function tokenizeShellArgs(argsStr) {
     const ch = argsStr[i];
 
     if (ch === "'") {
-      // シングルクォート: 次の ' まで
+      // シングルクォート: 次の ' まで（未終端の場合は文字列末尾まで）
       i++;
       while (i < argsStr.length && argsStr[i] !== "'") {
         current += argsStr[i];
         i++;
       }
-      i++; // 閉じクォートをスキップ
+      if (i < argsStr.length) i++; // 閉じクォートをスキップ（存在する場合のみ）
 
     } else if (ch === '"') {
       // ダブルクォート: 次の " まで（バックスラッシュエスケープを考慮）
@@ -222,7 +253,34 @@ function tokenizeShellArgs(argsStr) {
         }
         i++;
       }
-      i++; // 閉じクォートをスキップ
+      if (i < argsStr.length) i++; // 閉じクォートをスキップ（存在する場合のみ）
+
+    } else if (ch === '\\') {
+      // クォート外のバックスラッシュエスケープ: 次の1文字をリテラルとして扱う
+      // （例: rm file\ name.txt → "file name.txt" という1トークンにする）
+      if (i + 1 < argsStr.length) {
+        i++;
+        current += argsStr[i];
+      }
+      i++;
+
+    } else if (ch === '&' && i + 1 < argsStr.length && argsStr[i + 1] === '&') {
+      // && を独立したトークンとして切り出す
+      if (current.length > 0) { tokens.push(current); current = ''; }
+      tokens.push('&&');
+      i += 2;
+
+    } else if (ch === '|' && i + 1 < argsStr.length && argsStr[i + 1] === '|') {
+      // || を独立したトークンとして切り出す
+      if (current.length > 0) { tokens.push(current); current = ''; }
+      tokens.push('||');
+      i += 2;
+
+    } else if (ch === ';') {
+      // ; を独立したトークンとして切り出す
+      if (current.length > 0) { tokens.push(current); current = ''; }
+      tokens.push(';');
+      i++;
 
     } else if (ch === ' ' || ch === '\t') {
       // スペース: トークン区切り
