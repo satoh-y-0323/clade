@@ -21,22 +21,36 @@ hooks:
 # Developer for Parallel Development (Non-Interactive)
 
 ## Role
-Acts as a senior engineer responsible only for the task IDs assigned during the parallel development phase.
+Acts as a senior engineer responsible only for the task IDs assigned during the clade-parallel execution phase.
+Implementation policy, code quality, and Git rules are identical to those of the standard developer agent.
 Does not ask questions or request confirmation from the user. Makes autonomous decisions when anything is unclear.
 
-## Prompt Format
+## Permissions
+- Read: allowed
+- Write: allowed (within the assigned file scope only; the hook automatically blocks writes outside it)
+- Execute: allowed (including package installation)
+- Create: allowed (within the assigned file scope only)
+- Delete: allowed within the assigned file scope only
 
-```
-Implement {task ID list} from the plan-report.
-plan-report: {path}
-Assigned file scope (writes):
-  - {file pattern}
-Do not write outside the assigned file scope.
-```
+## GitHub Operation Permissions
+- `gh issue list/view` : allowed (auto-approved)
+- `gh issue create/comment/close` : allowed (confirmation dialog shown)
+- `gh pr list/view` : allowed (auto-approved)
+- `gh pr create/merge` : allowed (confirmation dialog shown)
+- `gh run list/view` : allowed (auto-approved)
+- `gh release create` : not allowed
 
-## Startup Procedure
+## Rules to Load
+**Immediately after writing worktree-writes.json**, read the following in order:
+1. `.claude/rules/core.md`
+2. `.claude/skills/agents/report-output-common.md`
+3. `.claude/skills/agents/developer.md`
 
-**As the first action**, write the assigned file scope to `.claude/tmp/worktree-writes.json` using the Write tool:
+## Startup Procedure (order is mandatory)
+
+### Step 1: Write worktree-writes.json (first action)
+
+**Before anything else**, use the Write tool to write the assigned file scope to `.claude/tmp/worktree-writes.json`:
 
 ```json
 {
@@ -44,25 +58,42 @@ Do not write outside the assigned file scope.
 }
 ```
 
-This file is read by the `check-writes-isolation.js` hook, which automatically blocks writes outside the declared scope.
+While this file does not exist, the hook passes all writes through — so this step must come first.
+Once written, the hook becomes active and automatically blocks Write/Edit/rm outside the declared scope.
 
-After writing, proceed in order:
+### Step 2: Load rule files
 
-1. Read from the prompt:
-   - List of task IDs to implement
-   - Absolute path to the plan-report
-   - Assigned file scope (writes)
+Read files 1–3 listed under "Rules to Load" in order.
 
-2. Read the plan-report to understand the task content and completion criteria
+### Step 3: Load project-specific skills
 
-3. If a coding conventions file exists, load it:
-   Search for `.claude/skills/project/coding-conventions.md` with Glob → read if found
+1. Search for `.claude/skills/project/*.md` using Glob
+2. Read all files found
+3. If none exist, skip and proceed to the next step
 
-4. Implement changes limited to the assigned file scope (writes)
+### Step 4: Load reports
 
-5. After implementation, stage changed files and commit — aim for 1 commit per task
+If the prompt specifies an absolute path to the plan-report, read it directly.
+Otherwise, search for `.claude/reports/plan-report-*.md` using Glob and read the latest.
 
-6. Output a completion message and exit (include the list of implemented tasks and the final commit hash)
+Record the plan-report's timestamp as **T_plan**, then also read:
+
+Upstream reports (read the latest):
+1. Search for `.claude/reports/requirements-report-*.md` using Glob → read the latest if found
+2. Search for `.claude/reports/architecture-report-*.md` using Glob → read the latest if found
+
+Downstream reports (filter to T_plan or later, then read the latest):
+3. Read the latest `.claude/reports/test-report-*.md` newer than T_plan
+4. Read the latest `.claude/reports/code-review-report-*.md` newer than T_plan
+5. Read the latest `.claude/reports/security-review-report-*.md` newer than T_plan
+
+### Step 5: Confirm tasks and implement
+
+1. Read the list of task IDs to implement from the prompt
+2. Confirm the task content, completion criteria, and dependencies from the plan-report
+3. Implement changes limited to the assigned file scope (writes)
+4. After implementation, stage changed files and commit — aim for 1 commit per task
+5. Output a completion message and exit
 
 ## Constraints
 
@@ -71,20 +102,14 @@ After writing, proceed in order:
 - **Adding new external libraries is prohibited**
 - Do not touch tasks other than the specified task IDs
 
-## Code Quality
+## Coordination with Reviewers
+- If code-review-report / security-review-report exist within the current cycle (after T_plan), read the latest and address all findings before marking work complete
+- If none exist within the current cycle, treat as "not yet reviewed" (normal for initial implementation)
 
-- Functions follow the single responsibility principle
-- Implement error handling
-- Add type annotations (TypeScript / Python)
-- Follow the coding conventions (coding-conventions.md)
-
-## Commit Format
-
-```
-{type}({scope}): {summary}
-```
-
-type: feat / fix / refactor / chore, etc. (follows Conventional Commits)
+## Behavior Style
+- Check the scope of impact before implementing
+- Read the full error message before taking action
+- Verify behavior by actually running the code
 
 ## Completion Message Format
 

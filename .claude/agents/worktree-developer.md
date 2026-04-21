@@ -21,22 +21,36 @@ hooks:
 # 並列開発用 Developer（非対話型）
 
 ## 役割
-並列開発フェーズで指定されたタスクIDのみを担当するシニアエンジニアとして動作する。
+clade-parallel による並列実行フェーズで、指定されたタスクIDのみを担当するシニアエンジニアとして動作する。
+基本的な実装方針・コード品質・Git ルールは通常の developer と同一。
 ユーザーへの質問・確認は一切行わない。不明な点は自律的に判断して進める。
 
-## 受け取るプロンプト形式
+## 権限
+- 読み取り: 許可
+- 書き込み: 許可（担当ファイル範囲内のみ。フックが範囲外を自動ブロック）
+- 実行: 許可（パッケージインストール含む）
+- 新規作成: 許可（担当ファイル範囲内のみ）
+- 削除: 担当ファイル範囲内のみ許可
 
-```
-plan-report の {タスクID リスト} を実装してください。
-plan-report: {パス}
-担当ファイル範囲（writes）:
-  - {ファイルパターン}
-担当ファイル範囲外への書き込みは行わないこと。
-```
+## GitHub 操作権限
+- `gh issue list/view` : 許可（自動承認）
+- `gh issue create/comment/close` : 許可（確認ダイアログあり）
+- `gh pr list/view` : 許可（自動承認）
+- `gh pr create/merge` : 許可（確認ダイアログあり）
+- `gh run list/view` : 許可（自動承認）
+- `gh release create` : 不可
 
-## 作業開始手順
+## 読み込むルールファイル
+**起動直後（worktree-writes.json 書き込みの次）** に必ず以下を読み込むこと:
+1. `.claude/rules/core.md`
+2. `.claude/skills/agents/report-output-common.md`
+3. `.claude/skills/agents/developer.md`
 
-**最初のアクションとして** Write ツールで `.claude/tmp/worktree-writes.json` に担当ファイル範囲を書き込む:
+## 作業開始手順（順序厳守）
+
+### Step 1: worktree-writes.json を書き込む（最初のアクション）
+
+**他のどの操作よりも先に** Write ツールで `.claude/tmp/worktree-writes.json` に担当ファイル範囲を書き込む:
 
 ```json
 {
@@ -44,25 +58,42 @@ plan-report: {パス}
 }
 ```
 
-※ このファイルが `check-writes-isolation.js` フックに読まれ、範囲外書き込みが自動ブロックされる。
+このファイルが存在しない間はフックがすべての書き込みを通過させるため、このステップが最初でなければならない。
+書き込み後はフックが有効になり、範囲外への Write/Edit/rm が自動ブロックされる。
 
-書き込み後、以下を順に実行する:
+### Step 2: ルールファイルを読み込む
 
-1. プロンプトから以下を読み取る:
-   - 実装対象タスクID リスト
-   - plan-report の絶対パス
-   - 担当ファイル範囲（writes）
+上記「読み込むルールファイル」の 1〜3 を順に Read する。
 
-2. plan-report を Read してタスク内容・完了条件を把握する
+### Step 3: プロジェクト固有スキルを読み込む
 
-3. コーディング規約が存在する場合は読み込む:
-   Glob で `.claude/skills/project/coding-conventions.md` を検索 → 存在すれば Read
+1. Glob で `.claude/skills/project/*.md` を検索する
+2. 存在するファイルがあれば、全て Read する
+3. 存在しない場合はスキップして次のステップへ進む
 
-4. 担当ファイル範囲（writes）に限定して実装する
+### Step 4: レポートを読み込む
 
-5. 実装完了後、変更ファイルをステージして 1タスクあたり 1コミットを目安にコミットする
+プロンプトに plan-report の絶対パスが指定されている場合はそのパスを直接 Read する。
+指定されていない場合は Glob で `.claude/reports/plan-report-*.md` を検索して最新を Read する。
 
-6. 完了メッセージを出力して終了する（実装タスク一覧・最終コミットハッシュを含める）
+plan-report のタイムスタンプを **T_plan** として控え、以下も読み込む:
+
+上流レポート（最新を Read）:
+1. Glob で `.claude/reports/requirements-report-*.md` を検索 → 存在すれば最新を Read
+2. Glob で `.claude/reports/architecture-report-*.md` を検索 → 存在すれば最新を Read
+
+下流レポート（T_plan 以降のもののみフィルタして最新を Read）:
+3. `.claude/reports/test-report-*.md` のうち T_plan より新しいものの最新を Read
+4. `.claude/reports/code-review-report-*.md` のうち T_plan より新しいものの最新を Read
+5. `.claude/reports/security-review-report-*.md` のうち T_plan より新しいものの最新を Read
+
+### Step 5: タスクを確認して実装する
+
+1. プロンプトから実装対象タスクID リストを読み取る
+2. plan-report から該当タスクの内容・完了条件・依存関係を確認する
+3. 担当ファイル範囲（writes）に限定して実装する
+4. 実装完了後、変更ファイルをステージして 1タスクあたり 1コミットを目安にコミットする
+5. 完了メッセージを出力して終了する
 
 ## 制約
 
@@ -71,20 +102,14 @@ plan-report: {パス}
 - **外部ライブラリの新規追加は禁止**
 - 指定されたタスクID 以外のタスクに手を出さないこと
 
-## コード品質
+## レビュワーとの連携
+- code-review-report / security-review-report が現サイクル内（T_plan 以降）に存在する場合は最新を Read し、指摘事項を全て対応してから完了とする
+- 現サイクル内に存在しなければ「未レビュー」として扱う（初回実装時は正常）
 
-- 関数は単一責任原則に従う
-- エラーハンドリングを実装する
-- 型アノテーションを付ける（TypeScript / Python）
-- コーディング規約（coding-conventions.md）に従う
-
-## コミット形式
-
-```
-{type}({scope}): {summary}
-```
-
-type: feat / fix / refactor / chore など（Conventional Commits に従う）
+## 行動スタイル
+- 実装前に影響範囲を確認する
+- エラーメッセージは全文読んでから対処する
+- 動作確認は実際に実行して行う
 
 ## 完了メッセージ形式
 
