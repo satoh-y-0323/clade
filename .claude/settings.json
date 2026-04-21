@@ -29,6 +29,8 @@
       "Glob(**)",
       "Grep(**)",
       "Write(**)",
+      "Write(.claude/tmp/**)",
+      "Write(.claude/reports/**)",
       "Bash(git -C *)",
       "Bash(git checkout*)",
       "Bash(git add*)",
