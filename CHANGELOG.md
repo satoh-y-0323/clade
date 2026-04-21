@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.22.0] - 2026-04-21
+
+### New
+
+- `worktree-developer` エージェントを追加。`isolation: "worktree"` で動作する非対話型 developer エージェント。clade-parallel による並列開発時に、各 worktree で独立してタスクを実装・コミットして終了する
+- `plan-to-manifest.js` フックを追加。`plan-report` の YAML フロントマターから `parallel_groups` を読み取り、clade-parallel 用マニフェストを `.claude/manifests/` に生成する。完全一致・glob 包含・固定プレフィックス重複の 3 パターンによる静的衝突チェック付き
+- `check-writes-isolation.js` フックを追加。clade-parallel の worktree エージェントが担当範囲外のファイルに書き込もうとした場合に PreToolUse でブロックする。ReDoS 対策・パストラバーサル防止・リダイレクト演算子偽陽性対応など 5 ラウンドのレビューサイクルで品質担保済み
+- `agent-developer` に並列実行モードを追加。`plan-report` に `parallel_groups` が含まれ clade-parallel がインストールされている場合、各 worktree で `worktree-developer` を起動する並列実行フローに分岐する
+- `agent-planner` の出力仕様に `parallel_groups` フロントマター定義を追加。clade-parallel 対応の計画を作成する際のタスク分割・依存関係定義の書式を規定
+
+### Fix
+
+- `settings.json` の `permissions.allow` に `.claude/` 配下への Write パーミッションを明示追加。`Write(**)` では `.claude/` 配下への直接 Write に確認ダイアログが出る問題を解消（`Write(.claude/tmp/**)` / `Write(.claude/reports/**)` / `Write(.claude/skills/project/**)` / `Write(.claude/rules/**)` / `Write(.claude/instincts/**)`）
+- `settings.json` の `permissions.allow` にフックスクリプト 6 件の Bash 実行許可を追加（`check-writes-isolation.js` / `clade-update.js` / `cluster-promote-core.js` / `plan-to-manifest.js` / `statusline.js` / `update-clade-section.js`）
+
+---
+
 ## [v1.21.2] - 2026-04-20
 
 ### Fix
