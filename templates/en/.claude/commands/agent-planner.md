@@ -95,6 +95,61 @@ A: {answer}
 - Exit after generating the report (approval confirmation is handled by the parent Claude)
 ```
 
+The sub-agent prompt must also include the following YAML frontmatter output rules:
+
+```
+## YAML Frontmatter Output Rules
+
+Output a YAML frontmatter block at the very beginning of the plan-report (before the Markdown body)
+**only when all three conditions below are met**. Omit the frontmatter entirely otherwise.
+
+**Conditions:**
+1. Two or more task groups exist that can be implemented independently (no mutual dependencies)
+2. The files each group handles can be clearly separated
+3. Shared interfaces and type definitions can be finalized in advance
+
+**Format:**
+
+---
+parallel_groups:
+  pre_implementation:          # Lead group (omit this key entirely if not needed)
+    tasks: [T0]
+    agent: worktree-developer
+    writes:
+      - src/types/shared.ts
+  group-a:
+    name: {group name}
+    tasks: [T1, T2]
+    agent: worktree-developer
+    depends_on: [pre_implementation]   # only when pre_implementation exists
+    writes:
+      - src/user/**
+  group-b:
+    name: {group name}
+    tasks: [T3, T4]
+    agent: worktree-developer
+    depends_on: [pre_implementation]
+    writes:
+      - src/auth/**
+---
+
+**Field descriptions:**
+
+| Field | Description |
+|---|---|
+| `parallel_groups` | Map of groups. Keys are `pre_implementation` / `group-a` / `group-b` / ... |
+| `group-*.name` | Display name for the group |
+| `group-*.tasks` | List of task IDs handled by this group (use inline notation `[T1, T2]`) |
+| `group-*.agent` | Agent to run (parallel development uses `worktree-developer` exclusively) |
+| `group-*.writes` | File patterns this group writes to (**no overlap between groups**) |
+| `group-*.depends_on` | List of dependency group keys (use inline notation `[pre_implementation]`) |
+
+**File pattern syntax:**
+- `src/user/**` — all files under `src/user/`
+- `src/types/user.ts` — a single specific file
+- `src/**/*.ts` — all `.ts` files under `src/`
+```
+
 For regeneration after rejection, add the following to the prompt:
 ```
 ## Regeneration mode
