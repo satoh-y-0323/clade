@@ -99,6 +99,20 @@ Agents are selected via custom commands:
 - `/agent-mcp-setup`          → Research, configure, and generate skill files for MCP servers
 - `/agent-workflow-builder`   → Meta-agent that auto-generates a set of agents from business workflow interviews
 - `/agent-doc-writer`         → Generate Mermaid diagrams, README files, operation manuals, API specs, and more
+
+## Compact Instructions
+
+### KEEP
+- **Architectural Decisions** — Why a technology was chosen; trade-off records
+- **Key Conclusions** — Finalized specs, directory structure, naming conventions
+- **Caveats** — Root causes and permanent fixes for bugs that took effort to resolve
+- **TODO/Status** — Current tasks, next steps, and remaining work
+
+### DISCARD
+- **Chit-chat** — Social pleasantries such as "thank you", "good work", etc.
+- **Resolved Error Logs** — Temporary error logs and debug output (root cause and fix are retained in Caveats)
+- **Redundant Code Snippets** — Duplicate copies of source code already tracked in git
+- **Old Tasks** — Completed work that no longer affects future development
 <!-- CLADE:END -->
 
 ## User Agents
