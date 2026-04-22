@@ -115,6 +115,9 @@ parallel_groups:
   pre_implementation:          # Lead group (omit this key entirely if not needed)
     tasks: [T0]
     agent: worktree-developer
+    timeout_sec: 900           # default 900 when omitted; adjust based on expected duration
+    idle_timeout_sec: 600      # required for worktree-developer; adjust based on dev scale
+    read_only: false
     writes:
       - src/types/shared.ts
   group-a:
@@ -122,6 +125,9 @@ parallel_groups:
     tasks: [T1, T2]
     agent: worktree-developer
     depends_on: [pre_implementation]   # only when pre_implementation exists
+    timeout_sec: 1200
+    idle_timeout_sec: 600
+    read_only: false
     writes:
       - src/user/**
   group-b:
@@ -129,6 +135,9 @@ parallel_groups:
     tasks: [T3, T4]
     agent: worktree-developer
     depends_on: [pre_implementation]
+    timeout_sec: 1200
+    idle_timeout_sec: 600
+    read_only: false
     writes:
       - src/auth/**
 ---
@@ -140,14 +149,34 @@ parallel_groups:
 | `parallel_groups` | Map of groups. Keys are `pre_implementation` / `group-a` / `group-b` / ... |
 | `group-*.name` | Display name for the group |
 | `group-*.tasks` | List of task IDs handled by this group (use inline notation `[T1, T2]`) |
-| `group-*.agent` | Agent to run (parallel development uses `worktree-developer` exclusively) |
-| `group-*.writes` | File patterns this group writes to (**no overlap between groups**) |
+| `group-*.agent` | Agent to run. Use `worktree-developer` for parallel implementation, `code-reviewer` / `security-reviewer` for parallel review |
+| `group-*.timeout_sec` | Total execution time limit (seconds). Default 900 when omitted. Adjust based on estimated duration of the parallel section |
+| `group-*.idle_timeout_sec` | Silence time limit (seconds). **Required for worktree-developer** (guideline: 600). **Must not be set** for `read_only: true` groups |
+| `group-*.read_only` | YAML boolean (`true` / `false`). Use `false` for `worktree-developer`, `true` for `code-reviewer` / `security-reviewer` |
+| `group-*.writes` | File patterns this group writes to (**no overlap between groups**; omit for `read_only: true` groups) |
 | `group-*.depends_on` | List of dependency group keys (use inline notation `[pre_implementation]`) |
 
 **File pattern syntax:**
 - `src/user/**` — all files under `src/user/`
 - `src/types/user.ts` — a single specific file
 - `src/**/*.ts` — all `.ts` files under `src/`
+
+**Example with `read_only: true` (parallel review):**
+```yaml
+---
+parallel_groups:
+  code-reviewer:
+    tasks: [review]
+    agent: code-reviewer
+    timeout_sec: 600
+    read_only: true
+  security-reviewer:
+    tasks: [security]
+    agent: security-reviewer
+    timeout_sec: 600
+    read_only: true
+---
+```
 ```
 
 For regeneration after rejection, add the following to the prompt:

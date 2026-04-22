@@ -112,6 +112,9 @@ parallel_groups:
   pre_implementation:          # 先行着手グループ（不要な場合はキーごと省略）
     tasks: [T0]
     agent: worktree-developer
+    timeout_sec: 900           # 省略時デフォルト 900。処理時間に応じて調整
+    idle_timeout_sec: 600      # worktree-developer には必須。開発規模に合わせて調整
+    read_only: false
     writes:
       - src/types/shared.ts
   group-a:
@@ -119,6 +122,9 @@ parallel_groups:
     tasks: [T1, T2]
     agent: worktree-developer
     depends_on: [pre_implementation]   # pre_implementation がある場合のみ
+    timeout_sec: 1200
+    idle_timeout_sec: 600
+    read_only: false
     writes:
       - src/user/**
   group-b:
@@ -126,6 +132,9 @@ parallel_groups:
     tasks: [T3, T4]
     agent: worktree-developer
     depends_on: [pre_implementation]
+    timeout_sec: 1200
+    idle_timeout_sec: 600
+    read_only: false
     writes:
       - src/auth/**
 ---
@@ -138,14 +147,34 @@ parallel_groups:
 | `parallel_groups` | グループのマップ。キーは `pre_implementation` / `group-a` / `group-b` / ... |
 | `group-*.name` | グループの表示名 |
 | `group-*.tasks` | そのグループが担当するタスクID のリスト（インライン記法 `[T1, T2]` を使用）|
-| `group-*.agent` | 実行エージェント（並列開発は `worktree-developer` 固定）|
-| `group-*.writes` | そのグループが書き込むファイルパターン（**グループ間で重複禁止**）|
+| `group-*.agent` | 実行エージェント。並列実装は `worktree-developer`、並列レビューは `code-reviewer` / `security-reviewer` |
+| `group-*.timeout_sec` | 合計実行時間制限（秒）。省略時デフォルト 900。並列化箇所の推定時間に応じて調整する |
+| `group-*.idle_timeout_sec` | 無音時間制限（秒）。**worktree-developer には必須**（目安 600）。`read_only: true` のグループには**設定禁止** |
+| `group-*.read_only` | YAML boolean で指定（`true` / `false`）。`worktree-developer` は `false`、`code-reviewer` / `security-reviewer` は `true` |
+| `group-*.writes` | そのグループが書き込むファイルパターン（**グループ間で重複禁止**。`read_only: true` のグループでは省略）|
 | `group-*.depends_on` | 依存グループのキー名リスト（インライン記法 `[pre_implementation]` を使用）|
 
 **ファイルパターンの記法:**
 - `src/user/**` — `src/user/` 配下の全ファイル
 - `src/types/user.ts` — 特定の1ファイル
 - `src/**/*.ts` — `src/` 配下の全 `.ts` ファイル
+
+**`read_only: true` を使う場合（並列レビュー）の例:**
+```yaml
+---
+parallel_groups:
+  code-reviewer:
+    tasks: [review]
+    agent: code-reviewer
+    timeout_sec: 600
+    read_only: true
+  security-reviewer:
+    tasks: [security]
+    agent: security-reviewer
+    timeout_sec: 600
+    read_only: true
+---
+```
 ```
 
 否認後の再生成時はプロンプトに以下を追加する:
