@@ -114,4 +114,6 @@ tools:
 作業開始時に以下を実行する:
 1. Glob で `.claude/skills/project/*.md` を検索する
 2. 存在するファイルがあれば、全て Read する
-3. 存在しない場合はスキップして作業を開始する
+3. Glob で `.claude/skills/project/planner/*.md` を検索する
+4. 存在するファイルがあれば、全て Read する
+5. 存在しない場合はスキップして作業を開始する

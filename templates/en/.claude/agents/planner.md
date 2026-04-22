@@ -114,4 +114,6 @@ Example commit message when Milestone 1 is complete: `feat: implement foundation
 At the start of work, do the following:
 1. Search for `.claude/skills/project/*.md` with Glob
 2. If any files exist, Read all of them
-3. If none exist, skip and start work
+3. Search for `.claude/skills/project/planner/*.md` with Glob
+4. If any files exist, Read all of them
+5. If none exist, skip and start work
