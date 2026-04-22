@@ -1,5 +1,17 @@
 # 変更履歴
 
+## [v1.23.0] - 2026-04-23
+
+### New
+
+- `CLAUDE.md` に `## Compact Instructions` セクションを追加（Clade 管理）。コンテキスト圧縮時に保持する情報（設計判断・決定事項・解決済みハマりどころ・進行中ステータス）と破棄する情報（雑談・解決済みエラーログ・冗長コード断片・期限切れタスク）を明示
+- `plan-to-manifest.js` を clade-parallel v0.5 マニフェスト仕様に対応。グループごとに `timeout_sec`（省略時デフォルト 900）・`idle_timeout_sec`（worktree-developer 必須）・`read_only`（YAML boolean）を frontmatter から読み取って生成マニフェストに反映
+- `skills/project/planner/clade-parallel-manifest.md` を追加。v0.5 マニフェストの記述ルールをプランナー専用スキルとして提供
+
+### Fix
+
+- `plan-to-manifest.js` の `clade_plan_version` を `"0.3"` に戻す。マニフェストフォーマットバージョンと clade-parallel ツールバージョンは独立して管理されるため
+
 ## [v1.22.0] - 2026-04-21
 
 ### New
