@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.23.1] - 2026-04-23
+
+### Fix
+
+- `clade-manifest.json` の `skills` リストに `project/planner/clade-parallel-manifest.md` が漏れていた問題を修正。v1.23.0 で追加されたこのファイルが `/update` 経由でユーザーに配布されていなかった
+
+---
+
 ## [v1.23.0] - 2026-04-23
 
 ### New

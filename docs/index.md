@@ -83,6 +83,10 @@ VS Code 拡張には現在既知のバグがあり、プロジェクトレベル
 
 ## 最近の更新
 
+### [v1.23.1] - 2026-04-23
+
+`clade-manifest.json` の `skills` リストに `project/planner/clade-parallel-manifest.md` が漏れていた問題を修正。v1.23.0 で追加されたこのファイルが `/update` 経由でユーザーに配布されていなかった。
+
 ### [v1.23.0] - 2026-04-23
 
 `CLAUDE.md` に Compact Instructions セクションを追加（圧縮時の保持・破棄ルールを明示）。`plan-to-manifest.js` を clade-parallel v0.5 マニフェスト仕様に対応（`timeout_sec` / `idle_timeout_sec` / `read_only` をグループごとに frontmatter から読み取り）。プランナー専用スキル `skills/project/planner/clade-parallel-manifest.md` を追加。
@@ -90,9 +94,5 @@ VS Code 拡張には現在既知のバグがあり、プロジェクトレベル
 ### [v1.22.0] - 2026-04-21
 
 clade-parallel 連携の基盤を実装。`worktree-developer` エージェント（並列開発用非対話型 developer）・`plan-to-manifest.js`（plan-report → マニフェスト変換・静的衝突チェック付き）・`check-writes-isolation.js`（writes 範囲外ブロック）を追加。`agent-developer` に並列実行モード、`agent-planner` に `parallel_groups` フロントマター仕様を追加。`settings.json` の `.claude/` 配下 Write パーミッションと 6 スクリプトの Bash 許可を補完。
-
-### [v1.21.2] - 2026-04-20
-
-`record-approval.js` にシェルインジェクション対策の `--comment-file` オプションを追加（7 エージェントの呼び出し側を tmp ファイル経由方式に更新）。`workflow-builder` のサブエージェント定義ファイル生成漏れ、`agent-planner` の Q&A 必須ガード、`doc-writer` / `code-reviewer` / `security-reviewer` / `architect` の権限セクション整合性など複数の内部整合性を修正。
 
 [すべての変更履歴を見る →](/changelog)
