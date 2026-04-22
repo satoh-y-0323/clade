@@ -297,7 +297,7 @@ const taskYamls = orderedKeys.map(key => buildTaskYaml(key, groups[key], absolut
 
 const manifestContent = [
   '---',
-  'clade_plan_version: "0.5"',
+  'clade_plan_version: "0.3"',
   'tasks:',
   taskYamls.join('\n'),
   '---',
