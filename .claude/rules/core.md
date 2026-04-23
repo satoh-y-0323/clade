@@ -72,10 +72,28 @@ Step 2. /agent-planner      → requirements-report + architecture-report を読
 このフェーズ完了時点で存在するレポート: + plan-report
 
 ### フェーズ3: 実装・テスト（TDDサイクル）
+
 ```
-Step 3. /agent-tester       → plan-report 確認・テスト仕様設計・失敗テスト作成（Red）
-Step 4. /agent-developer    → plan-report 確認・実装（Green → Refactor）
-Step 5. /agent-tester       → テスト再実行・test-report 出力・承認
+Step 3. /agent-tester → plan-report 確認・テスト仕様設計・失敗テスト作成（Red）
+```
+
+#### Step 4: developer 実装
+
+plan-report の YAML フロントマターに `phase: developer` の `parallel_groups` が1件以上存在し、かつ clade-parallel が導入済みの場合 → **clade-parallel で並列実行する:**
+
+```bash
+node .claude/hooks/plan-to-manifest.js --phase developer {plan-report の絶対パス}
+clade-parallel run {developer-manifest パス}
+```
+完了後、全タスク成功ならユーザーに報告する。失敗タスクがある場合は失敗タスク名・終了コード・stderr の概要をユーザーに報告し、対応方針（再実行 or 逐次モードでの修正）を確認する。
+
+上記以外（`phase: developer` グループなし / clade-parallel 未導入）→ **逐次実行:**
+```
+Step 4. /agent-developer → plan-report 確認・実装（Green → Refactor）
+```
+
+```
+Step 5. /agent-tester → テスト再実行・test-report 出力・承認
 ```
 このフェーズ完了時点で存在するレポート: + test-report
 

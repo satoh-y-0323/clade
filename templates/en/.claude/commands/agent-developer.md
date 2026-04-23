@@ -1,7 +1,7 @@
 # /agent-developer Command
 
 Launches the implementation and debugging agent (developer) as a sub-agent.
-Automatically switches between simple mode, milestone mode, and parallel execution mode based on the plan-report.
+Operates in simple mode or milestone mode based on the plan-report.
 
 ## Rules
 **As the first action upon launch**, Read `.claude/skills/agents/developer.md` to review the rules before starting work.
@@ -12,37 +12,6 @@ Automatically switches between simple mode, milestone mode, and parallel executi
 2. If a plan-report exists, check:
    - Whether `milestone_mode` is listed in the `## Meta` section (`confirm` / `auto` / not listed)
    - Whether a milestone list exists
-3. If a plan-report exists, check the YAML frontmatter at the top of the file:
-   - Check whether the `parallel_groups` key is present
-   - If present, run the following in Bash to check whether clade-parallel is installed:
-     ```
-     command -v clade-parallel >/dev/null 2>&1 && echo "installed" || echo "not installed"
-     ```
-   - If `parallel_groups` is present **and** `clade-parallel` is installed → switch to parallel execution mode
-   - Otherwise → proceed with simple mode / milestone mode (no warning needed)
-
----
-
-## Parallel Execution Mode (plan-report defines parallel_groups and clade-parallel is installed)
-
-1. Run the following in Bash to generate the developer phase manifest.md:
-   ```
-   node .claude/hooks/plan-to-manifest.js --phase developer {absolute path to plan-report}
-   ```
-   Record the path printed to stdout as the manifest path.
-   - **If output is empty** (no developer phase groups defined): skip parallel mode and proceed with simple mode / milestone mode
-   - **If exit code is 1**: report the error to the user and stop
-
-2. Run the following in Bash to start parallel execution:
-   ```
-   clade-parallel run {manifest path}
-   ```
-   Wait until complete (timeout_sec follows the task settings in the manifest).
-
-3. Check the results:
-   - All tasks succeeded: report completion to the user
-   - Any tasks failed: report the failed task name, exit code, and a summary of stderr to the user,
-     then ask the user how to proceed (retry or fix in sequential mode)
 
 ---
 

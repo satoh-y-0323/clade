@@ -72,10 +72,28 @@ Step 2. /agent-planner      → Read requirements-report + architecture-report
 Reports present at the end of this phase: + plan-report
 
 ### Phase 3: Implementation and testing (TDD cycle)
+
 ```
-Step 3. /agent-tester       → Review plan-report, design test specs, write failing tests (Red)
-Step 4. /agent-developer    → Review plan-report, implement (Green → Refactor)
-Step 5. /agent-tester       → Re-run tests, output test-report, get approval
+Step 3. /agent-tester → Review plan-report, design test specs, write failing tests (Red)
+```
+
+#### Step 4: Developer implementation
+
+If the plan-report's YAML frontmatter contains at least one `parallel_groups` entry with `phase: developer`, and clade-parallel is installed → **run in parallel via clade-parallel:**
+
+```bash
+node .claude/hooks/plan-to-manifest.js --phase developer {absolute path to plan-report}
+clade-parallel run {developer-manifest path}
+```
+After completion, report all-success to the user, or report failed task name, exit code, and stderr summary and ask how to proceed (retry or fix in sequential mode).
+
+Otherwise (no `phase: developer` groups / clade-parallel not installed) → **run sequentially:**
+```
+Step 4. /agent-developer → Review plan-report, implement (Green → Refactor)
+```
+
+```
+Step 5. /agent-tester → Re-run tests, output test-report, get approval
 ```
 Reports present at the end of this phase: + test-report
 
