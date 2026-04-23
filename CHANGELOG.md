@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.24.2] - 2026-04-23
+
+### Fix
+
+- `plan-to-manifest.js`: reviewer 並列実行の出力指示を修正。`read_only: true` タスクのプロンプトを標準フロー（`clear-tmp-file.js` で tmp 削除 → Write ツールで `.claude/tmp/<baseName>.md` に書き込み → `write-report.js --file` で実レポート保存）に統一し、`write-report.js` 直接呼び出しを廃止
+- `plan-to-manifest.js`: `read_only: true` タスクに `cwd: ../..` を自動付与。`write-report.js` が `process.cwd()` を使うため、マニフェストディレクトリ（`.claude/manifests/`）ではなくリポジトリルートから実行する必要がある問題に対応
+
+### Changed
+
+- `agent-planner.md`: `timeout_sec` / `idle_timeout_sec` の目安値を小/中/大規模の3段階で明記。`idle_timeout_sec` については `read_only: true` タスクで runner.py が強制的に None にする挙動を注記に追加
+- `core.md` Phase 3 Step 4（developer 並列）・Phase 4 Step 6+7（reviewer 並列）にタイムアウト値の目安と reviewer の cwd 自動付与を注記として追加
+
+---
+
 ## [v1.24.1] - 2026-04-23
 
 ### Changed
