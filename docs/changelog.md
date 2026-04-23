@@ -1,5 +1,11 @@
 # 変更履歴
 
+## [v1.24.1] - 2026-04-23
+
+### Changed
+
+- developer 並列実行の判断ロジックを `agent-developer.md` から `core.md` Phase 3 に移動。reviewer 並列実行（Phase 4）と同じ構造に統一し、`agent-developer.md` をシンプルモード・マイルストーンモードのみに簡素化
+
 ## [v1.24.0] - 2026-04-23
 
 ### New

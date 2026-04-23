@@ -83,6 +83,10 @@ VS Code 拡張には現在既知のバグがあり、プロジェクトレベル
 
 ## 最近の更新
 
+### [v1.24.1] - 2026-04-23
+
+developer 並列実行の判断ロジックを `agent-developer.md` から `core.md` Phase 3 に移動。reviewer 並列実行（Phase 4）と同じ構造に統一し、並列実行の制御が親 Claude のワークフロールールに一元化された。
+
 ### [v1.24.0] - 2026-04-23
 
 `plan-to-manifest.js` に `--phase developer|reviewer` オプションを追加。`parallel_groups` に `phase` フィールドを追加し、developer 並列 → tester → reviewer 並列の多段並列実行が可能になった。`core.md` Phase 4 に clade-parallel による reviewer 並列実行フロー（code-reviewer + security-reviewer 同時実行）を追加。
@@ -90,9 +94,5 @@ VS Code 拡張には現在既知のバグがあり、プロジェクトレベル
 ### [v1.23.1] - 2026-04-23
 
 `clade-manifest.json` の `skills` リストに `project/planner/clade-parallel-manifest.md` が漏れていた問題を修正。v1.23.0 で追加されたこのファイルが `/update` 経由でユーザーに配布されていなかった。
-
-### [v1.23.0] - 2026-04-23
-
-`CLAUDE.md` に Compact Instructions セクションを追加（圧縮時の保持・破棄ルールを明示）。`plan-to-manifest.js` を clade-parallel v0.5 マニフェスト仕様に対応（`timeout_sec` / `idle_timeout_sec` / `read_only` をグループごとに frontmatter から読み取り）。プランナー専用スキル `skills/project/planner/clade-parallel-manifest.md` を追加。
 
 [すべての変更履歴を見る →](/changelog)
