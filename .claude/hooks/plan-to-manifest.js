@@ -11,9 +11,28 @@ const fs   = require('fs');
 const path = require('path');
 
 // ===== 引数チェック =====
-const planReportPath = process.argv[2];
+let planReportPath = null;
+let phaseFilter = null;
+
+const args = process.argv.slice(2);
+for (let i = 0; i < args.length; i++) {
+  if (args[i] === '--phase' && i + 1 < args.length) {
+    phaseFilter = args[++i];
+  } else if (args[i].startsWith('--phase=')) {
+    phaseFilter = args[i].slice('--phase='.length);
+  } else {
+    planReportPath = args[i];
+  }
+}
+
 if (!planReportPath) {
-  console.error('Usage: node .claude/hooks/plan-to-manifest.js <plan-report path>');
+  console.error('Usage: node .claude/hooks/plan-to-manifest.js [--phase developer|reviewer] <plan-report path>');
+  process.exit(1);
+}
+
+const VALID_PHASES = ['developer', 'reviewer'];
+if (phaseFilter !== null && !VALID_PHASES.includes(phaseFilter)) {
+  console.error(`Error: 不明な --phase 値: "${phaseFilter}". 有効値: developer, reviewer`);
   process.exit(1);
 }
 
@@ -124,11 +143,26 @@ function parseYaml(text) {
   return parseMap(0);
 }
 
+function filterGroupsByPhase(groups, filter) {
+  if (filter === null) return groups;
+  const filtered = {};
+  for (const [id, group] of Object.entries(groups)) {
+    const groupPhase = group.phase == null ? 'developer' : group.phase;
+    if (groupPhase === filter) filtered[id] = group;
+  }
+  return filtered;
+}
+
 // ===== パース & バリデーション =====
 const parsed = parseYaml(frontmatter);
 if (!parsed.parallel_groups) {
   console.error('Error: 並列グループが定義されていません（parallel_groups キーが見つかりません）');
   process.exit(1);
+}
+
+const groups = filterGroupsByPhase(parsed.parallel_groups, phaseFilter);
+if (Object.keys(groups).length === 0) {
+  process.exit(0);
 }
 
 // ===== 静的衝突チェック =====
@@ -203,7 +237,7 @@ function checkWriteConflicts(groups) {
   return conflicts;
 }
 
-const conflicts = checkWriteConflicts(parsed.parallel_groups);
+const conflicts = checkWriteConflicts(groups);
 if (conflicts.length > 0) {
   console.error('Error: 並列グループ間で writes パターンの衝突が検出されました:');
   for (const c of conflicts) {
@@ -293,7 +327,6 @@ function buildTaskYaml(id, group, absolutePlanPath) {
   return yaml;
 }
 
-const groups    = parsed.parallel_groups;
 const groupKeys = Object.keys(groups);
 
 // pre_implementation を先頭に、残りは定義順で並べる
@@ -319,7 +352,8 @@ if (!fs.existsSync(outputDir)) {
   fs.mkdirSync(outputDir, { recursive: true });
 }
 
-const outputPath = path.join(outputDir, `manifest-${getTimestamp()}.md`);
+const phaseSuffix = phaseFilter ? `-${phaseFilter}` : '';
+const outputPath = path.join(outputDir, `manifest${phaseSuffix}-${getTimestamp()}.md`);
 fs.writeFileSync(outputPath, manifestContent, 'utf8');
 
 console.log(outputPath);

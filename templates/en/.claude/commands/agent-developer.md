@@ -25,12 +25,13 @@ Automatically switches between simple mode, milestone mode, and parallel executi
 
 ## Parallel Execution Mode (plan-report defines parallel_groups and clade-parallel is installed)
 
-1. Run the following in Bash to generate manifest.md:
+1. Run the following in Bash to generate the developer phase manifest.md:
    ```
-   node .claude/hooks/plan-to-manifest.js {absolute path to plan-report}
+   node .claude/hooks/plan-to-manifest.js --phase developer {absolute path to plan-report}
    ```
    Record the path printed to stdout as the manifest path.
-   If the script exits with code 1, report the error to the user and stop.
+   - **If output is empty** (no developer phase groups defined): skip parallel mode and proceed with simple mode / milestone mode
+   - **If exit code is 1**: report the error to the user and stop
 
 2. Run the following in Bash to start parallel execution:
    ```

@@ -35,6 +35,10 @@ AIが自律的にエージェントを選択・連携させる場合は、以下
 - Step 6（code-reviewer）と Step 7（security-reviewer）を「依存関係がないから並列化できる」と判断し、同一メッセージで両方 Agent ツールを呼び出してしまう
 - 正しくは **Step 6 完了・承認 → Step 7 開始** の順で逐次実行する
 
+**注記: clade-parallel は上記ルールの対象外**
+
+clade-parallel は外部オーケストレーションツールであり、Claude Code の Agent ツールを呼び出すのではなく **別プロセスとして claude CLI を起動する**。そのため permissions race condition は発生せず、このルールの適用対象外となる。`plan-to-manifest.js` で生成した manifest を `clade-parallel run` に渡す形での並列実行は安全である。
+
 ### ユーザーが直接エージェントを指定した場合の確認ルール
 ユーザーが `/agent-xxx` を直接呼び出した場合、**親 Claude がコマンドファイル（`.claude/commands/agent-xxx.md`）を Read して** 作業開始前に以下を確認する:
 
@@ -76,10 +80,26 @@ Step 5. /agent-tester       → テスト再実行・test-report 出力・承認
 このフェーズ完了時点で存在するレポート: + test-report
 
 ### フェーズ4: レビュー・計画更新
+
+#### Step 6+7: レビュー実行
+
+plan-report の YAML フロントマターに `phase: reviewer` の `parallel_groups` が1件以上存在し、かつ clade-parallel が導入済みの場合 → **clade-parallel で並列実行する:**
+
+```bash
+node .claude/hooks/plan-to-manifest.js --phase reviewer {plan-report の絶対パス}
+clade-parallel run {reviewer-manifest パス}
+```
+完了後、生成された code-review-report と security-review-report を Read してユーザーに報告・承認を求める。
+
+上記以外（`phase: reviewer` グループなし / clade-parallel 未導入）→ **逐次実行:**
 ```
 Step 6. /agent-code-reviewer     → code-review-report 出力・承認
 Step 7. /agent-security-reviewer → security-review-report 出力・承認
-Step 8. /agent-planner           → 全レポート統合・更新 plan-report 出力・承認
+```
+
+#### Step 8:
+```
+Step 8. /agent-planner → 全レポート統合・更新 plan-report 出力・承認
 ```
 指摘がなくなるまで Step 3〜8 を繰り返す。
 

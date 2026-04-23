@@ -11,9 +11,28 @@ const fs   = require('fs');
 const path = require('path');
 
 // ===== Argument check =====
-const planReportPath = process.argv[2];
+let planReportPath = null;
+let phaseFilter = null;
+
+const args = process.argv.slice(2);
+for (let i = 0; i < args.length; i++) {
+  if (args[i] === '--phase' && i + 1 < args.length) {
+    phaseFilter = args[++i];
+  } else if (args[i].startsWith('--phase=')) {
+    phaseFilter = args[i].slice('--phase='.length);
+  } else {
+    planReportPath = args[i];
+  }
+}
+
 if (!planReportPath) {
-  console.error('Usage: node .claude/hooks/plan-to-manifest.js <plan-report path>');
+  console.error('Usage: node .claude/hooks/plan-to-manifest.js [--phase developer|reviewer] <plan-report path>');
+  process.exit(1);
+}
+
+const VALID_PHASES = ['developer', 'reviewer'];
+if (phaseFilter !== null && !VALID_PHASES.includes(phaseFilter)) {
+  console.error(`Error: Unknown --phase value: "${phaseFilter}". Valid values: developer, reviewer`);
   process.exit(1);
 }
 
@@ -124,11 +143,26 @@ function parseYaml(text) {
   return parseMap(0);
 }
 
+function filterGroupsByPhase(groups, filter) {
+  if (filter === null) return groups;
+  const filtered = {};
+  for (const [id, group] of Object.entries(groups)) {
+    const groupPhase = group.phase == null ? 'developer' : group.phase;
+    if (groupPhase === filter) filtered[id] = group;
+  }
+  return filtered;
+}
+
 // ===== Parse & validate =====
 const parsed = parseYaml(frontmatter);
 if (!parsed.parallel_groups) {
   console.error('Error: No parallel groups defined (parallel_groups key not found)');
   process.exit(1);
+}
+
+const groups = filterGroupsByPhase(parsed.parallel_groups, phaseFilter);
+if (Object.keys(groups).length === 0) {
+  process.exit(0);
 }
 
 // ===== Static conflict check =====
@@ -194,7 +228,7 @@ function checkWriteConflicts(groups) {
   return conflicts;
 }
 
-const conflicts = checkWriteConflicts(parsed.parallel_groups);
+const conflicts = checkWriteConflicts(groups);
 if (conflicts.length > 0) {
   console.error('Error: Write pattern conflicts detected between parallel groups:');
   for (const c of conflicts) {
@@ -284,7 +318,6 @@ function buildTaskYaml(id, group, absolutePlanPath) {
   return yaml;
 }
 
-const groups    = parsed.parallel_groups;
 const groupKeys = Object.keys(groups);
 
 // Place pre_implementation first, then the rest in definition order
@@ -310,7 +343,8 @@ if (!fs.existsSync(outputDir)) {
   fs.mkdirSync(outputDir, { recursive: true });
 }
 
-const outputPath = path.join(outputDir, `manifest-${getTimestamp()}.md`);
+const phaseSuffix = phaseFilter ? `-${phaseFilter}` : '';
+const outputPath = path.join(outputDir, `manifest${phaseSuffix}-${getTimestamp()}.md`);
 fs.writeFileSync(outputPath, manifestContent, 'utf8');
 
 console.log(outputPath);
