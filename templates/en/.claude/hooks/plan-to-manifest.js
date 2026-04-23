@@ -251,11 +251,39 @@ function buildPrompt(group, absolutePlanPath) {
   const writes   = Array.isArray(group.writes) ? group.writes : [];
 
   if (readOnly) {
+    const reportBaseNames = {
+      'code-reviewer':     'code-review-report',
+      'security-reviewer': 'security-review-report',
+    };
+    const reportBaseName = reportBaseNames[agent] || `${agent}-report`;
+
     return [
-      `Review ${tasks.join(', ')} from the plan-report.`,
-      `plan-report: ${absolutePlanPath}`,
-      `Use the Agent tool with subagent_type "${agent}" and pass the above as prompt.`,
-      `Do not ask questions. Execute immediately and exit.`,
+      `Use the Agent tool with subagent_type "${agent}" to review the code.`,
+      `Pass the following prompt to the subagent:`,
+      ``,
+      `"""`,
+      `## Task Request`,
+      `Generate ${reportBaseName} (automated execution)`,
+      ``,
+      `## plan-report`,
+      `${absolutePlanPath}`,
+      ``,
+      `## Review target tasks`,
+      `${tasks.join(', ')}`,
+      ``,
+      `## Notes`,
+      `Automated execution (non-interactive mode); no Q&A needed. Proceed with default settings.`,
+      ``,
+      `## Output instructions`,
+      `Follow the "Report output flow (common)" in \`.claude/skills/agents/report-output-common.md\` and execute in this order:`,
+      `1. \`node .claude/hooks/clear-tmp-file.js --path .claude/tmp/${reportBaseName}.md\` — pre-delete tmp file`,
+      `2. Use the Write tool to write the full report body to \`.claude/tmp/${reportBaseName}.md\` (no heredoc)`,
+      `3. \`node .claude/hooks/write-report.js ${reportBaseName} new --file .claude/tmp/${reportBaseName}.md\` — save to the actual report path`,
+      `- Always include the actual report file path printed by write-report.js (\`.claude/reports/${reportBaseName}-YYYYMMDD-HHmmss.md\`) in the final message`,
+      `- Exit after generating the report`,
+      `"""`,
+      ``,
+      `Do not ask any clarifying questions. Do not wait for approval. Invoke the subagent immediately with the above prompt and exit after the subagent completes.`,
     ].join('\n');
   }
 
@@ -305,6 +333,12 @@ function buildTaskYaml(id, group, absolutePlanPath) {
       ? `    writes:\n${yamlListBlock(writes, 6)}`
       : `    writes: []`;
     yaml += `${writesYaml}\n`;
+  }
+
+  // read_only tasks must run from the repo root (not the manifest dir .claude/manifests/)
+  // because write-report.js uses process.cwd()
+  if (readOnly) {
+    yaml += `    cwd: ../..` + '\n';
   }
 
   yaml += `    read_only: ${readOnly}\n`;

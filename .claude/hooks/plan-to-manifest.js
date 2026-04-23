@@ -260,11 +260,39 @@ function buildPrompt(group, absolutePlanPath) {
   const writes   = Array.isArray(group.writes) ? group.writes : [];
 
   if (readOnly) {
+    const reportBaseNames = {
+      'code-reviewer':     'code-review-report',
+      'security-reviewer': 'security-review-report',
+    };
+    const reportBaseName = reportBaseNames[agent] || `${agent}-report`;
+
     return [
-      `plan-report の ${tasks.join(', ')} をレビューしてください。`,
-      `plan-report: ${absolutePlanPath}`,
-      `Use the Agent tool with subagent_type "${agent}" and pass the above as prompt.`,
-      `Do not ask questions. Execute immediately and exit.`,
+      `Use the Agent tool with subagent_type "${agent}" to review the code.`,
+      `Pass the following prompt to the subagent:`,
+      ``,
+      `"""`,
+      `## 作業依頼`,
+      `${reportBaseName} の作成（自動実行）`,
+      ``,
+      `## plan-report`,
+      `${absolutePlanPath}`,
+      ``,
+      `## レビュー対象タスク`,
+      `${tasks.join(', ')}`,
+      ``,
+      `## 特記事項`,
+      `自動実行（非対話モード）のため Q&A は不要。デフォルト設定で進めてください。`,
+      ``,
+      `## 出力指示`,
+      `\`.claude/skills/agents/report-output-common.md\` の「レポート出力フロー（共通）」に従って以下の順で実行すること:`,
+      `1. \`node .claude/hooks/clear-tmp-file.js --path .claude/tmp/${reportBaseName}.md\` で tmp を事前削除`,
+      `2. Write ツールで \`.claude/tmp/${reportBaseName}.md\` にレポート全文を書き込む（heredoc 禁止）`,
+      `3. \`node .claude/hooks/write-report.js ${reportBaseName} new --file .claude/tmp/${reportBaseName}.md\` で実レポートに保存`,
+      `- 最終メッセージに write-report.js が出力した実レポートファイルパス（\`.claude/reports/${reportBaseName}-YYYYMMDD-HHmmss.md\`）を必ず含めること`,
+      `- レポート生成後は終了すること`,
+      `"""`,
+      ``,
+      `Do not ask any clarifying questions. Do not wait for approval. Invoke the subagent immediately with the above prompt and exit after the subagent completes.`,
     ].join('\n');
   }
 
@@ -314,6 +342,12 @@ function buildTaskYaml(id, group, absolutePlanPath) {
       ? `    writes:\n${yamlListBlock(writes, 6)}`
       : `    writes: []`;
     yaml += `${writesYaml}\n`;
+  }
+
+  // read_only タスクはマニフェストのディレクトリ（.claude/manifests/）ではなく
+  // リポジトリルートから実行する必要がある（write-report.js が process.cwd() を使うため）
+  if (readOnly) {
+    yaml += `    cwd: ../..` + '\n';
   }
 
   yaml += `    read_only: ${readOnly}\n`;

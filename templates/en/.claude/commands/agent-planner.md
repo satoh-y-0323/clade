@@ -115,8 +115,8 @@ parallel_groups:
   pre_implementation:          # Lead group (omit this key entirely if not needed)
     tasks: [T0]
     agent: worktree-developer
-    timeout_sec: 900           # default 900 when omitted; adjust based on expected duration
-    idle_timeout_sec: 600      # required for worktree-developer; adjust based on dev scale
+    timeout_sec: 900           # small: 900 / medium: 1800 / large: 3600
+    idle_timeout_sec: 600      # small: 600 / medium: 900 / large: 1200 (accounts for worktree startup 60-120s + read time)
     read_only: false
     writes:
       - src/types/shared.ts
@@ -151,7 +151,7 @@ parallel_groups:
 | `group-*.tasks` | List of task IDs handled by this group (use inline notation `[T1, T2]`) |
 | `group-*.agent` | Agent to run. Use `worktree-developer` for parallel implementation, `code-reviewer` / `security-reviewer` for parallel review |
 | `group-*.timeout_sec` | Total execution time limit (seconds). Default 900 when omitted. Adjust based on estimated duration of the parallel section |
-| `group-*.idle_timeout_sec` | Silence time limit (seconds). **Required for worktree-developer** (guideline: 600). **Must not be set** for `read_only: true` groups |
+| `group-*.idle_timeout_sec` | Silence time limit (seconds). **Required for worktree-developer** (small: 600 / medium: 900 / large: 1200). **Must not be set** for `read_only: true` groups (runner.py forces it to None) |
 | `group-*.read_only` | YAML boolean (`true` / `false`). Use `false` for `worktree-developer`, `true` for `code-reviewer` / `security-reviewer` |
 | `group-*.writes` | File patterns this group writes to (**no overlap between groups**; omit for `read_only: true` groups) |
 | `group-*.depends_on` | List of dependency group keys (use inline notation `[pre_implementation]`) |
@@ -166,15 +166,19 @@ parallel_groups:
 ---
 parallel_groups:
   code-reviewer:
+    phase: reviewer          # picked up by clade-parallel in the reviewer phase
     tasks: [review]
     agent: code-reviewer
-    timeout_sec: 600
+    timeout_sec: 600         # small: 600 / medium: 1800 / large: 9000
     read_only: true
+    # cwd is auto-prefixed with ../.. by plan-to-manifest.js (no need to set)
   security-reviewer:
+    phase: reviewer
     tasks: [security]
     agent: security-reviewer
-    timeout_sec: 600
+    timeout_sec: 600         # small: 600 / medium: 1800 / large: 9000
     read_only: true
+    # cwd is auto-prefixed with ../.. by plan-to-manifest.js (no need to set)
 ---
 ```
 ```

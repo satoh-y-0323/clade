@@ -112,8 +112,8 @@ parallel_groups:
   pre_implementation:          # 先行着手グループ（不要な場合はキーごと省略）
     tasks: [T0]
     agent: worktree-developer
-    timeout_sec: 900           # 省略時デフォルト 900。処理時間に応じて調整
-    idle_timeout_sec: 600      # worktree-developer には必須。開発規模に合わせて調整
+    timeout_sec: 900           # 小規模:900 / 中規模:1800 / 大規模:3600
+    idle_timeout_sec: 600      # 小規模:600 / 中規模:900 / 大規模:1200（worktree 起動60〜120秒+読み込み時間を考慮）
     read_only: false
     writes:
       - src/types/shared.ts
@@ -149,7 +149,7 @@ parallel_groups:
 | `group-*.tasks` | そのグループが担当するタスクID のリスト（インライン記法 `[T1, T2]` を使用）|
 | `group-*.agent` | 実行エージェント。並列実装は `worktree-developer`、並列レビューは `code-reviewer` / `security-reviewer` |
 | `group-*.timeout_sec` | 合計実行時間制限（秒）。省略時デフォルト 900。並列化箇所の推定時間に応じて調整する |
-| `group-*.idle_timeout_sec` | 無音時間制限（秒）。**worktree-developer には必須**（目安 600）。`read_only: true` のグループには**設定禁止** |
+| `group-*.idle_timeout_sec` | 無音時間制限（秒）。**worktree-developer には必須**（小規模:600 / 中規模:900 / 大規模:1200）。`read_only: true` のグループには**設定禁止**（runner.py が強制 None にする） |
 | `group-*.read_only` | YAML boolean で指定（`true` / `false`）。`worktree-developer` は `false`、`code-reviewer` / `security-reviewer` は `true` |
 | `group-*.writes` | そのグループが書き込むファイルパターン（**グループ間で重複禁止**。`read_only: true` のグループでは省略）|
 | `group-*.depends_on` | 依存グループのキー名リスト（インライン記法 `[pre_implementation]` を使用）|
@@ -164,15 +164,19 @@ parallel_groups:
 ---
 parallel_groups:
   code-reviewer:
+    phase: reviewer          # clade-parallel が reviewer フェーズで拾う
     tasks: [review]
     agent: code-reviewer
-    timeout_sec: 600
+    timeout_sec: 600         # 小規模:600 / 中規模:1800 / 大規模:9000
     read_only: true
+    # cwd は plan-to-manifest.js が自動で ../.. を付与（設定不要）
   security-reviewer:
+    phase: reviewer
     tasks: [security]
     agent: security-reviewer
-    timeout_sec: 600
+    timeout_sec: 600         # 小規模:600 / 中規模:1800 / 大規模:9000
     read_only: true
+    # cwd は plan-to-manifest.js が自動で ../.. を付与（設定不要）
 ---
 ```
 ```
