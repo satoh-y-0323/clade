@@ -1,5 +1,15 @@
 # 変更履歴
 
+## [v1.24.0] - 2026-04-23
+
+### New
+
+- `plan-to-manifest.js` に `--phase developer|reviewer` オプションを追加。developer フェーズと reviewer フェーズのマニフェストを個別生成できるようになり、フルワークフローで developer 並列 → tester → reviewer 並列の多段並列実行が可能になった
+- `parallel_groups` に `phase` フィールドを追加（`phase: developer` / `phase: reviewer`。省略時は developer 扱いで後方互換）
+- `core.md` Phase 4 に clade-parallel による reviewer 並列実行フローを追加（code-reviewer + security-reviewer を同時実行）
+- `core.md` の逐次実行ルールに clade-parallel 除外注記を追加（別プロセス起動のため permissions race condition が発生しない）
+- `clade-parallel-manifest.md` に `phase` フィールド仕様・フルワークフロー例・マルチラウンド制約を追記
+
 ## [v1.23.1] - 2026-04-23
 
 ### Fix

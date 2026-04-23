@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.24.0] - 2026-04-23
+
+### New
+
+- `plan-to-manifest.js` に `--phase developer|reviewer` オプションを追加。フルワークフロー（developer 並列 → tester → reviewer 並列）で developer フェーズと reviewer フェーズのマニフェストを個別生成できるようになった。生成ファイル名も `manifest-developer-*.md` / `manifest-reviewer-*.md` と phase 別に区別される
+- `parallel_groups` に `phase` フィールドを追加。`phase: developer`（または省略）は実装タスク用 worktree-developer グループ、`phase: reviewer` は code-reviewer / security-reviewer などの read_only レビュータスク用グループを指定する
+- `core.md` Phase 4 に clade-parallel による reviewer 並列実行フローを追加。plan-report に `phase: reviewer` グループがある場合、code-reviewer と security-reviewer が並列実行される
+- `core.md` の逐次実行ルールに clade-parallel 除外注記を追加。clade-parallel は別プロセスで claude CLI を起動するため permissions race condition が発生せず、ルールの対象外であることを明記
+- `clade-parallel-manifest.md` スキルファイルに `phase` フィールドの仕様・フルワークフロー例・マルチラウンド制約（1 plan-report = 1ラウンド分のみ）を追記
+
+---
+
 ## [v1.23.1] - 2026-04-23
 
 ### Fix
