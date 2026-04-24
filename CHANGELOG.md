@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.25.0] - 2026-04-24
+
+### New
+
+- `plan-to-manifest.js`: `phase_scales` フィールドのサポートを追加。plan-report フロントマターに `phase_scales: { developer: medium, reviewer: small }` と記述するだけでタイムアウト値を自動解決。グループ直書きの `timeout_sec` が `phase_scales` より優先される（後方互換あり）
+- `agent-planner.md`: `phase_scales` の記述方法と scale 判断基準（small: 1〜2タスク / medium: 3〜5 / large: 6以上）を追記。`core.md` からタイムアウト数値の目安ブロックを削除しトークン節約
+
+### Fix
+
+- `hook-utils.js`: `path` モジュール未 require（`getProjectRoot` が worktree 環境で常にフォールバックしていた問題）を修正
+- `write-file.js`: CLI の `--path`/`--file` 引数にパストラバーサル防御を追加
+- `pre-tool.js`: `rm` ブロックパターンを強化（`-rfv`・`-fr` 等の複合フラグ変形に対応）。`--force-with-lease` を警告対象に追加
+- `apply-diff.js`: `--target`/`--new` 引数にパストラバーサル防御を追加。ファイル I/O を resolved パスで統一
+- `write-report.js`: `baseName` 許可リストバリデーション・`targetFileName` パストラバーサル対策・ループ上限追加
+- `record-approval.js`: `--comment-file` のパス制限・`reportType` 許可リストバリデーション追加
+- `stop.js`: `wx` フラグによる排他書き込み・JSON パース失敗ログ計上・`cmd` の Markdown `#` エスケープ追加
+- `update-clade-section.js`: デッドコード削除・`removeRuleFromContent` の User Rules 範囲限定・ルール名バリデーション強化
+- `cluster-promote-core.js`: ANSI エスケープサニタイズ・`.tmp` サイズ上限追加・`extractSection` を `startsWith` に変更
+- `statusline.js`: stdin タイムアウト（5秒）・サイズ制限（64KB）追加
+- `enable-sandbox.js`: `enableWeakerNestedSandbox: false` ハードコードバグを修正（`true` に変更）
+- `manage-playwright-origins.js`: URL バリデーション・JSON パースエラー処理改善
+- `plan-to-manifest.js`: インラインコメント除去・`--` プレフィックスパスサニタイズ・YAML パーサーのクロージャ化
+- `clade-update.js`: SSRF 防止（リダイレクトホスト検証）・全ファイル操作へのパストラバーサル防御・ダウンロードサイズ上限（100MB）・リダイレクト上限（MAX_REDIRECTS=5）を追加
+
+---
+
 ## [v1.24.2] - 2026-04-23
 
 ### Fix

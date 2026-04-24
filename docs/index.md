@@ -83,6 +83,10 @@ VS Code 拡張には現在既知のバグがあり、プロジェクトレベル
 
 ## 最近の更新
 
+### [v1.25.0] - 2026-04-24
+
+`plan-to-manifest.js` に `phase_scales` フィールドのサポートを追加。plan-report フロントマターに `phase_scales: { developer: medium, reviewer: small }` と書くだけでタイムアウト値を自動解決。`.claude/hooks/` 配下19ファイルへのコードレビュー・セキュリティレビューを実施し、パストラバーサル防御・SSRF 対策・`enable-sandbox.js` のハードコードバグ修正など全指摘を対応。
+
 ### [v1.24.2] - 2026-04-23
 
 reviewer 並列実行の出力指示を標準フロー（`clear-tmp-file.js` → Write ツールで tmp → `write-report.js --file`）に統一し、`read_only: true` タスクに `cwd: ../..` を自動付与する修正を `plan-to-manifest.js` に適用。`agent-planner.md` と `core.md` にタイムアウト値の目安（小/中/大規模）を追記。
@@ -90,9 +94,5 @@ reviewer 並列実行の出力指示を標準フロー（`clear-tmp-file.js` →
 ### [v1.24.1] - 2026-04-23
 
 developer 並列実行の判断ロジックを `agent-developer.md` から `core.md` Phase 3 に移動。reviewer 並列実行（Phase 4）と同じ構造に統一し、並列実行の制御が親 Claude のワークフロールールに一元化された。
-
-### [v1.24.0] - 2026-04-23
-
-`plan-to-manifest.js` に `--phase developer|reviewer` オプションを追加。`parallel_groups` に `phase` フィールドを追加し、developer 並列 → tester → reviewer 並列の多段並列実行が可能になった。`core.md` Phase 4 に clade-parallel による reviewer 並列実行フロー（code-reviewer + security-reviewer 同時実行）を追加。
 
 [すべての変更履歴を見る →](/changelog)
