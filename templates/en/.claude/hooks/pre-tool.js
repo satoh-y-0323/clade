@@ -24,17 +24,18 @@ if (/git\s+push\s+(--force|--force-with-lease|-f)\b/.test(cmd)) {
 }
 
 // rm -rf variants (dangerous target): block
-// Covers -rf / -fr / -r -f / -f -r / --recursive --force and similar variants
-if (
-  /rm\s+-rf\s+[/~.]/.test(cmd)  ||   // rm -rf /path, rm -rf ~, rm -rf ./path
-  /rm\s+-fr\s+[/~.]/.test(cmd)  ||   // rm -fr /path
-  /rm\s+-r\s+-f\s+/.test(cmd)   ||   // rm -r -f path
-  /rm\s+-f\s+-r\s+/.test(cmd)   ||   // rm -f -r path
-  /rm\s+--recursive\s+--force\s+/.test(cmd) ||
-  /rm\s+--force\s+--recursive\s+/.test(cmd)
-) {
-  process.stderr.write(`[PreToolUse BLOCK] Blocked a dangerous command: ${cmd}\n`);
-  process.exit(2);
+// Short flag form: r and f both appear in flag tokens (-xxx), or as separate -r / -f tokens
+// Long option form: both --recursive and --force are present
+if (/\brm\b/.test(cmd)) {
+  const shortFlags = (cmd.match(/-[a-zA-Z]+/g) || []).join('');
+  const hasR = shortFlags.includes('r') || /\brm\b.*\s-[a-zA-Z]*r[a-zA-Z]*/.test(cmd);
+  const hasF = shortFlags.includes('f') || /\brm\b.*\s-[a-zA-Z]*f[a-zA-Z]*/.test(cmd);
+  const hasLongRecursive = /--recursive/.test(cmd);
+  const hasLongForce = /--force/.test(cmd);
+  if ((hasR && hasF) || (hasLongRecursive && hasLongForce)) {
+    process.stderr.write(`[PreToolUse BLOCK] Blocked a dangerous command: ${cmd}\n`);
+    process.exit(2);
+  }
 }
 
 // Destructive DB operations in production: warn (do not block)
