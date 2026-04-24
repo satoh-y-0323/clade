@@ -169,14 +169,17 @@ function removeRuleFromContent(content, ruleName) {
 }
 
 // ---------------------------------------------------------------------------
-// Subcommand: add-rule
+// Shared subcommand utilities
 // ---------------------------------------------------------------------------
 
 /**
- * Entry point for the add-rule subcommand.
+ * Parses subcommand arguments into { isDryRun, ruleName } and validates the rule name.
+ * Calls process.exit(1) on validation failure.
  * @param {string[]} args - arguments after the subcommand name
+ * @param {string} usage - usage string shown on error
+ * @returns {{ isDryRun: boolean, ruleName: string }}
  */
-function commandAddRule(args) {
+function parseRuleCommandArgs(args, usage) {
   const dryRunIdx = args.indexOf('--dry-run');
   const isDryRun = dryRunIdx !== -1;
 
@@ -185,7 +188,7 @@ function commandAddRule(args) {
   const ruleName = positional[0];
 
   if (!ruleName) {
-    log('Error: rule name is required. Usage: add-rule NAME [--dry-run]');
+    log('Error: rule name is required. Usage: ' + usage);
     process.exit(1);
   }
 
@@ -196,16 +199,68 @@ function commandAddRule(args) {
     process.exit(1);
   }
 
-  const claudeMdPath = getClaudeMdPath();
+  return { isDryRun, ruleName };
+}
 
-  // Read file
-  let content;
+/**
+ * Reads CLAUDE.md and returns its content. Calls process.exit(1) on failure.
+ * @param {string} claudeMdPath
+ * @returns {string}
+ */
+function readClaudeMd(claudeMdPath) {
   try {
-    content = fs.readFileSync(claudeMdPath, 'utf8');
+    return fs.readFileSync(claudeMdPath, 'utf8');
   } catch (err) {
     log('Error: failed to read ' + claudeMdPath + ': ' + err.message);
     process.exit(1);
   }
+}
+
+/**
+ * Compares original and updated content line by line and prints a diff to stderr.
+ * @param {string} original - content before changes
+ * @param {string} updated  - content after changes
+ */
+function printDiff(original, updated) {
+  log('[dry-run] Would write the following content:');
+  process.stderr.write('--- diff ---\n');
+  const lines = updated.split('\n');
+  const originalLines = original.split('\n');
+  for (let i = 0; i < Math.max(lines.length, originalLines.length); i++) {
+    if (lines[i] !== originalLines[i]) {
+      if (originalLines[i] !== undefined) process.stderr.write('- ' + originalLines[i] + '\n');
+      if (lines[i] !== undefined) process.stderr.write('+ ' + lines[i] + '\n');
+    }
+  }
+  process.stderr.write('--- end diff ---\n');
+}
+
+/**
+ * Writes content to CLAUDE.md. Calls process.exit(1) on failure.
+ * @param {string} claudeMdPath
+ * @param {string} content
+ */
+function writeClaudeMd(claudeMdPath, content) {
+  try {
+    fs.writeFileSync(claudeMdPath, content, 'utf8');
+  } catch (err) {
+    log('Error: failed to write ' + claudeMdPath + ': ' + err.message);
+    process.exit(1);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Subcommand: add-rule
+// ---------------------------------------------------------------------------
+
+/**
+ * Entry point for the add-rule subcommand.
+ * @param {string[]} args - arguments after the subcommand name
+ */
+function commandAddRule(args) {
+  const { isDryRun, ruleName } = parseRuleCommandArgs(args, 'add-rule NAME [--dry-run]');
+  const claudeMdPath = getClaudeMdPath();
+  const content = readClaudeMd(claudeMdPath);
 
   // Apply changes
   const result = addRuleToContent(content, ruleName);
@@ -223,29 +278,12 @@ function commandAddRule(args) {
   log('Adding @rules/' + ruleName + '.md to User Rules section in ' + claudeMdPath);
 
   if (isDryRun) {
-    log('[dry-run] Would write the following content:');
-    process.stderr.write('--- diff ---\n');
-    const lines = result.newContent.split('\n');
-    const originalLines = content.split('\n');
-    for (let i = 0; i < Math.max(lines.length, originalLines.length); i++) {
-      if (lines[i] !== originalLines[i]) {
-        if (originalLines[i] !== undefined) process.stderr.write('- ' + originalLines[i] + '\n');
-        if (lines[i] !== undefined) process.stderr.write('+ ' + lines[i] + '\n');
-      }
-    }
-    process.stderr.write('--- end diff ---\n');
+    printDiff(content, result.newContent);
     process.exit(0);
   }
 
-  // Write file
-  try {
-    fs.writeFileSync(claudeMdPath, result.newContent, 'utf8');
-    log('Successfully added @rules/' + ruleName + '.md to User Rules section.');
-  } catch (err) {
-    log('Error: failed to write ' + claudeMdPath + ': ' + err.message);
-    process.exit(1);
-  }
-
+  writeClaudeMd(claudeMdPath, result.newContent);
+  log('Successfully added @rules/' + ruleName + '.md to User Rules section.');
   process.exit(0);
 }
 
@@ -258,35 +296,9 @@ function commandAddRule(args) {
  * @param {string[]} args - arguments after the subcommand name
  */
 function commandRemoveRule(args) {
-  const dryRunIdx = args.indexOf('--dry-run');
-  const isDryRun = dryRunIdx !== -1;
-
-  // Remove --dry-run from positional args
-  const positional = args.filter((a, i) => i !== dryRunIdx);
-  const ruleName = positional[0];
-
-  if (!ruleName) {
-    log('Error: rule name is required. Usage: remove-rule NAME [--dry-run]');
-    process.exit(1);
-  }
-
-  // Validate rule name (allow only alphanumeric, underscore, hyphen)
-  // Rejects null bytes, control characters, and path traversal patterns
-  if (!/^[\w\-]+$/.test(ruleName)) {
-    log('Error: invalid rule name "' + ruleName + '" (only alphanumeric, underscore, hyphen allowed)');
-    process.exit(1);
-  }
-
+  const { isDryRun, ruleName } = parseRuleCommandArgs(args, 'remove-rule NAME [--dry-run]');
   const claudeMdPath = getClaudeMdPath();
-
-  // Read file
-  let content;
-  try {
-    content = fs.readFileSync(claudeMdPath, 'utf8');
-  } catch (err) {
-    log('Error: failed to read ' + claudeMdPath + ': ' + err.message);
-    process.exit(1);
-  }
+  const content = readClaudeMd(claudeMdPath);
 
   // Apply removal
   const result = removeRuleFromContent(content, ruleName);
@@ -299,29 +311,12 @@ function commandRemoveRule(args) {
   log('Removing @rules/' + ruleName + '.md from ' + claudeMdPath);
 
   if (isDryRun) {
-    log('[dry-run] Would write the following content:');
-    process.stderr.write('--- diff ---\n');
-    const lines = result.newContent.split('\n');
-    const originalLines = content.split('\n');
-    for (let i = 0; i < Math.max(lines.length, originalLines.length); i++) {
-      if (lines[i] !== originalLines[i]) {
-        if (originalLines[i] !== undefined) process.stderr.write('- ' + originalLines[i] + '\n');
-        if (lines[i] !== undefined) process.stderr.write('+ ' + lines[i] + '\n');
-      }
-    }
-    process.stderr.write('--- end diff ---\n');
+    printDiff(content, result.newContent);
     process.exit(0);
   }
 
-  // Write file
-  try {
-    fs.writeFileSync(claudeMdPath, result.newContent, 'utf8');
-    log('Successfully removed @rules/' + ruleName + '.md.');
-  } catch (err) {
-    log('Error: failed to write ' + claudeMdPath + ': ' + err.message);
-    process.exit(1);
-  }
-
+  writeClaudeMd(claudeMdPath, result.newContent);
+  log('Successfully removed @rules/' + ruleName + '.md.');
   process.exit(0);
 }
 

@@ -168,14 +168,17 @@ function removeRuleFromContent(content, ruleName) {
 }
 
 // ---------------------------------------------------------------------------
-// サブコマンド: add-rule
+// サブコマンド共通ユーティリティ
 // ---------------------------------------------------------------------------
 
 /**
- * add-rule サブコマンドのエントリポイント
+ * サブコマンド引数から { isDryRun, ruleName } を解析してバリデーションする。
+ * バリデーション失敗時は process.exit(1) する。
  * @param {string[]} args - サブコマンド以降の引数
+ * @param {string} usage - エラー時に表示する使い方文字列
+ * @returns {{ isDryRun: boolean, ruleName: string }}
  */
-function commandAddRule(args) {
+function parseRuleCommandArgs(args, usage) {
   const dryRunIdx = args.indexOf('--dry-run');
   const isDryRun = dryRunIdx !== -1;
 
@@ -184,7 +187,7 @@ function commandAddRule(args) {
   const ruleName = positional[0];
 
   if (!ruleName) {
-    log('Error: rule name is required. Usage: add-rule NAME [--dry-run]');
+    log('Error: rule name is required. Usage: ' + usage);
     process.exit(1);
   }
 
@@ -195,16 +198,68 @@ function commandAddRule(args) {
     process.exit(1);
   }
 
-  const claudeMdPath = getClaudeMdPath();
+  return { isDryRun, ruleName };
+}
 
-  // ファイル読み込み
-  let content;
+/**
+ * CLAUDE.md を読み込んで内容を返す。失敗時は process.exit(1) する。
+ * @param {string} claudeMdPath
+ * @returns {string}
+ */
+function readClaudeMd(claudeMdPath) {
   try {
-    content = fs.readFileSync(claudeMdPath, 'utf8');
+    return fs.readFileSync(claudeMdPath, 'utf8');
   } catch (err) {
     log('Error: failed to read ' + claudeMdPath + ': ' + err.message);
     process.exit(1);
   }
+}
+
+/**
+ * 変更前後の内容を行単位で比較して diff を stderr に出力する。
+ * @param {string} original - 変更前の内容
+ * @param {string} updated  - 変更後の内容
+ */
+function printDiff(original, updated) {
+  log('[dry-run] Would write the following content:');
+  process.stderr.write('--- diff ---\n');
+  const lines = updated.split('\n');
+  const originalLines = original.split('\n');
+  for (let i = 0; i < Math.max(lines.length, originalLines.length); i++) {
+    if (lines[i] !== originalLines[i]) {
+      if (originalLines[i] !== undefined) process.stderr.write('- ' + originalLines[i] + '\n');
+      if (lines[i] !== undefined) process.stderr.write('+ ' + lines[i] + '\n');
+    }
+  }
+  process.stderr.write('--- end diff ---\n');
+}
+
+/**
+ * 内容を CLAUDE.md に書き込む。失敗時は process.exit(1) する。
+ * @param {string} claudeMdPath
+ * @param {string} content
+ */
+function writeClaudeMd(claudeMdPath, content) {
+  try {
+    fs.writeFileSync(claudeMdPath, content, 'utf8');
+  } catch (err) {
+    log('Error: failed to write ' + claudeMdPath + ': ' + err.message);
+    process.exit(1);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// サブコマンド: add-rule
+// ---------------------------------------------------------------------------
+
+/**
+ * add-rule サブコマンドのエントリポイント
+ * @param {string[]} args - サブコマンド以降の引数
+ */
+function commandAddRule(args) {
+  const { isDryRun, ruleName } = parseRuleCommandArgs(args, 'add-rule NAME [--dry-run]');
+  const claudeMdPath = getClaudeMdPath();
+  const content = readClaudeMd(claudeMdPath);
 
   // 追記処理
   const result = addRuleToContent(content, ruleName);
@@ -222,30 +277,12 @@ function commandAddRule(args) {
   log('Adding @rules/' + ruleName + '.md to User Rules section in ' + claudeMdPath);
 
   if (isDryRun) {
-    log('[dry-run] Would write the following content:');
-    process.stderr.write('--- diff ---\n');
-    // dry-run では変更後の内容を stderr に出力して終了
-    const lines = result.newContent.split('\n');
-    const originalLines = content.split('\n');
-    for (let i = 0; i < Math.max(lines.length, originalLines.length); i++) {
-      if (lines[i] !== originalLines[i]) {
-        if (originalLines[i] !== undefined) process.stderr.write('- ' + originalLines[i] + '\n');
-        if (lines[i] !== undefined) process.stderr.write('+ ' + lines[i] + '\n');
-      }
-    }
-    process.stderr.write('--- end diff ---\n');
+    printDiff(content, result.newContent);
     process.exit(0);
   }
 
-  // ファイル書き込み
-  try {
-    fs.writeFileSync(claudeMdPath, result.newContent, 'utf8');
-    log('Successfully added @rules/' + ruleName + '.md to User Rules section.');
-  } catch (err) {
-    log('Error: failed to write ' + claudeMdPath + ': ' + err.message);
-    process.exit(1);
-  }
-
+  writeClaudeMd(claudeMdPath, result.newContent);
+  log('Successfully added @rules/' + ruleName + '.md to User Rules section.');
   process.exit(0);
 }
 
@@ -258,35 +295,9 @@ function commandAddRule(args) {
  * @param {string[]} args - サブコマンド以降の引数
  */
 function commandRemoveRule(args) {
-  const dryRunIdx = args.indexOf('--dry-run');
-  const isDryRun = dryRunIdx !== -1;
-
-  // --dry-run フラグを除いた引数リスト
-  const positional = args.filter((a, i) => i !== dryRunIdx);
-  const ruleName = positional[0];
-
-  if (!ruleName) {
-    log('Error: rule name is required. Usage: remove-rule NAME [--dry-run]');
-    process.exit(1);
-  }
-
-  // ルール名のバリデーション（英数字・アンダースコア・ハイフンのみ許可）
-  // ヌルバイト・制御文字・パストラバーサルを全て拒否する
-  if (!/^[\w\-]+$/.test(ruleName)) {
-    log('Error: invalid rule name "' + ruleName + '" (only alphanumeric, underscore, hyphen allowed)');
-    process.exit(1);
-  }
-
+  const { isDryRun, ruleName } = parseRuleCommandArgs(args, 'remove-rule NAME [--dry-run]');
   const claudeMdPath = getClaudeMdPath();
-
-  // ファイル読み込み
-  let content;
-  try {
-    content = fs.readFileSync(claudeMdPath, 'utf8');
-  } catch (err) {
-    log('Error: failed to read ' + claudeMdPath + ': ' + err.message);
-    process.exit(1);
-  }
+  const content = readClaudeMd(claudeMdPath);
 
   // 削除処理
   const result = removeRuleFromContent(content, ruleName);
@@ -299,29 +310,12 @@ function commandRemoveRule(args) {
   log('Removing @rules/' + ruleName + '.md from ' + claudeMdPath);
 
   if (isDryRun) {
-    log('[dry-run] Would write the following content:');
-    process.stderr.write('--- diff ---\n');
-    const lines = result.newContent.split('\n');
-    const originalLines = content.split('\n');
-    for (let i = 0; i < Math.max(lines.length, originalLines.length); i++) {
-      if (lines[i] !== originalLines[i]) {
-        if (originalLines[i] !== undefined) process.stderr.write('- ' + originalLines[i] + '\n');
-        if (lines[i] !== undefined) process.stderr.write('+ ' + lines[i] + '\n');
-      }
-    }
-    process.stderr.write('--- end diff ---\n');
+    printDiff(content, result.newContent);
     process.exit(0);
   }
 
-  // ファイル書き込み
-  try {
-    fs.writeFileSync(claudeMdPath, result.newContent, 'utf8');
-    log('Successfully removed @rules/' + ruleName + '.md.');
-  } catch (err) {
-    log('Error: failed to write ' + claudeMdPath + ': ' + err.message);
-    process.exit(1);
-  }
-
+  writeClaudeMd(claudeMdPath, result.newContent);
+  log('Successfully removed @rules/' + ruleName + '.md.');
   process.exit(0);
 }
 
