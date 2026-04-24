@@ -60,33 +60,13 @@ function getClaudeMdPath() {
 // ---------------------------------------------------------------------------
 
 /**
- * CLADE:START ~ CLADE:END 区間の開始・終了インデックスを検出する。
- * CRLF / LF 両対応。
- *
- * @param {string} content - ファイル全文
- * @returns {{ startIdx: number, endIdx: number } | null}
- *   startIdx: CLADE:START マーカー行の先頭インデックス
- *   endIdx:   CLADE:END マーカー行の末尾インデックス（\n含む）
- *   null:     マーカーが見つからない場合
- */
-function findCladeSection(content) {
-  const startIdx = content.indexOf(CLADE_START_MARKER);
-  if (startIdx === -1) return null;
-
-  const endIdx = content.indexOf(CLADE_END_MARKER, startIdx);
-  if (endIdx === -1) return null;
-
-  // CLADE:END マーカー行の末尾まで含める（改行文字も含む）
-  const afterEnd = endIdx + CLADE_END_MARKER.length;
-  const nextNewline = content.indexOf('\n', afterEnd);
-  const sectionEnd = nextNewline === -1 ? content.length : nextNewline + 1;
-
-  return { startIdx, sectionEnd, innerStart: startIdx + CLADE_START_MARKER.length, innerEnd: endIdx };
-}
-
-/**
  * User Rules セクション（<!-- /cluster-promote によって自動追記される --> 以降、
  * <!-- CLADE:START --> の直前）に @rules/NAME.md を冪等追記する。
+ *
+ * オフセット計算は LF（\n）基準で行う。CRLF ファイルでは split('\n') 後の各行末
+ * に \r が残るため、line.length は \r を含む値になる。ただし挿入位置の最終決定は
+ * content.indexOf('\n', lastRulesLineOffset) で \n を直接探すため、CRLF 環境でも
+ * 挿入位置は正確に補正される。（CRLF 対応済み）
  *
  * @param {string} content    - CLAUDE.md 全文
  * @param {string} ruleName   - 追記するルール名（拡張子なし）
@@ -129,10 +109,13 @@ function addRuleToContent(content, ruleName) {
   let insertPos;
   if (lastRulesLineOffset !== -1) {
     // 最後の @rules/ 行の末尾（改行の直後）に挿入
-    insertPos = content.indexOf('\n', lastRulesLineOffset) + 1;
+    // indexOf('\n', ...) が -1 の場合（ファイル末尾が改行なし）はファイル末尾に挿入
+    const nlPos = content.indexOf('\n', lastRulesLineOffset);
+    insertPos = nlPos === -1 ? content.length : nlPos + 1;
   } else {
     // @rules/ 行がない場合はマーカー行の直後に挿入
-    insertPos = content.indexOf('\n', markerIdx) + 1;
+    const nlPos = content.indexOf('\n', markerIdx);
+    insertPos = nlPos === -1 ? content.length : nlPos + 1;
   }
 
   const before = content.slice(0, insertPos);
@@ -143,7 +126,10 @@ function addRuleToContent(content, ruleName) {
 }
 
 /**
- * CLAUDE.md から @rules/NAME.md の行を削除する。
+ * CLAUDE.md の User Rules セクション内から @rules/NAME.md の行を削除する。
+ * 削除対象を User Rules セクション（USER_RULES_MARKER 以降、CLADE_START_MARKER 以前）
+ * に限定することで、ファイル内の他の箇所に同一文字列が存在しても誤削除されない。
+ * CRLF と LF の両方に対応。replaceAll で重複行をまとめて削除する。
  *
  * @param {string} content    - CLAUDE.md 全文
  * @param {string} ruleName   - 削除するルール名（拡張子なし）
@@ -152,18 +138,31 @@ function addRuleToContent(content, ruleName) {
 function removeRuleFromContent(content, ruleName) {
   const ruleEntry = '@rules/' + ruleName + '.md';
 
-  // エントリが存在するか確認
-  if (!content.includes(ruleEntry)) {
+  // User Rules マーカーを探す
+  const markerIdx = content.indexOf(USER_RULES_MARKER);
+  if (markerIdx === -1 || !content.includes(ruleEntry)) {
     return { newContent: content, notFound: true };
   }
 
-  // 該当行（改行含む）を削除する
-  // CRLF と LF の両方に対応
-  const newContent = content
-    .replace(ruleEntry + '\r\n', '')
-    .replace(ruleEntry + '\n', '');
+  // User Rules セクションの終端（CLADE:START の直前、または EOF）を特定
+  const cladeStartIdx = content.indexOf(CLADE_START_MARKER, markerIdx);
+  const searchEnd = cladeStartIdx === -1 ? content.length : cladeStartIdx;
 
-  return { newContent, notFound: false };
+  // User Rules セクション内にエントリが存在するか確認
+  const sectionContent = content.slice(markerIdx, searchEnd);
+  if (!sectionContent.includes(ruleEntry)) {
+    return { newContent: content, notFound: true };
+  }
+
+  // セクション内のみ対象に、CRLF / LF の両方を replaceAll で全削除
+  const newSection = sectionContent
+    .replaceAll(ruleEntry + '\r\n', '')
+    .replaceAll(ruleEntry + '\n', '');
+
+  return {
+    newContent: content.slice(0, markerIdx) + newSection + content.slice(searchEnd),
+    notFound: false,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -187,9 +186,10 @@ function commandAddRule(args) {
     process.exit(1);
   }
 
-  // ルール名のバリデーション（パストラバーサル防止）
-  if (ruleName.includes('/') || ruleName.includes('\\') || ruleName.includes('..')) {
-    log('Error: invalid rule name "' + ruleName + '"');
+  // ルール名のバリデーション（英数字・アンダースコア・ハイフンのみ許可）
+  // ヌルバイト・制御文字・パストラバーサルを全て拒否する
+  if (!/^[\w\-]+$/.test(ruleName)) {
+    log('Error: invalid rule name "' + ruleName + '" (only alphanumeric, underscore, hyphen allowed)');
     process.exit(1);
   }
 
@@ -268,9 +268,10 @@ function commandRemoveRule(args) {
     process.exit(1);
   }
 
-  // ルール名のバリデーション（パストラバーサル防止）
-  if (ruleName.includes('/') || ruleName.includes('\\') || ruleName.includes('..')) {
-    log('Error: invalid rule name "' + ruleName + '"');
+  // ルール名のバリデーション（英数字・アンダースコア・ハイフンのみ許可）
+  // ヌルバイト・制御文字・パストラバーサルを全て拒否する
+  if (!/^[\w\-]+$/.test(ruleName)) {
+    log('Error: invalid rule name "' + ruleName + '" (only alphanumeric, underscore, hyphen allowed)');
     process.exit(1);
   }
 

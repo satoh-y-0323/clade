@@ -60,31 +60,14 @@ function getClaudeMdPath() {
 // ---------------------------------------------------------------------------
 
 /**
- * Finds the start and end indices of the CLADE:START ~ CLADE:END region.
- * Handles both CRLF and LF line endings.
- *
- * @param {string} content - full file content
- * @returns {{ startIdx: number, sectionEnd: number, innerStart: number, innerEnd: number } | null}
- *   null if markers are not found
- */
-function findCladeSection(content) {
-  const startIdx = content.indexOf(CLADE_START_MARKER);
-  if (startIdx === -1) return null;
-
-  const endIdx = content.indexOf(CLADE_END_MARKER, startIdx);
-  if (endIdx === -1) return null;
-
-  // Include through the end of the CLADE:END marker line (including newline)
-  const afterEnd = endIdx + CLADE_END_MARKER.length;
-  const nextNewline = content.indexOf('\n', afterEnd);
-  const sectionEnd = nextNewline === -1 ? content.length : nextNewline + 1;
-
-  return { startIdx, sectionEnd, innerStart: startIdx + CLADE_START_MARKER.length, innerEnd: endIdx };
-}
-
-/**
  * Locates the User Rules section (after <!-- /cluster-promote appends here -->
  * and before <!-- CLADE:START -->) and idempotently appends @rules/NAME.md.
+ *
+ * Offset calculation is LF (\n) based. In CRLF files each line retains a
+ * trailing \r after split('\n'), so line.length includes \r. The final
+ * insertion position is resolved via content.indexOf('\n', lastRulesLineOffset),
+ * which directly locates the \n character, so CRLF files are handled correctly.
+ * (CRLF-compatible)
  *
  * @param {string} content    - full CLAUDE.md content
  * @param {string} ruleName   - rule name without extension
@@ -125,10 +108,13 @@ function addRuleToContent(content, ruleName) {
   let insertPos;
   if (lastRulesLineOffset !== -1) {
     // Insert after the last @rules/ line
-    insertPos = content.indexOf('\n', lastRulesLineOffset) + 1;
+    // Fall back to end-of-file if indexOf returns -1 (no trailing newline)
+    const nlPos = content.indexOf('\n', lastRulesLineOffset);
+    insertPos = nlPos === -1 ? content.length : nlPos + 1;
   } else {
     // No @rules/ lines yet — insert after the marker line
-    insertPos = content.indexOf('\n', markerIdx) + 1;
+    const nlPos = content.indexOf('\n', markerIdx);
+    insertPos = nlPos === -1 ? content.length : nlPos + 1;
   }
 
   const before = content.slice(0, insertPos);
@@ -139,7 +125,11 @@ function addRuleToContent(content, ruleName) {
 }
 
 /**
- * Removes the @rules/NAME.md line from CLAUDE.md.
+ * Removes the @rules/NAME.md line from the User Rules section of CLAUDE.md.
+ * The search is scoped to the User Rules section (USER_RULES_MARKER through
+ * CLADE_START_MARKER) to prevent accidental deletion of the same string
+ * appearing elsewhere in the file (e.g. in comments or examples).
+ * Handles both CRLF and LF line endings. Uses replaceAll to remove duplicates.
  *
  * @param {string} content    - full CLAUDE.md content
  * @param {string} ruleName   - rule name without extension
@@ -148,17 +138,31 @@ function addRuleToContent(content, ruleName) {
 function removeRuleFromContent(content, ruleName) {
   const ruleEntry = '@rules/' + ruleName + '.md';
 
-  // Check if the entry exists
-  if (!content.includes(ruleEntry)) {
+  // Find the User Rules marker
+  const markerIdx = content.indexOf(USER_RULES_MARKER);
+  if (markerIdx === -1 || !content.includes(ruleEntry)) {
     return { newContent: content, notFound: true };
   }
 
-  // Remove the matching line (including its newline), handling both CRLF and LF
-  const newContent = content
-    .replace(ruleEntry + '\r\n', '')
-    .replace(ruleEntry + '\n', '');
+  // Determine the end of the User Rules section (just before CLADE:START, or EOF)
+  const cladeStartIdx = content.indexOf(CLADE_START_MARKER, markerIdx);
+  const searchEnd = cladeStartIdx === -1 ? content.length : cladeStartIdx;
 
-  return { newContent, notFound: false };
+  // Check that the entry actually exists within the User Rules section
+  const sectionContent = content.slice(markerIdx, searchEnd);
+  if (!sectionContent.includes(ruleEntry)) {
+    return { newContent: content, notFound: true };
+  }
+
+  // Remove all occurrences within the section, handling both CRLF and LF
+  const newSection = sectionContent
+    .replaceAll(ruleEntry + '\r\n', '')
+    .replaceAll(ruleEntry + '\n', '');
+
+  return {
+    newContent: content.slice(0, markerIdx) + newSection + content.slice(searchEnd),
+    notFound: false,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -182,9 +186,10 @@ function commandAddRule(args) {
     process.exit(1);
   }
 
-  // Validate rule name (prevent path traversal)
-  if (ruleName.includes('/') || ruleName.includes('\\') || ruleName.includes('..')) {
-    log('Error: invalid rule name "' + ruleName + '"');
+  // Validate rule name (allow only alphanumeric, underscore, hyphen)
+  // Rejects null bytes, control characters, and path traversal patterns
+  if (!/^[\w\-]+$/.test(ruleName)) {
+    log('Error: invalid rule name "' + ruleName + '" (only alphanumeric, underscore, hyphen allowed)');
     process.exit(1);
   }
 
@@ -262,9 +267,10 @@ function commandRemoveRule(args) {
     process.exit(1);
   }
 
-  // Validate rule name (prevent path traversal)
-  if (ruleName.includes('/') || ruleName.includes('\\') || ruleName.includes('..')) {
-    log('Error: invalid rule name "' + ruleName + '"');
+  // Validate rule name (allow only alphanumeric, underscore, hyphen)
+  // Rejects null bytes, control characters, and path traversal patterns
+  if (!/^[\w\-]+$/.test(ruleName)) {
+    log('Error: invalid rule name "' + ruleName + '" (only alphanumeric, underscore, hyphen allowed)');
     process.exit(1);
   }
 
