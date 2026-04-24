@@ -428,6 +428,11 @@ function buildTaskYaml(id, group, absolutePlanPath, phaseScales) {
     yaml += `\n    idle_timeout_sec: ${idleTimeoutSec}`;
   }
 
+  // max_retries: omit when not set (default 0)
+  if (typeof group.max_retries === 'number' && group.max_retries > 0) {
+    yaml += `\n    max_retries: ${group.max_retries}`;
+  }
+
   return yaml;
 }
 

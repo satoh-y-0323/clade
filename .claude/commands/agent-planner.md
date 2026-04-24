@@ -177,6 +177,7 @@ plan-report のフロントマター冒頭（`parallel_groups` より上）に `
 | `group-*.tasks` | そのグループが担当するタスクID のリスト（インライン記法 `[T1, T2]` を使用）|
 | `group-*.agent` | 実行エージェント。並列実装は `worktree-developer`、並列レビューは `code-reviewer` / `security-reviewer` |
 | `group-*.timeout_sec` | 合計実行時間制限（秒）。通常は `phase_scales` から自動解決されるため省略可。個別調整時のみ直書きする |
+| `group-*.max_retries` | 失敗時の最大リトライ回数（省略時は 0 = リトライなし）。一時的な失敗が疑われるタスクに設定する。通常は省略してよい |
 | `group-*.read_only` | YAML boolean で指定（`true` / `false`）。`worktree-developer` は `false`、`code-reviewer` / `security-reviewer` は `true` |
 | `group-*.writes` | そのグループが書き込むファイルパターン（**グループ間で重複禁止**。`read_only: true` のグループでは省略）|
 | `group-*.depends_on` | 依存グループのキー名リスト（インライン記法 `[pre_implementation]` を使用）|

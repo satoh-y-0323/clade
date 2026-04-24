@@ -179,6 +179,7 @@ In principle, only write `phase_scales`. If a specific group needs a different t
 | `group-*.tasks` | List of task IDs handled by this group (use inline notation `[T1, T2]`) |
 | `group-*.agent` | Agent to run. Use `worktree-developer` for parallel implementation, `code-reviewer` / `security-reviewer` for parallel review |
 | `group-*.timeout_sec` | Total execution time limit (seconds). Normally auto-resolved from `phase_scales`; omit unless overriding individually |
+| `group-*.max_retries` | Maximum number of retries on failure (default 0 = no retries). Set for tasks where transient failures are expected. Normally omit. |
 | `group-*.read_only` | YAML boolean (`true` / `false`). Use `false` for `worktree-developer`, `true` for `code-reviewer` / `security-reviewer` |
 | `group-*.writes` | File patterns this group writes to (**no overlap between groups**; omit for `read_only: true` groups) |
 | `group-*.depends_on` | List of dependency group keys (use inline notation `[pre_implementation]`) |
