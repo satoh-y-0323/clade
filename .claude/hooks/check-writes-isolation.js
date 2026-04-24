@@ -33,11 +33,17 @@ function loadAllowedPatterns(cfgPath) {
   try {
     const config = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
     // config.reads は読み取り制限（将来拡張用）。このフックでは参照しない。
-    // 非文字列要素はクラッシュ防止のため除外する
+    // 非文字列要素はクラッシュ防止のため除外する。空文字列パターンは matchGlob で
+    // 意図しないマッチを引き起こす可能性があるため除外する。
     return Array.isArray(config.writes)
-      ? config.writes.filter(p => typeof p === 'string')
+      ? config.writes.filter(p => typeof p === 'string' && p.length > 0)
       : [];
-  } catch (_) {
+  } catch (e) {
+    if (e.code !== 'ENOENT') {
+      // ファイルは存在するがパースに失敗した場合は警告を出す（設定ファイル破損の可能性）
+      // ENOENT（ファイル未存在）は非並列モードとして正常扱い
+      process.stderr.write(`[check-writes-isolation] WARNING: failed to parse ${cfgPath}: ${e.message}\n`);
+    }
     return null; // null = 非並列モード
   }
 }
@@ -64,8 +70,9 @@ if (toolName === 'Write' || toolName === 'Edit') {
 }
 
 // パスの正規化と照合
-const normalizedCwd = cwd.replace(/\\/g, '/');
-const normalizedCwdSlash = normalizedCwd.endsWith('/') ? normalizedCwd : normalizedCwd + '/';
+// normalizedCwdSlash: バックスラッシュをスラッシュに変換し末尾に / を保証する
+// （cwd との前方一致チェックで "C:/foo/bar" が "C:/foo/barbaz" にマッチしないよう末尾スラッシュが必要）
+const normalizedCwdSlash = (cwd.replace(/\\/g, '/').replace(/\/$/, '')) + '/';
 
 const violations = [];
 
@@ -201,8 +208,11 @@ function extractRmTargets(cmd) {
   }
 
   // リダイレクトが結合形式かどうかを判定するヘルパー
-  // 例: '2>/dev/null', '>/tmp/log', '>>/tmp/log', '</dev/stdin'
-  // fd 付き・なし・追記・入力のすべてを対象とする
+  // isRedirectOperator がスペースあり分離形式（'>' '2>' 等の演算子単体トークン）を対象とするのに対し、
+  // こちらはスペースなし結合形式（演算子とファイル名が同一トークン内に含まれる形式）を対象とする。
+  // 例: '2>/dev/null', '>/tmp/log', '>>/tmp/log', '</dev/stdin', '&>/dev/null'
+  // fd 付き・なし・追記・入力・&> のすべてを対象とする。
+  // 末尾の [^>] は '>>' 単体（スペースあり形式で isRedirectOperator がすでにカバー）を除外するため。
   function isRedirectCombined(token) {
     return /^[0-9]*>>?[^>]/.test(token) || /^[0-9]*<[^<]/.test(token) || /^&>>?[^>]/.test(token);
   }
@@ -287,6 +297,15 @@ function tokenizeShellArgs(argsStr) {
     } else if (ch === '\\') {
       // クォート外のバックスラッシュエスケープ: 次の1文字をリテラルとして扱う
       // （例: rm file\ name.txt → "file name.txt" という1トークンにする）
+      //
+      // エッジケース: バックスラッシュエスケープされたパイプ（\|）について:
+      //   rm /allowed/path \| rm /protected/path
+      //   → \| の \ がここで処理され、| が current に追加される
+      //   → 結果: "/allowed/path|" が1トークン、その後の "rm" "/" が続くトークンとして処理される
+      //   → | 単独トークンにはならないため extractRmTargets の | 分割処理は発動しない
+      //   → "/protected/path" は次のサブコマンドの rm 引数として正しくターゲット収集される
+      //   この動作はシェルの実際の挙動と異なる（シェルでは \| はリテラル | としてコマンドに渡る）が、
+      //   ターゲット収集においては安全側（より多くターゲットを拾う方向）に倒れているため問題なし。
       if (i + 1 < argsStr.length) {
         i++;
         current += argsStr[i];

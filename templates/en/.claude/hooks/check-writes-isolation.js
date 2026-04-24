@@ -33,11 +33,17 @@ function loadAllowedPatterns(cfgPath) {
   try {
     const config = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
     // config.reads is for read-scope limiting (reserved for future use). Not referenced in this hook.
-    // Filter out non-string elements to prevent crashes
+    // Filter out non-string elements to prevent crashes. Empty strings are also excluded because
+    // an empty pattern could cause unintended matchGlob matches.
     return Array.isArray(config.writes)
-      ? config.writes.filter(p => typeof p === 'string')
+      ? config.writes.filter(p => typeof p === 'string' && p.length > 0)
       : [];
-  } catch (_) {
+  } catch (e) {
+    if (e.code !== 'ENOENT') {
+      // File exists but failed to parse — warn (possible config file corruption).
+      // ENOENT (file not found) is treated as non-parallel mode and is normal.
+      process.stderr.write(`[check-writes-isolation] WARNING: failed to parse ${cfgPath}: ${e.message}\n`);
+    }
     return null; // null = non-parallel mode
   }
 }
@@ -64,8 +70,9 @@ if (toolName === 'Write' || toolName === 'Edit') {
 }
 
 // Normalize paths and match against allowed patterns
-const normalizedCwd = cwd.replace(/\\/g, '/');
-const normalizedCwdSlash = normalizedCwd.endsWith('/') ? normalizedCwd : normalizedCwd + '/';
+// normalizedCwdSlash: backslashes converted to forward slashes, trailing slash guaranteed
+// (the trailing slash prevents "C:/foo/bar" from prefix-matching "C:/foo/barbaz")
+const normalizedCwdSlash = (cwd.replace(/\\/g, '/').replace(/\/$/, '')) + '/';
 
 const violations = [];
 
@@ -198,8 +205,13 @@ function extractRmTargets(cmd) {
     return false;
   }
 
-  // Helper to detect combined-form redirects (no space between operator and destination)
-  // Examples: '2>/dev/null', '>/tmp/log', '>>/tmp/log', '</dev/stdin'
+  // Helper to detect combined-form redirects (operator and destination in the same token, no space).
+  // isRedirectOperator handles the space-separated form ('>' '2>' etc. as standalone tokens).
+  // This function handles the combined form where operator and path are concatenated.
+  // Examples: '2>/dev/null', '>/tmp/log', '>>/tmp/log', '</dev/stdin', '&>/dev/null'
+  // Covers fd-prefixed, plain, append, input, and &> forms.
+  // The trailing [^>] in the '>>' pattern excludes '>>' as a standalone operator
+  // (already covered by isRedirectOperator in the space-separated form).
   function isRedirectCombined(token) {
     return /^[0-9]*>>?[^>]/.test(token) || /^[0-9]*<[^<]/.test(token) || /^&>>?[^>]/.test(token);
   }
@@ -283,6 +295,15 @@ function tokenizeShellArgs(argsStr) {
     } else if (ch === '\\') {
       // Backslash escape outside quotes: treat the next character as a literal
       // (e.g. rm file\ name.txt → "file name.txt" as a single token)
+      //
+      // Edge case — backslash-escaped pipe (\|):
+      //   rm /allowed/path \| rm /protected/path
+      //   → The \ here is consumed and | is appended to current
+      //   → Result: "/allowed/path|" is one token; "rm" "/protected/path" follow as separate tokens
+      //   → | does NOT become a standalone token, so extractRmTargets' pipe-split does not fire here
+      //   → "/protected/path" is collected as a target of the next rm subcommand
+      //   This differs from actual shell behavior (\| passes a literal | to the command), but for
+      //   target collection it errs on the safe side (collecting more targets rather than fewer).
       if (i + 1 < argsStr.length) {
         i++;
         current += argsStr[i];
