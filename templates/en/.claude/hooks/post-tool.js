@@ -17,7 +17,8 @@ const input        = hookInput.tool_input || {};
 const toolResponse = hookInput.tool_response || {};
 const now          = new Date();
 const ts           = now.toISOString();
-const session      = now.toISOString().slice(0, 10).replace(/-/g, '');
+// Derive session from ts to avoid drift if the ts calculation is ever changed
+const session      = ts.slice(0, 10).replace(/-/g, '');
 
 const cmd = (input.command || '').slice(0, 300);
 
@@ -31,6 +32,9 @@ const responseStr = typeof toolResponse === 'string'
   : (toolResponse.output || JSON.stringify(toolResponse));
 const outPreview = responseStr.slice(0, 800).replace(/\r?\n/g, '↵');
 
+// bash-log.jsonl records the first 300 chars of each Bash command in plain text.
+// If a command contains API keys, tokens, etc., they will appear in the log.
+// Keep .claude/instincts/raw/ in .gitignore so it is never tracked by git (already configured).
 const logDir  = path.join(process.cwd(), '.claude', 'instincts', 'raw');
 const logFile = path.join(logDir, 'bash-log.jsonl');
 

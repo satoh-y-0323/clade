@@ -17,7 +17,8 @@ const input        = hookInput.tool_input || {};
 const toolResponse = hookInput.tool_response || {};
 const now          = new Date();
 const ts           = now.toISOString();
-const session      = now.toISOString().slice(0, 10).replace(/-/g, '');
+// session は ts から導出する（ts と独立して計算すると将来の ts 変更時に取り残されるリスクがある）
+const session      = ts.slice(0, 10).replace(/-/g, '');
 
 const cmd = (input.command || '').slice(0, 300);
 
@@ -31,6 +32,9 @@ const responseStr = typeof toolResponse === 'string'
   : (toolResponse.output || JSON.stringify(toolResponse));
 const outPreview = responseStr.slice(0, 800).replace(/\r?\n/g, '↵');
 
+// bash-log.jsonl には Bash コマンドの先頭300文字が平文記録される。
+// APIキー・トークン等がコマンドに含まれる場合もログに残るため、
+// .claude/instincts/raw/ は .gitignore で git 追跡対象外にすること（設定済み）。
 const logDir  = path.join(process.cwd(), '.claude', 'instincts', 'raw');
 const logFile = path.join(logDir, 'bash-log.jsonl');
 
