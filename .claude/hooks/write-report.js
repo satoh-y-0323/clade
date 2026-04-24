@@ -43,6 +43,12 @@ if (!baseName || (modeOrContent !== 'new' && modeOrContent !== 'append')) {
   process.exit(1);
 }
 
+// baseName バリデーション: 英数字・ハイフン・アンダースコアのみ許可
+if (!/^[a-zA-Z0-9_\-]+$/.test(baseName)) {
+  console.error('[write-report] baseName に使用できない文字が含まれています（英数字・ハイフン・アンダースコアのみ）。');
+  process.exit(1);
+}
+
 const reportsDir = path.join(process.cwd(), '.claude', 'reports');
 fs.mkdirSync(reportsDir, { recursive: true });
 
@@ -60,12 +66,12 @@ function resolveNewPath(baseNameArg, timestamp) {
   const base = path.join(reportsDir, `${baseNameArg}-${timestamp}.md`);
   if (!fs.existsSync(base)) return base;
 
-  let branch = 2;
-  while (true) {
+  const MAX_ATTEMPTS = 100;
+  for (let branch = 2; branch <= MAX_ATTEMPTS + 1; branch++) {
     const candidate = path.join(reportsDir, `${baseNameArg}-${timestamp}-${branch}.md`);
     if (!fs.existsSync(candidate)) return candidate;
-    branch++;
   }
+  throw new Error(`[write-report] ファイル名の衝突を解決できませんでした: ${baseNameArg}-${timestamp}`);
 }
 
 // モード判定
@@ -90,6 +96,12 @@ if (isNew) {
   if (!targetFileName || targetFileName === '--file') {
     console.error('[write-report] append モードには追記先ファイル名が必要です。');
     console.error('  例: node write-report.js test-report append test-report-20260401-143022.md --file /tmp/report.md');
+    process.exit(1);
+  }
+
+  // targetFileName パストラバーサル対策: パス区切り文字・.. を拒否
+  if (targetFileName.includes('/') || targetFileName.includes('\\') || targetFileName.includes('..')) {
+    console.error('[write-report] targetFileName にパス区切り文字や .. を含めることはできません。');
     process.exit(1);
   }
 

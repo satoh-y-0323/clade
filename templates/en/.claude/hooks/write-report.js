@@ -43,6 +43,12 @@ if (!baseName || (modeOrContent !== 'new' && modeOrContent !== 'append')) {
   process.exit(1);
 }
 
+// baseName validation: only alphanumeric, hyphens, and underscores allowed
+if (!/^[a-zA-Z0-9_\-]+$/.test(baseName)) {
+  console.error('[write-report] baseName contains invalid characters (only alphanumeric, hyphens, and underscores are allowed).');
+  process.exit(1);
+}
+
 const reportsDir = path.join(process.cwd(), '.claude', 'reports');
 fs.mkdirSync(reportsDir, { recursive: true });
 
@@ -60,12 +66,12 @@ function resolveNewPath(baseNameArg, timestamp) {
   const base = path.join(reportsDir, `${baseNameArg}-${timestamp}.md`);
   if (!fs.existsSync(base)) return base;
 
-  let branch = 2;
-  while (true) {
+  const MAX_ATTEMPTS = 100;
+  for (let branch = 2; branch <= MAX_ATTEMPTS + 1; branch++) {
     const candidate = path.join(reportsDir, `${baseNameArg}-${timestamp}-${branch}.md`);
     if (!fs.existsSync(candidate)) return candidate;
-    branch++;
   }
+  throw new Error(`[write-report] Failed to resolve filename conflict: ${baseNameArg}-${timestamp}`);
 }
 
 // Mode determination
@@ -90,6 +96,12 @@ if (isNew) {
   if (!targetFileName || targetFileName === '--file') {
     console.error('[write-report] append mode requires a target filename.');
     console.error('  Example: node write-report.js test-report append test-report-20260401-143022.md --file /tmp/report.md');
+    process.exit(1);
+  }
+
+  // targetFileName path traversal guard: reject path separators and ..
+  if (targetFileName.includes('/') || targetFileName.includes('\\') || targetFileName.includes('..')) {
+    console.error('[write-report] targetFileName must not contain path separators or "..".');
     process.exit(1);
   }
 
