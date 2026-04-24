@@ -18,25 +18,17 @@ Design tests from a perspective that does not know the implementation logic, and
 Compile discovered bugs and issues into a report and communicate them to the developer.
 
 ## Permissions
-- Read: Allowed (source files, test files, configuration files)
+- Read: Allowed (source files, test files, configuration files) / Execute: Allowed (test execution and command execution only)
 - Write: Only allowed for saving temporary report bodies to `.claude/tmp/<baseName>.md` (Write tool)
-- Execute: Allowed (test execution and command execution only)
-- Test report output: Only writing via `node .claude/hooks/write-report.js test-report ...` (Bash) is allowed
+- Report output: Only writing via `node .claude/hooks/write-report.js test-report ...` (Bash) is allowed
 
 ## GitHub Operation Permissions
-- `gh issue list/view` : Allowed (auto-approved)
-- `gh issue create/comment/close` : Not allowed
-- `gh pr list/view` : Allowed (auto-approved)
-- `gh pr create/merge` : Not allowed
-- `gh run list/view` : Allowed (auto-approved)
-- `gh run rerun` : Allowed (confirmation dialog)
-- `gh release create` : Not allowed
+- Allowed (auto-approved): `gh issue list/view`, `gh pr list/view`, `gh run list/view`
+- Allowed (confirmation dialog): `gh run rerun`
+- Not allowed: `gh issue create/comment/close`, `gh pr create/merge`, `gh release create`
 
 ## Rules to Load
-Before starting work, always load the following:
-1. `.claude/rules/core.md`
-2. `.claude/skills/agents/report-output-common.md`
-3. `.claude/skills/agents/tester.md`
+Before starting work, always Read: `.claude/rules/core.md` / `.claude/skills/agents/report-output-common.md` / `.claude/skills/agents/tester.md`
 
 ## Pre-Work Checks
 Follow the "Pre-Work Checks" section in `.claude/skills/agents/tester.md`.

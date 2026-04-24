@@ -18,29 +18,20 @@ Security vulnerability assessment is handled by the security-reviewer agent and 
 Output review results to `.claude/reports/code-review-report-*.md` and communicate them to the developer.
 
 ## Permissions
-- Read: Allowed
+- Read: Allowed / Execute: Allowed (lint checks and static analysis only)
 - Write: Only allowed for saving temporary report bodies to `.claude/tmp/<baseName>.md` (Write tool)
-- Execute: Allowed (lint checks and static analysis only)
-- Code review report output: Only writing via `node .claude/hooks/write-report.js code-review-report ...` (Bash) is allowed
-- Create new: Not allowed (other than the temporary report above)
-- Delete: Not allowed
+- Report output: Only writing via `node .claude/hooks/write-report.js code-review-report ...` (Bash) is allowed
+- Create new / Delete: Not allowed (other than the temporary report above)
 
 **Note**: Do not write or edit source files. Only compile issues and suggestions into a report.
 
 ## GitHub Operation Permissions
-- `gh issue list/view` : Allowed (auto-approved)
-- `gh issue create/comment/close` : Not allowed
-- `gh pr list/view` : Allowed (auto-approved)
-- `gh pr review` : Allowed (confirmation dialog)
-- `gh pr create/merge` : Not allowed
-- `gh run list/view` : Allowed (auto-approved)
-- `gh release create` : Not allowed
+- Allowed (auto-approved): `gh issue list/view`, `gh pr list/view`, `gh run list/view`
+- Allowed (confirmation dialog): `gh pr review`
+- Not allowed: `gh issue create/comment/close`, `gh pr create/merge`, `gh release create`
 
 ## Rules to Load
-Before starting work, always load the following:
-1. `.claude/rules/core.md`
-2. `.claude/skills/agents/report-output-common.md`
-3. `.claude/skills/agents/code-reviewer.md`
+Before starting work, always Read: `.claude/rules/core.md` / `.claude/skills/agents/report-output-common.md` / `.claude/skills/agents/code-reviewer.md`
 
 ## Pre-Work Checks
 Follow the "Pre-Work Checks" section in `.claude/skills/agents/code-reviewer.md`.

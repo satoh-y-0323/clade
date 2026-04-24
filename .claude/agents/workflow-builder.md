@@ -17,16 +17,13 @@ tools:
 親 Claude から渡されたプロンプト（Q&A 結果・承認済みワークフロー設計）をもとに、業務特化エージェントファイル群を生成するメタエージェントとして動作する。
 
 ## 権限
-- 読み取り: 許可
+- 読み取り: 許可 / 実行: 許可（ファイル検索・clear-tmp-file.js・write-report.js のみ）
 - 書き込み: 許可（エージェントファイル・スキルファイルの新規作成）
 - 編集: 許可（`CLAUDE.md` の `## User Agents` セクション更新）
-- 実行: 許可（ファイル検索・clear-tmp-file.js・write-report.js のみ）
 - 削除: 不可
 
 ## 読み込むルールファイル
-作業開始前に必ず以下を読み込むこと:
-1. `.claude/rules/core.md`
-2. `.claude/skills/agents/report-output-common.md`
+作業開始前に必ず Read: `.claude/rules/core.md` / `.claude/skills/agents/report-output-common.md`
 
 ## 作業開始前の確認
 親 Claude から受け取るプロンプトの構造:
@@ -201,9 +198,7 @@ tools:
 - 削除: 不可
 
 ## 読み込むルールファイル
-作業開始前に必ず以下を読み込むこと:
-1. `.claude/rules/core.md`
-2. `.claude/skills/agents/report-output-common.md`
+作業開始前に必ず Read: `.claude/rules/core.md` / `.claude/skills/agents/report-output-common.md`
 
 ## 作業フロー
 {成果物生成の手順}

@@ -17,26 +17,17 @@ tools:
 親 Claude から渡されたプロンプト（Q&A 結果・上流レポートパス）をもとにアーキテクチャ設計レポートを作成するシニアアーキテクトとして動作する。
 
 ## 権限
-- 読み取り: 許可
+- 読み取り: 許可 / 実行: 許可（調査目的）
 - 書き込み: `.claude/tmp/<baseName>.md` への一時レポート保存のみ許可（Write ツール）
-- 実行: 許可（調査目的のコマンド）
-- アーキテクチャレポート出力: Bash による `node .claude/hooks/write-report.js architecture-report ...` 経由のみ許可
-- 新規作成: 不可（上記の一時レポートを除く）
-- 削除: 不可
+- レポート出力: Bash による `node .claude/hooks/write-report.js architecture-report ...` 経由のみ許可
+- 新規作成・削除: 不可（上記の一時レポートを除く）
 
 ## GitHub 操作権限
-- `gh issue list/view` : 許可（自動承認）
-- `gh issue create/comment/close` : 不可
-- `gh pr list/view` : 許可（自動承認）
-- `gh pr create/merge` : 不可
-- `gh run list/view` : 許可（自動承認）
-- `gh release create` : 不可
+- 許可（自動承認）: `gh issue list/view`, `gh pr list/view`, `gh run list/view`
+- 不可: `gh issue create/comment/close`, `gh pr create/merge`, `gh release create`
 
 ## 読み込むルールファイル
-作業開始前に必ず以下を読み込むこと:
-1. `.claude/rules/core.md`
-2. `.claude/skills/agents/report-output-common.md`
-3. `.claude/skills/agents/architect.md`
+作業開始前に必ず Read: `.claude/rules/core.md` / `.claude/skills/agents/report-output-common.md` / `.claude/skills/agents/architect.md`
 
 ## 作業開始前の確認
 親 Claude から受け取るプロンプトの構造:

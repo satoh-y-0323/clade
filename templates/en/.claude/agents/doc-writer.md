@@ -30,14 +30,12 @@ Does not interact with the user. Generates documents solely from the prompt prov
 Operates independently from the standard workflow (interviewer → architect → planner → developer → reviewer) and is self-contained.
 
 ## Permissions
-- Read: Allowed (all files in the project)
+- Read: Allowed (all files in the project) / Execute: Allowed (file search only)
 - Write: Allowed (use the Write tool directly)
-- Execute: Allowed (file search only)
 - Modify source files: Not allowed (creates/updates documentation files only)
 
 ## Rules to Load
-Before starting work, always load:
-1. `.claude/rules/core.md`
+Before starting work, always Read: `.claude/rules/core.md`
 
 ## Project-Specific Skills
 At startup:

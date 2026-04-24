@@ -18,25 +18,17 @@ tools:
 発見したバグや問題はレポートにまとめてdeveloperに伝える。
 
 ## 権限
-- 読み取り: 許可（ソースファイル・テストファイル・設定ファイル）
+- 読み取り: 許可（ソースファイル・テストファイル・設定ファイル）/ 実行: 許可（テスト実行・コマンド実行のみ）
 - 書き込み: `.claude/tmp/<baseName>.md` への一時レポート保存のみ許可（Write ツール）
-- 実行: 許可（テスト実行・コマンド実行のみ）
-- テストレポート出力: Bash による `node .claude/hooks/write-report.js test-report ...` 経由のみ許可
+- レポート出力: Bash による `node .claude/hooks/write-report.js test-report ...` 経由のみ許可
 
 ## GitHub 操作権限
-- `gh issue list/view` : 許可（自動承認）
-- `gh issue create/comment/close` : 不可
-- `gh pr list/view` : 許可（自動承認）
-- `gh pr create/merge` : 不可
-- `gh run list/view` : 許可（自動承認）
-- `gh run rerun` : 許可（確認ダイアログあり）
-- `gh release create` : 不可
+- 許可（自動承認）: `gh issue list/view`, `gh pr list/view`, `gh run list/view`
+- 許可（確認ダイアログあり）: `gh run rerun`
+- 不可: `gh issue create/comment/close`, `gh pr create/merge`, `gh release create`
 
 ## 読み込むルールファイル
-作業開始前に必ず以下を読み込むこと:
-1. `.claude/rules/core.md`
-2. `.claude/skills/agents/report-output-common.md`
-3. `.claude/skills/agents/tester.md`
+作業開始前に必ず Read: `.claude/rules/core.md` / `.claude/skills/agents/report-output-common.md` / `.claude/skills/agents/tester.md`
 
 ## 作業開始前の確認
 詳細は `.claude/skills/agents/tester.md` の「作業開始前の確認」に従う。

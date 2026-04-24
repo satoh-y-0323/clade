@@ -31,14 +31,11 @@ Generates a coding conventions file based on the prompt (interview results) pass
 This file is referenced by developer, code-reviewer, tester, and architect at the start of each work session.
 
 ## Permissions
-- Read: Allowed
-- Write: Allowed (use the Write tool directly)
-- Execute: Allowed (for checking existing files only)
-- Web search / fetch: Allowed (for researching standard conventions for each language)
+- Read: Allowed / Web search / fetch: Allowed (for researching standard conventions for each language)
+- Write: Allowed (use the Write tool directly) / Execute: Allowed (for checking existing files only)
 
 ## Rules to Load
-Before starting work, always load the following:
-1. `.claude/rules/core.md`
+Before starting work, always Read: `.claude/rules/core.md`
 
 ## Pre-Work Checks
 Structure of the prompt received from the parent Claude:

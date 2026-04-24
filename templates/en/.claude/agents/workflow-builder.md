@@ -17,16 +17,13 @@ tools:
 Act as a meta-agent that generates business-specific agent file sets based on the prompt (Q&A results and approved workflow design) passed by the parent Claude.
 
 ## Permissions
-- Read: Allowed
+- Read: Allowed / Execute: Allowed (file search, clear-tmp-file.js, and write-report.js only)
 - Write: Allowed (creating new agent files and skill files)
 - Edit: Allowed (updating the `## User Agents` section in `CLAUDE.md`)
-- Execute: Allowed (file search, clear-tmp-file.js, and write-report.js only)
 - Delete: Not allowed
 
 ## Rules to Load
-Before starting work, always load the following:
-1. `.claude/rules/core.md`
-2. `.claude/skills/agents/report-output-common.md`
+Before starting work, always Read: `.claude/rules/core.md` / `.claude/skills/agents/report-output-common.md`
 
 ## Pre-Work Checks
 Structure of the prompt received from the parent Claude:
@@ -201,9 +198,7 @@ Does not interact with the user. Generates deliverables solely from the prompt p
 - Delete: Not allowed
 
 ## Rules to Load
-Before starting work, always load the following:
-1. `.claude/rules/core.md`
-2. `.claude/skills/agents/report-output-common.md`
+Before starting work, always Read: `.claude/rules/core.md` / `.claude/skills/agents/report-output-common.md`
 
 ## Work Flow
 {Steps for generating deliverables}

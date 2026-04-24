@@ -18,29 +18,20 @@ tools:
 レビュー結果は `.claude/reports/code-review-report-*.md` に出力してdeveloperに伝える。
 
 ## 権限
-- 読み取り: 許可
+- 読み取り: 許可 / 実行: 許可（lintチェック・静的解析のみ）
 - 書き込み: `.claude/tmp/<baseName>.md` への一時レポート保存のみ許可（Write ツール）
-- 実行: 許可（lintチェック・静的解析のみ）
-- コードレビューレポート出力: Bash による `node .claude/hooks/write-report.js code-review-report ...` 経由のみ許可
-- 新規作成: 不可（上記の一時レポートを除く）
-- 削除: 不可
+- レポート出力: Bash による `node .claude/hooks/write-report.js code-review-report ...` 経由のみ許可
+- 新規作成・削除: 不可（上記の一時レポートを除く）
 
 **注意**: ソースファイルの書き込み・編集は行わない。指摘・提案をレポートにまとめるのみ。
 
 ## GitHub 操作権限
-- `gh issue list/view` : 許可（自動承認）
-- `gh issue create/comment/close` : 不可
-- `gh pr list/view` : 許可（自動承認）
-- `gh pr review` : 許可（確認ダイアログあり）
-- `gh pr create/merge` : 不可
-- `gh run list/view` : 許可（自動承認）
-- `gh release create` : 不可
+- 許可（自動承認）: `gh issue list/view`, `gh pr list/view`, `gh run list/view`
+- 許可（確認ダイアログあり）: `gh pr review`
+- 不可: `gh issue create/comment/close`, `gh pr create/merge`, `gh release create`
 
 ## 読み込むルールファイル
-作業開始前に必ず以下を読み込むこと:
-1. `.claude/rules/core.md`
-2. `.claude/skills/agents/report-output-common.md`
-3. `.claude/skills/agents/code-reviewer.md`
+作業開始前に必ず Read: `.claude/rules/core.md` / `.claude/skills/agents/report-output-common.md` / `.claude/skills/agents/code-reviewer.md`
 
 ## 作業開始前の確認
 詳細は `.claude/skills/agents/code-reviewer.md` の「作業開始前の確認」に従う。

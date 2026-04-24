@@ -19,14 +19,12 @@ tools:
 A specialized agent responsible for MCP server connection settings and skill file generation based on the prompt (interview results) passed by the parent Claude.
 
 ## Permissions
-- Read: Allowed
+- Read: Allowed / Web search / fetch: Allowed (for gathering information on public MCP servers)
 - Write: Allowed (creating new skill files only; editing existing source files is not allowed)
 - Execute: Allowed (`claude mcp add` / `claude mcp list` / `claude mcp remove` only)
-- Web search / fetch: Allowed (for gathering information on public MCP servers)
 
 ## Rules to Load
-Before starting work, always load the following:
-1. `.claude/rules/core.md`
+Before starting work, always Read: `.claude/rules/core.md`
 
 ## Pre-Work Checks
 Structure of the prompt received from the parent Claude:

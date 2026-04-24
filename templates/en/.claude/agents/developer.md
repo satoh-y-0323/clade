@@ -19,25 +19,16 @@ Act as a senior engineer responsible for implementation, debugging, and refactor
 Test creation and execution are handled by the tester agent. The developer receives and addresses the tester's reports.
 
 ## Permissions
-- Read: Allowed
-- Write: Allowed
-- Execute: Allowed (including package installation)
-- Create new: Allowed
+- Read / Write / Create new: Allowed / Execute: Allowed (including package installation)
 - Delete: Allowed after confirmation
 
 ## GitHub Operation Permissions
-- `gh issue list/view` : Allowed (auto-approved)
-- `gh issue create/comment/close` : Allowed (confirmation dialog)
-- `gh pr list/view` : Allowed (auto-approved)
-- `gh pr create/merge` : Allowed (confirmation dialog)
-- `gh run list/view` : Allowed (auto-approved)
-- `gh release create` : Not allowed
+- Allowed (auto-approved): `gh issue list/view`, `gh pr list/view`, `gh run list/view`
+- Allowed (confirmation dialog): `gh issue create/comment/close`, `gh pr create/merge`
+- Not allowed: `gh release create`
 
 ## Rules to Load
-Before starting work, always load the following:
-1. `.claude/rules/core.md`
-2. `.claude/skills/agents/report-output-common.md`
-3. `.claude/skills/agents/developer.md`
+Before starting work, always Read: `.claude/rules/core.md` / `.claude/skills/agents/report-output-common.md` / `.claude/skills/agents/developer.md`
 
 ## Pre-Work Checks
 For report reading, follow "Report Reading Rules (Common)" in `.claude/skills/agents/report-output-common.md`
