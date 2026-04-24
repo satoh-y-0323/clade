@@ -75,94 +75,106 @@ if (!frontmatter) {
 }
 
 // ===== Simple YAML parser (standard modules only) =====
-let _lines = [];
-let _pos   = 0;
-
-function currentLine() {
-  while (_pos < _lines.length && (_lines[_pos].trim() === '' || _lines[_pos].trim().startsWith('#'))) {
-    _pos++;
-  }
-  return _pos < _lines.length ? _lines[_pos] : null;
-}
-
-function getIndent(line) {
-  if (!line) return -1;
-  return line.match(/^( *)/)[1].length;
-}
-
-function parseScalar(s) {
-  s = s.trim();
-  // Strip inline comments only when the value is not quoted
-  if (!s.startsWith('"') && !s.startsWith("'")) {
-    const commentIdx = s.indexOf(' #');
-    if (commentIdx !== -1) s = s.slice(0, commentIdx).trim();
-  }
-  if (s.startsWith('[') && s.endsWith(']')) {
-    const inner = s.slice(1, -1).trim();
-    if (!inner) return [];
-    return inner.split(',').map(x => x.trim()).filter(Boolean);
-  }
-  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
-    return s.slice(1, -1);
-  }
-  if (s === 'true') return true;
-  if (s === 'false') return false;
-  if (/^\d+$/.test(s)) return parseInt(s, 10);
-  return s;
-}
-
-function parseMap(baseIndent) {
-  const result = {};
-  while (true) {
-    const line = currentLine();
-    if (!line) break;
-    const indent = getIndent(line);
-    if (indent < baseIndent) break;
-    if (indent > baseIndent) { _pos++; continue; }
-
-    const trimmed = line.trim();
-    if (trimmed.startsWith('- ')) break;
-
-    const colonIdx = trimmed.indexOf(':');
-    if (colonIdx === -1) { _pos++; continue; }
-
-    const key  = trimmed.slice(0, colonIdx).trim();
-    const rest = trimmed.slice(colonIdx + 1).trim();
-    _pos++;
-
-    if (rest === '') {
-      const next = currentLine();
-      if (!next) { result[key] = {}; continue; }
-      const nextIndent = getIndent(next);
-      if (nextIndent <= baseIndent) { result[key] = {}; continue; }
-      result[key] = next.trim().startsWith('- ')
-        ? parseList(nextIndent)
-        : parseMap(nextIndent);
-    } else {
-      result[key] = parseScalar(rest);
-    }
-  }
-  return result;
-}
-
-function parseList(baseIndent) {
-  const result = [];
-  while (true) {
-    const line = currentLine();
-    if (!line) break;
-    const indent = getIndent(line);
-    if (indent < baseIndent) break;
-    const trimmed = line.trim();
-    if (!trimmed.startsWith('- ')) break;
-    result.push(trimmed.slice(2).trim());
-    _pos++;
-  }
-  return result;
-}
+// Known limitations:
+//   - parseList only handles scalar lists ("- value" form).
+//     List-of-maps ("- key: value" form) is not supported — items are stored as strings.
+//     The current plan-report format does not use list-of-maps, so there is no practical
+//     impact, but parseList will need to be extended if the schema is expanded in the future.
+//   - Inline list parsing in parseScalar ([a, b, c]) uses a simple split(',').
+//     Elements whose values contain commas are not parsed correctly.
+//     The current schema does not use comma-containing values, so there is no practical impact.
 
 function parseYaml(text) {
-  _lines = text.split('\n');
-  _pos   = 0;
+  // _lines and _pos are scoped inside parseYaml as closure variables to prevent
+  // state leakage between multiple calls.
+  let _lines = text.split('\n');
+  let _pos   = 0;
+
+  function currentLine() {
+    while (_pos < _lines.length && (_lines[_pos].trim() === '' || _lines[_pos].trim().startsWith('#'))) {
+      _pos++;
+    }
+    return _pos < _lines.length ? _lines[_pos] : null;
+  }
+
+  function getIndent(line) {
+    if (!line) return -1;
+    return line.match(/^( *)/)[1].length;
+  }
+
+  function parseScalar(s) {
+    s = s.trim();
+    // Strip inline comments only when the value is not quoted
+    if (!s.startsWith('"') && !s.startsWith("'")) {
+      const commentIdx = s.indexOf(' #');
+      if (commentIdx !== -1) s = s.slice(0, commentIdx).trim();
+    }
+    if (s.startsWith('[') && s.endsWith(']')) {
+      const inner = s.slice(1, -1).trim();
+      if (!inner) return [];
+      // Note: elements with commas in their values are not supported (known limitation)
+      return inner.split(',').map(x => x.trim()).filter(Boolean);
+    }
+    if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+      return s.slice(1, -1);
+    }
+    if (s === 'true') return true;
+    if (s === 'false') return false;
+    if (/^\d+$/.test(s)) return parseInt(s, 10);
+    return s;
+  }
+
+  function parseMap(baseIndent) {
+    const result = {};
+    while (true) {
+      const line = currentLine();
+      if (!line) break;
+      const indent = getIndent(line);
+      if (indent < baseIndent) break;
+      if (indent > baseIndent) { _pos++; continue; }
+
+      const trimmed = line.trim();
+      if (trimmed.startsWith('- ')) break;
+
+      const colonIdx = trimmed.indexOf(':');
+      if (colonIdx === -1) { _pos++; continue; }
+
+      const key  = trimmed.slice(0, colonIdx).trim();
+      const rest = trimmed.slice(colonIdx + 1).trim();
+      _pos++;
+
+      if (rest === '') {
+        const next = currentLine();
+        if (!next) { result[key] = {}; continue; }
+        const nextIndent = getIndent(next);
+        if (nextIndent <= baseIndent) { result[key] = {}; continue; }
+        result[key] = next.trim().startsWith('- ')
+          ? parseList(nextIndent)
+          : parseMap(nextIndent);
+      } else {
+        result[key] = parseScalar(rest);
+      }
+    }
+    return result;
+  }
+
+  function parseList(baseIndent) {
+    const result = [];
+    while (true) {
+      const line = currentLine();
+      if (!line) break;
+      const indent = getIndent(line);
+      if (indent < baseIndent) break;
+      const trimmed = line.trim();
+      if (!trimmed.startsWith('- ')) break;
+      // Note: list-of-maps ("- key: value" form) is not supported (known limitation).
+      // Items are stored as plain strings.
+      result.push(trimmed.slice(2).trim());
+      _pos++;
+    }
+    return result;
+  }
+
   return parseMap(0);
 }
 
