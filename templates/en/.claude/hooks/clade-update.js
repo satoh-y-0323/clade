@@ -35,6 +35,15 @@ const BACKUP_COMMIT_PREFIX = 'chore: backup before clade update to';
 // English edition: source files from templates/en/.claude/ in the release
 const RELEASE_SRC_PREFIX = 'templates/en/.claude/';
 
+// Hosts that are allowed to receive Authorization headers on redirect
+const ALLOWED_HOSTS = ['api.github.com', 'codeload.github.com', 'objects.githubusercontent.com'];
+
+// Maximum number of redirects to follow before giving up
+const MAX_REDIRECTS = 5;
+
+// User-Agent string sent with all HTTP requests
+const USER_AGENT = 'clade-update/1.0';
+
 // ============================================================
 // Helpers: HTTP
 // ============================================================
@@ -51,14 +60,19 @@ function fetchGitHubToken() {
   return null;
 }
 
-function httpsGet(host, urlPath, extraHeaders = {}) {
+function httpsGet(host, urlPath, extraHeaders = {}, redirectCount = 0) {
   return new Promise((resolve, reject) => {
+    if (redirectCount > MAX_REDIRECTS) {
+      reject(new Error(`Too many redirects (> ${MAX_REDIRECTS})`));
+      return;
+    }
+
     const options = {
       hostname: host,
       path: urlPath,
       method: 'GET',
       headers: {
-        'User-Agent': 'clade-update/1.0',
+        'User-Agent': USER_AGENT,
         Accept: 'application/vnd.github+json',
         ...extraHeaders,
       },
@@ -67,7 +81,13 @@ function httpsGet(host, urlPath, extraHeaders = {}) {
     const req = https.request(options, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         const redirectUrl = new URL(res.headers.location);
-        httpsGet(redirectUrl.hostname, redirectUrl.pathname + redirectUrl.search, extraHeaders)
+        // Strip Authorization header when redirecting to an untrusted host
+        const safeHeaders = ALLOWED_HOSTS.includes(redirectUrl.hostname)
+          ? extraHeaders
+          : Object.fromEntries(
+              Object.entries(extraHeaders).filter(([k]) => k.toLowerCase() !== 'authorization')
+            );
+        httpsGet(redirectUrl.hostname, redirectUrl.pathname + redirectUrl.search, safeHeaders, redirectCount + 1)
           .then(resolve)
           .catch(reject);
         return;
@@ -90,17 +110,20 @@ function httpsGet(host, urlPath, extraHeaders = {}) {
   });
 }
 
-function httpsDownload(url, extraHeaders = {}) {
-  const ALLOWED_HOSTS = ['api.github.com', 'codeload.github.com', 'objects.githubusercontent.com'];
-
+function httpsDownload(url, extraHeaders = {}, redirectCount = 0) {
   return new Promise((resolve, reject) => {
+    if (redirectCount > MAX_REDIRECTS) {
+      reject(new Error(`Too many redirects (> ${MAX_REDIRECTS})`));
+      return;
+    }
+
     const parsedUrl = new URL(url);
     const options = {
       hostname: parsedUrl.hostname,
       path: parsedUrl.pathname + parsedUrl.search,
       method: 'GET',
       headers: {
-        'User-Agent': 'clade-update/1.0',
+        'User-Agent': USER_AGENT,
         ...extraHeaders,
       },
     };
@@ -113,7 +136,7 @@ function httpsDownload(url, extraHeaders = {}) {
           : Object.fromEntries(
               Object.entries(extraHeaders).filter(([k]) => k.toLowerCase() !== 'authorization')
             );
-        httpsDownload(res.headers.location, safeHeaders).then(resolve).catch(reject);
+        httpsDownload(res.headers.location, safeHeaders, redirectCount + 1).then(resolve).catch(reject);
         return;
       }
 
@@ -170,6 +193,22 @@ function ensureDirectory(dirPath) {
 function copyFile(sourcePath, destPath) {
   ensureDirectory(path.dirname(destPath));
   fs.copyFileSync(sourcePath, destPath);
+}
+
+/**
+ * Assert that resolvedPath is strictly within basePath to prevent path traversal.
+ * Throws an Error if the path escapes the expected base directory.
+ * @param {string} resolvedPath
+ * @param {string} basePath
+ */
+function assertWithinBase(resolvedPath, basePath) {
+  const normalizedBase = path.resolve(basePath) + path.sep;
+  const normalizedPath = path.resolve(resolvedPath);
+  // Allow the base directory itself as well as anything under it
+  if (normalizedPath !== path.resolve(basePath) &&
+      !normalizedPath.startsWith(normalizedBase)) {
+    throw new Error(`Path traversal detected: ${resolvedPath} is outside ${basePath}`);
+  }
 }
 
 // ============================================================
@@ -235,47 +274,67 @@ async function extractZip(zipBuffer, destDir) {
   const zipPath = path.join(destDir, '_clade_release.zip');
   fs.writeFileSync(zipPath, zipBuffer);
 
-  // Use PowerShell's Expand-Archive (Windows)
-  const escapedZipPath = zipPath.replace(/'/g, "''");
-  const escapedDestDir = destDir.replace(/'/g, "''");
-  const result = spawnSync(
-    'powershell',
-    [
-      '-NoProfile',
-      '-Command',
-      `Expand-Archive -Force -Path '${escapedZipPath}' -DestinationPath '${escapedDestDir}'`,
-    ],
-    { encoding: 'utf8' }
-  );
+  try {
+    // Use PowerShell's Expand-Archive (Windows).
+    // Pass paths via environment variables to avoid PowerShell string injection risks.
+    const result = spawnSync(
+      'powershell',
+      [
+        '-NoProfile',
+        '-Command',
+        'Expand-Archive -Force -LiteralPath $env:ZIP_PATH -DestinationPath $env:DEST_DIR',
+      ],
+      {
+        encoding: 'utf8',
+        env: { ...process.env, ZIP_PATH: zipPath, DEST_DIR: destDir },
+      }
+    );
 
-  // Fall back to unzip if PowerShell is unavailable
-  if (result.status !== 0) {
-    const unzipResult = spawnSync('unzip', ['-o', '-q', zipPath, '-d', destDir], {
-      encoding: 'utf8',
-    });
-    if (unzipResult.status !== 0) {
-      throw new Error(`zip extraction failed: ${result.stderr || unzipResult.stderr}`);
+    // Fall back to unzip if PowerShell is unavailable
+    if (result.status !== 0) {
+      const unzipResult = spawnSync('unzip', ['-o', '-q', zipPath, '-d', destDir], {
+        encoding: 'utf8',
+      });
+      if (unzipResult.status !== 0) {
+        throw new Error(`zip extraction failed: ${result.stderr || unzipResult.stderr}`);
+      }
+    }
+  } finally {
+    // Always clean up the zip file, even on error
+    if (fs.existsSync(zipPath)) {
+      try { fs.unlinkSync(zipPath); } catch (_) {}
     }
   }
-
-  fs.unlinkSync(zipPath);
 }
 
 function findReleaseDir(extractDir) {
   const entries = fs.readdirSync(extractDir);
   const dirs = entries.filter((e) => {
-    const stat = fs.statSync(path.join(extractDir, e));
-    return stat.isDirectory();
+    try {
+      return fs.statSync(path.join(extractDir, e)).isDirectory();
+    } catch (_) {
+      // Ignore broken symlinks or permission errors
+      return false;
+    }
   });
 
+  let releaseDir;
   if (dirs.length === 1) {
-    return path.join(extractDir, dirs[0]);
+    releaseDir = path.join(extractDir, dirs[0]);
+  } else {
+    const cladeDir = dirs.find((d) => d.includes('clade'));
+    releaseDir = cladeDir ? path.join(extractDir, cladeDir) : extractDir;
   }
-  const cladeDir = dirs.find((d) => d.includes('clade'));
-  if (cladeDir) {
-    return path.join(extractDir, cladeDir);
+
+  // ZIP slip guard: ensure the resolved release dir is within the temp extract dir
+  const resolvedRelease = path.resolve(releaseDir);
+  const resolvedBase    = path.resolve(extractDir);
+  if (resolvedRelease !== resolvedBase &&
+      !resolvedRelease.startsWith(resolvedBase + path.sep)) {
+    throw new Error(`ZIP slip detected: release dir is outside temp dir (${releaseDir})`);
   }
-  return extractDir;
+
+  return releaseDir;
 }
 
 // ============================================================
@@ -294,66 +353,74 @@ function findReleaseDir(extractDir) {
  */
 function copyFilesFromManifest(manifest, releaseDir, projectRoot) {
   const managed = manifest.managed_files;
+  const claudeBase = path.join(projectRoot, '.claude');
 
   // commands
-  for (const file of managed.commands) {
-    const srcPath = path.join(releaseDir, RELEASE_SRC_PREFIX, 'commands', file);
+  for (const file of (managed.commands || [])) {
+    const srcPath  = path.join(releaseDir, RELEASE_SRC_PREFIX, 'commands', file);
     if (!fs.existsSync(srcPath)) continue;
-    const destPath = path.join(projectRoot, '.claude', 'commands', file);
+    const destPath = path.join(claudeBase, 'commands', file);
+    assertWithinBase(destPath, claudeBase);
     copyFile(srcPath, destPath);
   }
 
   // hooks (skip clade-update.js itself to avoid self-overwrite during update)
-  for (const file of managed.hooks) {
+  for (const file of (managed.hooks || [])) {
     if (file === 'clade-update.js') continue;
 
-    const srcPath = path.join(releaseDir, RELEASE_SRC_PREFIX, 'hooks', file);
+    const srcPath  = path.join(releaseDir, RELEASE_SRC_PREFIX, 'hooks', file);
     if (!fs.existsSync(srcPath)) continue;
-    const destPath = path.join(projectRoot, '.claude', 'hooks', file);
+    const destPath = path.join(claudeBase, 'hooks', file);
+    assertWithinBase(destPath, claudeBase);
     copyFile(srcPath, destPath);
   }
 
   // rules
-  for (const file of managed.rules) {
-    const srcPath = path.join(releaseDir, RELEASE_SRC_PREFIX, 'rules', file);
+  for (const file of (managed.rules || [])) {
+    const srcPath  = path.join(releaseDir, RELEASE_SRC_PREFIX, 'rules', file);
     if (!fs.existsSync(srcPath)) continue;
-    const destPath = path.join(projectRoot, '.claude', 'rules', file);
+    const destPath = path.join(claudeBase, 'rules', file);
+    assertWithinBase(destPath, claudeBase);
     copyFile(srcPath, destPath);
   }
 
   // agents
   for (const file of (managed.agents || [])) {
-    const srcPath = path.join(releaseDir, RELEASE_SRC_PREFIX, 'agents', file);
+    const srcPath  = path.join(releaseDir, RELEASE_SRC_PREFIX, 'agents', file);
     if (!fs.existsSync(srcPath)) continue;
-    const destPath = path.join(projectRoot, '.claude', 'agents', file);
+    const destPath = path.join(claudeBase, 'agents', file);
+    assertWithinBase(destPath, claudeBase);
     copyFile(srcPath, destPath);
   }
 
   // skills (top-level: .claude/skills/)
   for (const file of (managed.skills || [])) {
-    const srcPath = path.join(releaseDir, RELEASE_SRC_PREFIX, 'skills', file);
+    const srcPath  = path.join(releaseDir, RELEASE_SRC_PREFIX, 'skills', file);
     if (!fs.existsSync(srcPath)) continue;
-    const destPath = path.join(projectRoot, '.claude', 'skills', file);
+    const destPath = path.join(claudeBase, 'skills', file);
+    assertWithinBase(destPath, claudeBase);
     copyFile(srcPath, destPath);
   }
 
   // agent_skills (.claude/skills/agents/)
   for (const file of (managed.agent_skills || [])) {
-    const srcPath = path.join(releaseDir, RELEASE_SRC_PREFIX, 'skills', 'agents', file);
+    const srcPath  = path.join(releaseDir, RELEASE_SRC_PREFIX, 'skills', 'agents', file);
     if (!fs.existsSync(srcPath)) continue;
-    const destPath = path.join(projectRoot, '.claude', 'skills', 'agents', file);
+    const destPath = path.join(claudeBase, 'skills', 'agents', file);
+    assertWithinBase(destPath, claudeBase);
     copyFile(srcPath, destPath);
   }
 
   // other (CLAUDE.md, VERSION, clade-manifest.json are handled separately)
-  for (const file of managed.other) {
+  for (const file of (managed.other || [])) {
     if (file === 'CLAUDE.md' || file === 'clade-manifest.json' || file === 'VERSION') {
       continue;
     }
 
-    const srcPath = path.join(releaseDir, RELEASE_SRC_PREFIX, file);
+    const srcPath  = path.join(releaseDir, RELEASE_SRC_PREFIX, file);
     if (!fs.existsSync(srcPath)) continue;
-    const destPath = path.join(projectRoot, '.claude', file);
+    const destPath = path.join(claudeBase, file);
+    assertWithinBase(destPath, claudeBase);
     copyFile(srcPath, destPath);
   }
 }
@@ -369,6 +436,7 @@ function copyFilesFromManifest(manifest, releaseDir, projectRoot) {
 function processInteractiveFiles(manifest, releaseDir, projectRoot) {
   const managed = manifest.managed_files;
   const interactiveFiles = managed.interactive_files || [];
+  const claudeBase = path.join(projectRoot, '.claude');
   const diffs = [];
 
   for (const entry of interactiveFiles) {
@@ -378,7 +446,8 @@ function processInteractiveFiles(manifest, releaseDir, projectRoot) {
     const srcPath = path.join(releaseDir, RELEASE_SRC_PREFIX, sourceName);
     if (!fs.existsSync(srcPath)) continue;
 
-    const targetPath = path.join(projectRoot, '.claude', targetName);
+    const targetPath = path.join(claudeBase, targetName);
+    assertWithinBase(targetPath, claudeBase);
     const newPath = targetPath + '.new';
     const newContent = fs.readFileSync(srcPath, 'utf8');
 
@@ -417,12 +486,14 @@ function processInteractiveFiles(manifest, releaseDir, projectRoot) {
 function processProtectedFiles(manifest, releaseDir, projectRoot) {
   const managed = manifest.managed_files;
   const protectedFiles = managed.protected_files || [];
+  const claudeBase = path.join(projectRoot, '.claude');
 
   for (const file of protectedFiles) {
     const srcPath = path.join(releaseDir, RELEASE_SRC_PREFIX, file);
     if (!fs.existsSync(srcPath)) continue;
 
-    const destPath = path.join(projectRoot, '.claude', file);
+    const destPath = path.join(claudeBase, file);
+    assertWithinBase(destPath, claudeBase);
     if (fs.existsSync(destPath)) continue;
 
     copyFile(srcPath, destPath);
@@ -436,8 +507,10 @@ function processProtectedFiles(manifest, releaseDir, projectRoot) {
  */
 function removeObsoleteFiles(manifest, projectRoot) {
   const removedFiles = manifest.managed_files.removed_files || [];
+  const claudeBase = path.join(projectRoot, '.claude');
   for (const file of removedFiles) {
-    const filePath = path.join(projectRoot, '.claude', file);
+    const filePath = path.join(claudeBase, file);
+    assertWithinBase(filePath, claudeBase);
     if (fs.existsSync(filePath)) {
       try { fs.unlinkSync(filePath); } catch (_) {}
     }
@@ -462,6 +535,9 @@ function updateClaudeMdMarkerSection(localClaudeMdPath, releaseClaudeMdPath) {
   const startIdx = localContent.indexOf(CLADE_MARKER_START);
   const endIdx   = localContent.indexOf(CLADE_MARKER_END);
 
+  // Only the first marker pair is targeted. If multiple START/END markers exist
+  // (e.g. from copy-paste errors), this may update the wrong section — but that
+  // situation represents a malformed CLAUDE.md which is outside normal usage.
   if (startIdx === -1 || endIdx === -1 || startIdx >= endIdx) {
     return { markerMissing: true };
   }
@@ -505,6 +581,7 @@ async function runCheckMode(options = {}) {
     has_update:      hasUpdate,
     changelog,
     changes: {
+      // TODO: detailed file-level change tracking is not yet implemented
       en: { added: [], updated: [], removed: [] },
     },
   };
@@ -550,6 +627,8 @@ async function runApplyMode() {
       process.stderr.write(`Backup commit failed: ${commitResult.stderr}\n`);
       process.exit(1);
     }
+    // Intentional: if there is nothing to commit, the working tree is already clean.
+    // backupCommitCreated remains false and rollback is not needed.
   } else {
     backupCommitCreated = true;
   }
@@ -659,7 +738,8 @@ async function runApplyFilesMode(releaseDir, latestVersion) {
         // keep default
       }
     }
-    const newManifest = JSON.parse(fs.readFileSync(releaseManifestPath, 'utf8'));
+    // manifest was already parsed above — deep-copy to avoid mutating the original
+    const newManifest = JSON.parse(JSON.stringify(manifest));
     newManifest.language = localLanguage;
     fs.writeFileSync(manifestPath, JSON.stringify(newManifest, null, 2) + '\n', 'utf8');
 
@@ -746,10 +826,15 @@ if (mode === '--check') {
     process.exit(1);
   });
 } else if (mode === '--apply-files') {
-  const releaseDir = args[1];
+  const releaseDir    = args[1];
   const latestVersion = args[2];
   if (!releaseDir || !latestVersion) {
     process.stderr.write('Usage: node clade-update.js --apply-files <releaseDir> <version>\n');
+    process.exit(1);
+  }
+  // Validate version string to prevent commit-message injection and path manipulation
+  if (!/^[\w.\-]+$/.test(latestVersion)) {
+    process.stderr.write(`Invalid version string: ${latestVersion}\n`);
     process.exit(1);
   }
   runApplyFilesMode(releaseDir, latestVersion).catch((error) => {
