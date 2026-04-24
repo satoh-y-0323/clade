@@ -21,14 +21,27 @@ const BASH_LOG_PATH = path.join(__dirname, '..', 'instincts', 'raw', 'bash-log.j
 // ---- 日付ユーティリティ --------------------------------------------------
 
 /**
+ * Date オブジェクトから { yyyy, mm, dd, hh, min, sec } の文字列パーツを返す。
+ * @param {Date} d
+ * @returns {{ yyyy: string, mm: string, dd: string, hh: string, min: string, sec: string }}
+ */
+function formatDateParts(d) {
+  return {
+    yyyy: String(d.getFullYear()),
+    mm:   String(d.getMonth() + 1).padStart(2, '0'),
+    dd:   String(d.getDate()).padStart(2, '0'),
+    hh:   String(d.getHours()).padStart(2, '0'),
+    min:  String(d.getMinutes()).padStart(2, '0'),
+    sec:  String(d.getSeconds()).padStart(2, '0'),
+  };
+}
+
+/**
  * 今日の日付を YYYYMMDD 形式で返す。
  * @returns {string}
  */
 function getTodayStr() {
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const dd = String(now.getDate()).padStart(2, '0');
+  const { yyyy, mm, dd } = formatDateParts(new Date());
   return `${yyyy}${mm}${dd}`;
 }
 
@@ -37,13 +50,7 @@ function getTodayStr() {
  * @returns {string}
  */
 function getScannedAt() {
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const dd = String(now.getDate()).padStart(2, '0');
-  const hh = String(now.getHours()).padStart(2, '0');
-  const min = String(now.getMinutes()).padStart(2, '0');
-  const sec = String(now.getSeconds()).padStart(2, '0');
+  const { yyyy, mm, dd, hh, min, sec } = formatDateParts(new Date());
   return `${yyyy}-${mm}-${dd} ${hh}:${min}:${sec}`;
 }
 
@@ -238,14 +245,14 @@ function parseListItems(text) {
   const lines = text.split(/\r?\n/);
   const items = [];
   let currentTitle = null;
-  const bodyLines = [];
+  let bodyLines = [];
 
   for (const line of lines) {
     const listMatch = line.match(/^[-*]\s+(.+)/);
     if (listMatch) {
       if (currentTitle !== null) {
         items.push({ title: currentTitle, body: bodyLines.join(' ').trim() });
-        bodyLines.length = 0;
+        bodyLines = [];
       }
       currentTitle = listMatch[1].replace(/:.*$/, '').trim();
       const afterColon = listMatch[1].includes(':') ? listMatch[1].split(':').slice(1).join(':').trim() : '';
@@ -263,6 +270,11 @@ function parseListItems(text) {
 /**
  * 制御文字（ANSI エスケープシーケンスを含む）を除去して端末出力を安全にする。
  * --json モードでは呼び出さない（JSON には生データをそのまま含める）。
+ *
+ * 正規表現 [\x00-\x1f\x7f-\x9f] は ASCII 制御文字（C0）と Latin-1 C1 制御文字
+ * （U+0080〜U+009F）を除去する。JavaScript の String.replace は code-point ベースで
+ * 動作するため、U+0080 以上のバイト値を持つマルチバイト文字（日本語など）は
+ * 除去されない。例: "あ"（U+3042）は範囲外なので安全。
  * @param {string} str
  * @returns {string}
  */
@@ -294,7 +306,7 @@ function extractFromBashLog() {
     let record;
     try {
       record = JSON.parse(line);
-    } catch (_) {
+    } catch {
       continue;
     }
 

@@ -25,14 +25,27 @@ const SECTION_SUCCEEDED = '## Approaches That Worked (with evidence)';
 // ---- Date utilities ----------------------------------------------------------
 
 /**
+ * Returns zero-padded string parts { yyyy, mm, dd, hh, min, sec } for a Date object.
+ * @param {Date} d
+ * @returns {{ yyyy: string, mm: string, dd: string, hh: string, min: string, sec: string }}
+ */
+function formatDateParts(d) {
+  return {
+    yyyy: String(d.getFullYear()),
+    mm:   String(d.getMonth() + 1).padStart(2, '0'),
+    dd:   String(d.getDate()).padStart(2, '0'),
+    hh:   String(d.getHours()).padStart(2, '0'),
+    min:  String(d.getMinutes()).padStart(2, '0'),
+    sec:  String(d.getSeconds()).padStart(2, '0'),
+  };
+}
+
+/**
  * Returns today's date as a YYYYMMDD string.
  * @returns {string}
  */
 function getTodayStr() {
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const dd = String(now.getDate()).padStart(2, '0');
+  const { yyyy, mm, dd } = formatDateParts(new Date());
   return `${yyyy}${mm}${dd}`;
 }
 
@@ -41,13 +54,7 @@ function getTodayStr() {
  * @returns {string}
  */
 function getScannedAt() {
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const dd = String(now.getDate()).padStart(2, '0');
-  const hh = String(now.getHours()).padStart(2, '0');
-  const min = String(now.getMinutes()).padStart(2, '0');
-  const sec = String(now.getSeconds()).padStart(2, '0');
+  const { yyyy, mm, dd, hh, min, sec } = formatDateParts(new Date());
   return `${yyyy}-${mm}-${dd} ${hh}:${min}:${sec}`;
 }
 
@@ -243,14 +250,14 @@ function parseListItems(text) {
   const lines = text.split(/\r?\n/);
   const items = [];
   let currentTitle = null;
-  const bodyLines = [];
+  let bodyLines = [];
 
   for (const line of lines) {
     const listMatch = line.match(/^[-*]\s+(.+)/);
     if (listMatch) {
       if (currentTitle !== null) {
         items.push({ title: currentTitle, body: bodyLines.join(' ').trim() });
-        bodyLines.length = 0;
+        bodyLines = [];
       }
       currentTitle = listMatch[1].replace(/:.*$/, '').trim();
       const afterColon = listMatch[1].includes(':') ? listMatch[1].split(':').slice(1).join(':').trim() : '';
@@ -268,6 +275,12 @@ function parseListItems(text) {
 /**
  * Strips control characters (including ANSI escape sequences) for safe terminal output.
  * Not called in --json mode (raw data is preserved in JSON output).
+ *
+ * The regex [\x00-\x1f\x7f-\x9f] removes ASCII C0 control characters and
+ * Latin-1 C1 control characters (U+0080–U+009F). Because JavaScript's
+ * String.replace operates on code points (not bytes), multibyte characters
+ * such as CJK characters are not affected. Example: "あ" (U+3042) is outside
+ * the removed range and passes through safely.
  * @param {string} str
  * @returns {string}
  */
@@ -299,7 +312,7 @@ function extractFromBashLog() {
     let record;
     try {
       record = JSON.parse(line);
-    } catch (_) {
+    } catch {
       continue;
     }
 
