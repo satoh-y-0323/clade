@@ -34,6 +34,13 @@ if (commentFileIdx !== -1) {
     console.error('[record-approval] --comment-file オプションにファイルパスが必要です。');
     process.exit(1);
   }
+  // --comment-file パス検証: プロジェクトルート配下のみ許可
+  const resolvedCommentPath = path.resolve(commentFilePath);
+  const allowedRoot = path.resolve(process.cwd());
+  if (!resolvedCommentPath.startsWith(allowedRoot + path.sep)) {
+    console.error('[record-approval] --comment-file にはリポジトリ内のパスのみ指定できます。');
+    process.exit(1);
+  }
   try {
     commentFromFile = fs.readFileSync(commentFilePath, 'utf-8').replace(/\r?\n$/, '');
   } catch (err) {
@@ -55,6 +62,12 @@ if (!reportFile || !approvedArg || !reportType) {
 
 const approved = approvedArg.toLowerCase() === 'yes';
 const comment  = commentFromFile !== null ? commentFromFile : (commentParts.join(' ') || '');
+
+// reportType バリデーション: 許可リストに含まれない場合は警告（実行は継続）
+const VALID_REPORT_TYPES = ['requirements', 'architecture', 'plan', 'test', 'code-review', 'security-review'];
+if (!VALID_REPORT_TYPES.includes(reportType)) {
+  console.warn(`[record-approval] 警告: 未知の reportType: ${reportType}`);
+}
 
 const reportsDir    = path.join(process.cwd(), '.claude', 'reports');
 const approvalsFile = path.join(reportsDir, 'approvals.jsonl');

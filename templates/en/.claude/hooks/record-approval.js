@@ -34,6 +34,13 @@ if (commentFileIdx !== -1) {
     console.error('[record-approval] --comment-file option requires a file path.');
     process.exit(1);
   }
+  // --comment-file path guard: only allow paths within the project root
+  const resolvedCommentPath = path.resolve(commentFilePath);
+  const allowedRoot = path.resolve(process.cwd());
+  if (!resolvedCommentPath.startsWith(allowedRoot + path.sep)) {
+    console.error('[record-approval] --comment-file must be a path within the repository.');
+    process.exit(1);
+  }
   try {
     commentFromFile = fs.readFileSync(commentFilePath, 'utf-8').replace(/\r?\n$/, '');
   } catch (err) {
@@ -55,6 +62,12 @@ if (!reportFile || !approvedArg || !reportType) {
 
 const approved = approvedArg.toLowerCase() === 'yes';
 const comment  = commentFromFile !== null ? commentFromFile : (commentParts.join(' ') || '');
+
+// reportType validation: warn on unknown values (execution continues for backward compatibility)
+const VALID_REPORT_TYPES = ['requirements', 'architecture', 'plan', 'test', 'code-review', 'security-review'];
+if (!VALID_REPORT_TYPES.includes(reportType)) {
+  console.warn(`[record-approval] Warning: unknown reportType: ${reportType}`);
+}
 
 const reportsDir    = path.join(process.cwd(), '.claude', 'reports');
 const approvalsFile = path.join(reportsDir, 'approvals.jsonl');
