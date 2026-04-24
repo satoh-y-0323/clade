@@ -50,7 +50,14 @@ function resolveContent(args) {
       console.error('[write-file] --file option requires a file path.');
       process.exit(1);
     }
-    return fs.readFileSync(filePath, 'utf-8');
+    // Path traversal protection: restrict --file to files within the project root
+    const resolvedFilePath = path.resolve(filePath);
+    const allowedRoot = path.resolve(process.cwd());
+    if (!resolvedFilePath.startsWith(allowedRoot + path.sep) && resolvedFilePath !== allowedRoot) {
+      console.error('[write-file] --file must point to a path inside the repository.');
+      process.exit(1);
+    }
+    return fs.readFileSync(resolvedFilePath, 'utf-8');
   }
   return readStdin();
 }
@@ -82,14 +89,21 @@ if (require.main === module) {
   const args = process.argv.slice(2);
 
   const pathIdx = args.indexOf('--path');
-  if (pathIdx === -1 || !args[pathIdx + 1]) {
+  const rawTargetPath = args[pathIdx + 1];
+  if (pathIdx === -1 || !rawTargetPath || rawTargetPath.startsWith('--')) {
     console.error('[write-file] Usage:');
     console.error('  new:    node write-file.js --path <targetPath> [--file <contentFile>]');
     console.error('  append: node write-file.js --path <targetPath> --append [--file <contentFile>]');
     process.exit(1);
   }
 
-  const targetPath = args[pathIdx + 1];
+  // Path traversal protection: restrict write destination to within the project root
+  const targetPath = path.resolve(rawTargetPath);
+  const allowedRoot = path.resolve(process.cwd());
+  if (!targetPath.startsWith(allowedRoot + path.sep) && targetPath !== allowedRoot) {
+    console.error('[write-file] Paths outside the repository are not allowed.');
+    process.exit(1);
+  }
   const isAppend   = args.includes('--append');
   const content    = resolveContent(args);
 

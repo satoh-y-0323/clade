@@ -50,7 +50,14 @@ function resolveContent(args) {
       console.error('[write-file] --file オプションにファイルパスが必要です。');
       process.exit(1);
     }
-    return fs.readFileSync(filePath, 'utf-8');
+    // パストラバーサル対策: --file の参照先をプロジェクトルート配下に限定する
+    const resolvedFilePath = path.resolve(filePath);
+    const allowedRoot = path.resolve(process.cwd());
+    if (!resolvedFilePath.startsWith(allowedRoot + path.sep) && resolvedFilePath !== allowedRoot) {
+      console.error('[write-file] --file にはリポジトリ内のパスのみ指定できます。');
+      process.exit(1);
+    }
+    return fs.readFileSync(resolvedFilePath, 'utf-8');
   }
   return readStdin();
 }
@@ -82,14 +89,21 @@ if (require.main === module) {
   const args = process.argv.slice(2);
 
   const pathIdx = args.indexOf('--path');
-  if (pathIdx === -1 || !args[pathIdx + 1]) {
+  const rawTargetPath = args[pathIdx + 1];
+  if (pathIdx === -1 || !rawTargetPath || rawTargetPath.startsWith('--')) {
     console.error('[write-file] 使い方:');
     console.error('  新規: node write-file.js --path <targetPath> [--file <contentFile>]');
     console.error('  追記: node write-file.js --path <targetPath> --append [--file <contentFile>]');
     process.exit(1);
   }
 
-  const targetPath = args[pathIdx + 1];
+  // パストラバーサル対策: 書き込み先をプロジェクトルート配下に限定する
+  const targetPath = path.resolve(rawTargetPath);
+  const allowedRoot = path.resolve(process.cwd());
+  if (!targetPath.startsWith(allowedRoot + path.sep) && targetPath !== allowedRoot) {
+    console.error('[write-file] リポジトリ外へのパスは指定できません。');
+    process.exit(1);
+  }
   const isAppend   = args.includes('--append');
   const content    = resolveContent(args);
 
