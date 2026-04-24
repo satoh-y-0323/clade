@@ -28,8 +28,10 @@ function readSettingsLocal() {
   if (!fs.existsSync(SETTINGS_LOCAL_PATH)) return {};
   try {
     return JSON.parse(fs.readFileSync(SETTINGS_LOCAL_PATH, 'utf8'));
-  } catch {
-    return {};
+  } catch (e) {
+    console.error(`[manage-playwright-origins] ${SETTINGS_LOCAL_PATH} の JSON パースに失敗しました: ${e.message}`);
+    console.error('ファイルの内容を確認してください。');
+    process.exit(1);
   }
 }
 
@@ -40,8 +42,8 @@ function writeSettingsLocal(data) {
 function getExtraOrigins(settings) {
   const args = settings?.mcpServers?.playwright?.args || [];
   const idx = args.indexOf('--allowed-origins');
-  if (idx === -1) return [];
-  const originsStr = args[idx + 1] || '';
+  if (idx === -1 || idx + 1 >= args.length) return [];
+  const originsStr = args[idx + 1];
   return originsStr
     .split(';')
     .map(o => o.trim())
@@ -85,6 +87,16 @@ if (command === 'list') {
   if (BASE_ORIGINS.includes(origin)) {
     console.log(`"${origin}" はベースオリジンに既に含まれています。追加不要です。`);
     process.exit(0);
+  }
+
+  // URL バリデーション: セパレーター文字・改行・制御文字の混入を防ぐ
+  if (origin.includes(';') || origin.includes('\n') || origin.includes('\r') || /[\x00-\x1f]/.test(origin)) {
+    console.error(`エラー: オリジンにセミコロン・改行・制御文字を含めることはできません: "${origin}"`);
+    process.exit(1);
+  }
+  if (!origin.startsWith('http://') && !origin.startsWith('https://')) {
+    console.error(`エラー: オリジンは http:// または https:// で始まる必要があります: "${origin}"`);
+    process.exit(1);
   }
 
   const extras = getExtraOrigins(settings);
