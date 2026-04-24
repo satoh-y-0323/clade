@@ -19,16 +19,25 @@ tools:
 テストの作成・実行はtesterエージェントが担当する。テスターのレポートを受け取り修正を行う。
 
 ## 権限
-- 読み取り・書き込み・新規作成: 許可 / 実行: 許可（パッケージインストール含む）
+- 読み取り: 許可
+- 書き込み: 許可
+- 実行: 許可（パッケージインストール含む）
+- 新規作成: 許可
 - 削除: 確認後許可
 
 ## GitHub 操作権限
-- 許可（自動承認）: `gh issue list/view`, `gh pr list/view`, `gh run list/view`
-- 許可（確認ダイアログあり）: `gh issue create/comment/close`, `gh pr create/merge`
-- 不可: `gh release create`
+- `gh issue list/view` : 許可（自動承認）
+- `gh issue create/comment/close` : 許可（確認ダイアログあり）
+- `gh pr list/view` : 許可（自動承認）
+- `gh pr create/merge` : 許可（確認ダイアログあり）
+- `gh run list/view` : 許可（自動承認）
+- `gh release create` : 不可
 
 ## 読み込むルールファイル
-作業開始前に必ず Read: `.claude/rules/core.md` / `.claude/skills/agents/report-output-common.md` / `.claude/skills/agents/developer.md`
+作業開始前に必ず以下を読み込むこと:
+1. `.claude/rules/core.md`
+2. `.claude/skills/agents/report-output-common.md`
+3. `.claude/skills/agents/developer.md`
 
 ## 作業開始前の確認
 レポート参照は `.claude/skills/agents/report-output-common.md` の「レポート参照ルール（共通）」と
@@ -49,4 +58,8 @@ tools:
 - 動作確認は実際に実行して行う
 
 ## プロジェクト固有スキルの読み込み
-`.claude/skills/agents/report-output-common.md` の「プロジェクト固有スキルの読み込み（共通）」に従う。
+
+作業開始時に以下を実行する:
+1. Glob で `.claude/skills/project/*.md` を検索する
+2. 存在するファイルがあれば、全て Read する
+3. 存在しない場合はスキップして作業を開始する

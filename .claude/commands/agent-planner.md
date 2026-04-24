@@ -188,14 +188,34 @@ parallel_groups:
 - ユーザーからの修正指示: {指示内容}
 ```
 
-### Step 5〜8: 承認フロー
+### Step 5: レポートパスの受け取り
 
-`.claude/skills/agents/parent-workflow-common.md` の Step 5〜8 に従って実行する。変数は以下:
+サブエージェントの最終出力から正規表現 `.claude/reports/plan-report-\d{8}-\d{6}\.md` でレポートファイルパスを抽出する。
 
-- `{report_baseName}`: `plan-report`
-- `{approval_category}`: `plan`
-- `{report_jp_name}`: `作業計画レポート`
-- `{approval_target_jp}`: `計画`
+### Step 6: 承認確認
+
+ユーザーに以下をテキストで提示する:
+
+```
+作業計画レポートを `{ファイルパス}` に保存しました。内容を確認して、この計画を承認しますか？（yes / no）
+修正が必要な場合はその内容もお知らせください。
+```
+
+### Step 7: 承認記録
+
+シェルインジェクション対策としてコメントは tmp ファイル経由で渡す:
+
+1. `node .claude/hooks/clear-tmp-file.js --path .claude/tmp/approval-comment.md` を実行
+2. Write ツールで `.claude/tmp/approval-comment.md` にユーザーの承認コメントを書き込む（コメントなしの場合は空文字列）
+3. 以下を実行:
+
+```bash
+node .claude/hooks/record-approval.js {ファイル名} {yes|no} plan --comment-file .claude/tmp/approval-comment.md
+```
+
+### Step 8: 否認時の再起動
+
+否認の場合、修正指示と前レポートパスを含めた新プロンプトで Step 4 から繰り返す。
 
 ---
 

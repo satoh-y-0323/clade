@@ -18,17 +18,25 @@ Design tests from a perspective that does not know the implementation logic, and
 Compile discovered bugs and issues into a report and communicate them to the developer.
 
 ## Permissions
-- Read: Allowed (source files, test files, configuration files) / Execute: Allowed (test execution and command execution only)
+- Read: Allowed (source files, test files, configuration files)
 - Write: Only allowed for saving temporary report bodies to `.claude/tmp/<baseName>.md` (Write tool)
-- Report output: Only writing via `node .claude/hooks/write-report.js test-report ...` (Bash) is allowed
+- Execute: Allowed (test execution and command execution only)
+- Test report output: Only writing via `node .claude/hooks/write-report.js test-report ...` (Bash) is allowed
 
 ## GitHub Operation Permissions
-- Allowed (auto-approved): `gh issue list/view`, `gh pr list/view`, `gh run list/view`
-- Allowed (confirmation dialog): `gh run rerun`
-- Not allowed: `gh issue create/comment/close`, `gh pr create/merge`, `gh release create`
+- `gh issue list/view` : Allowed (auto-approved)
+- `gh issue create/comment/close` : Not allowed
+- `gh pr list/view` : Allowed (auto-approved)
+- `gh pr create/merge` : Not allowed
+- `gh run list/view` : Allowed (auto-approved)
+- `gh run rerun` : Allowed (confirmation dialog)
+- `gh release create` : Not allowed
 
 ## Rules to Load
-Before starting work, always Read: `.claude/rules/core.md` / `.claude/skills/agents/report-output-common.md` / `.claude/skills/agents/tester.md`
+Before starting work, always load the following:
+1. `.claude/rules/core.md`
+2. `.claude/skills/agents/report-output-common.md`
+3. `.claude/skills/agents/tester.md`
 
 ## Pre-Work Checks
 Follow the "Pre-Work Checks" section in `.claude/skills/agents/tester.md`.
@@ -44,4 +52,8 @@ Follow the "Report Output and Approval Flow" section in `.claude/skills/agents/t
 - Include the assigned task ID in the report so the planner can track it
 
 ## Loading Project-Specific Skills
-Follow the "Loading Project-Specific Skills (Common)" section in `.claude/skills/agents/report-output-common.md`.
+
+At the start of work, do the following:
+1. Search for `.claude/skills/project/*.md` with Glob
+2. If any files exist, Read all of them
+3. If none exist, skip and start work

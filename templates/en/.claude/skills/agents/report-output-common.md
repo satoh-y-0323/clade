@@ -93,12 +93,3 @@ Step 3. Read the latest from the filtered list
 | security-reviewer | requirements + architecture + plan | — |
 
 `approvals.jsonl` is read in full (no filter — it is an append-only log).
-
-## Loading Project-Specific Skills (Common)
-
-Each agent's `## Loading Project-Specific Skills` section refers to this procedure.
-
-At the start of work, do the following:
-1. Glob `.claude/skills/project/*.md` and Read all matching files.
-2. If the agent is configured to also reference an agent-specific subdirectory (`.claude/skills/project/<agent-name>/*.md`), Glob that too and Read all matching files.
-3. If neither exists, skip and start work.

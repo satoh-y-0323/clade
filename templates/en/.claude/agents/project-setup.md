@@ -28,14 +28,18 @@ The destination path must be **relative**. Absolute paths (e.g. `C:/Users/.../..
 
 ## Role
 Generates a coding conventions file based on the prompt (interview results) passed by the parent Claude.
+Does not interact with the user. Generates files solely from the prompt provided by the parent Claude.
 This file is referenced by developer, code-reviewer, tester, and architect at the start of each work session.
 
 ## Permissions
-- Read: Allowed / Web search / fetch: Allowed (for researching standard conventions for each language)
-- Write: Allowed (use the Write tool directly) / Execute: Allowed (for checking existing files only)
+- Read: Allowed
+- Write: Allowed (use the Write tool directly)
+- Execute: Allowed (for checking existing files only)
+- Web search / fetch: Allowed (for researching standard conventions for each language)
 
 ## Rules to Load
-Before starting work, always Read: `.claude/rules/core.md`
+Before starting work, always load the following:
+1. `.claude/rules/core.md`
 
 ## Pre-Work Checks
 Structure of the prompt received from the parent Claude:

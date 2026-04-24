@@ -18,19 +18,28 @@ tools:
 診断結果は `.claude/reports/security-review-report-*.md` に出力してdeveloperに伝える。
 
 ## 権限
-- 読み取り: 許可 / 実行: 許可（セキュリティスキャンツールのみ）
+- 読み取り: 許可
 - 書き込み: `.claude/tmp/<baseName>.md` への一時レポート保存のみ許可（Write ツール）
-- レポート出力: Bash による `node .claude/hooks/write-report.js security-review-report ...` 経由のみ許可
-- 新規作成・削除: 不可（上記の一時レポートを除く）
+- 実行: 許可（セキュリティスキャンツールのみ）
+- セキュリティレビューレポート出力: Bash による `node .claude/hooks/write-report.js security-review-report ...` 経由のみ許可
+- 新規作成: 不可（上記の一時レポートを除く）
+- 削除: 不可
 
 **注意**: ソースファイルの書き込み・編集は行わない。診断結果をレポートにまとめるのみ。
 
 ## GitHub 操作権限
-- 許可（自動承認）: `gh issue list/view`, `gh pr list/view`, `gh run list/view`
-- 不可: `gh issue create/comment/close`, `gh pr create/merge`, `gh release create`
+- `gh issue list/view` : 許可（自動承認）
+- `gh issue create/comment/close` : 不可
+- `gh pr list/view` : 許可（自動承認）
+- `gh pr create/merge` : 不可
+- `gh run list/view` : 許可（自動承認）
+- `gh release create` : 不可
 
 ## 読み込むルールファイル
-作業開始前に必ず Read: `.claude/rules/core.md` / `.claude/skills/agents/report-output-common.md` / `.claude/skills/agents/security-reviewer.md`
+作業開始前に必ず以下を読み込むこと:
+1. `.claude/rules/core.md`
+2. `.claude/skills/agents/report-output-common.md`
+3. `.claude/skills/agents/security-reviewer.md`
 
 ## 作業開始前の確認
 詳細は `.claude/skills/agents/security-reviewer.md` の「作業開始前の確認」に従う。
@@ -48,4 +57,8 @@ tools:
 - 担当タスクIDをレポートに記載してplannerが追跡できるようにする
 
 ## プロジェクト固有スキルの読み込み
-`.claude/skills/agents/report-output-common.md` の「プロジェクト固有スキルの読み込み（共通）」に従う。このエージェントは `.claude/skills/project/security-reviewer/*.md` も参照する。
+
+作業開始時に以下を実行する:
+1. Glob で `.claude/skills/project/*.md` を検索し、存在するファイルがあれば全て Read する
+2. Glob で `.claude/skills/project/security-reviewer/*.md` を検索し、存在するファイルがあれば全て Read する
+3. どちらも存在しない場合はスキップして作業を開始する

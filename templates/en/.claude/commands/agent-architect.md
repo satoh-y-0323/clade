@@ -93,33 +93,70 @@ Organize the user's answers into the following structure:
 - Priority quality characteristics
 - Design premises
 
-### Step 4-8: Sub-agent launch and approval flow
+### Step 4: Single-shot sub-agent launch
 
-Follow `.claude/skills/agents/parent-workflow-common.md` with the following variables:
+Launch with `subagent_type: architect` via the Agent tool. Include the following in the prompt:
 
-- `{agent_type}`: `architect`
-- `{report_baseName}`: `architecture-report`
-- `{approval_category}`: `architecture`
-- `{report_en_name}`: `architecture design report`
-- `{approval_target_en}`: `design`
-- `{request_summary}`: `Create architecture design report`
-- `{extra_output_instructions}`: omit
-- `{prompt_body}`:
-  ```
-  ## Upstream report path
-  - requirements-report: {path or "none"}
+```
+## Work request
+Create architecture design report
 
-  ## Q&A results with user
+## Upstream report path
+- requirements-report: {path or "none"}
 
-  ### Q1: Clarification answers
-  A: {answer}
+## Q&A results with user
 
-  ### Q2: Tradeoff selection
-  A: {answer}
+### Q1: Clarification answers
+A: {answer}
 
-  ### Q3: Constraints and priorities
-  A: {answer}
-  ```
+### Q2: Tradeoff selection
+A: {answer}
+
+### Q3: Constraints and priorities
+A: {answer}
+
+## Output instructions
+- Output destination: `.claude/reports/architecture-report-*.md` (via write-report.js)
+- The final message must include the report file path (format: `File: .claude/reports/architecture-report-YYYYMMDD-HHmmss.md`)
+- Do not use AskUserQuestion / SendMessage
+- Exit after generating the report (approval confirmation is handled by the parent Claude)
+```
+
+For regeneration after rejection, add the following to the prompt:
+```
+## Regeneration mode
+- Previous report: {previous report path}
+- User's revision instructions: {instructions}
+```
+
+### Step 5: Receive report path
+
+Extract the report file path from the sub-agent's final output using the regex `.claude/reports/architecture-report-\d{8}-\d{6}\.md`.
+
+### Step 6: Approval confirmation
+
+Present the following to the user as text:
+
+```
+The architecture design report has been saved to `{file path}`. Please review the content — do you approve this design? (yes / no)
+If revisions are needed, please describe them.
+```
+
+### Step 7: Record approval
+
+To prevent shell injection, pass the comment via a tmp file:
+
+1. Run `node .claude/hooks/clear-tmp-file.js --path .claude/tmp/approval-comment.md`
+2. Use the Write tool to save the user's approval comment to `.claude/tmp/approval-comment.md` (empty string if no comment)
+3. Run:
+
+```bash
+node .claude/hooks/record-approval.js {filename} {yes|no} architecture --comment-file .claude/tmp/approval-comment.md
+```
+
+### Step 8: Restart on rejection
+
+If rejected, repeat from Step 4 with a new prompt that includes the revision instructions and the previous report path.
 
 ---
 

@@ -19,16 +19,25 @@ Act as a senior engineer responsible for implementation, debugging, and refactor
 Test creation and execution are handled by the tester agent. The developer receives and addresses the tester's reports.
 
 ## Permissions
-- Read / Write / Create new: Allowed / Execute: Allowed (including package installation)
+- Read: Allowed
+- Write: Allowed
+- Execute: Allowed (including package installation)
+- Create new: Allowed
 - Delete: Allowed after confirmation
 
 ## GitHub Operation Permissions
-- Allowed (auto-approved): `gh issue list/view`, `gh pr list/view`, `gh run list/view`
-- Allowed (confirmation dialog): `gh issue create/comment/close`, `gh pr create/merge`
-- Not allowed: `gh release create`
+- `gh issue list/view` : Allowed (auto-approved)
+- `gh issue create/comment/close` : Allowed (confirmation dialog)
+- `gh pr list/view` : Allowed (auto-approved)
+- `gh pr create/merge` : Allowed (confirmation dialog)
+- `gh run list/view` : Allowed (auto-approved)
+- `gh release create` : Not allowed
 
 ## Rules to Load
-Before starting work, always Read: `.claude/rules/core.md` / `.claude/skills/agents/report-output-common.md` / `.claude/skills/agents/developer.md`
+Before starting work, always load the following:
+1. `.claude/rules/core.md`
+2. `.claude/skills/agents/report-output-common.md`
+3. `.claude/skills/agents/developer.md`
 
 ## Pre-Work Checks
 For report reading, follow "Report Reading Rules (Common)" in `.claude/skills/agents/report-output-common.md`
@@ -49,4 +58,8 @@ In particular, confirm the following before starting work:
 - Confirm operation by actually running the code
 
 ## Loading Project-Specific Skills
-Follow the "Loading Project-Specific Skills (Common)" section in `.claude/skills/agents/report-output-common.md`.
+
+At the start of work, do the following:
+1. Search for `.claude/skills/project/*.md` with Glob
+2. If any files exist, Read all of them
+3. If none exist, skip and start work

@@ -15,15 +15,19 @@ tools:
 
 ## Role
 Act as a meta-agent that generates business-specific agent file sets based on the prompt (Q&A results and approved workflow design) passed by the parent Claude.
+Does not interact with the user. Generates files solely from the prompt provided by the parent Claude.
 
 ## Permissions
-- Read: Allowed / Execute: Allowed (file search, clear-tmp-file.js, and write-report.js only)
+- Read: Allowed
 - Write: Allowed (creating new agent files and skill files)
 - Edit: Allowed (updating the `## User Agents` section in `CLAUDE.md`)
+- Execute: Allowed (file search, clear-tmp-file.js, and write-report.js only)
 - Delete: Not allowed
 
 ## Rules to Load
-Before starting work, always Read: `.claude/rules/core.md` / `.claude/skills/agents/report-output-common.md`
+Before starting work, always load the following:
+1. `.claude/rules/core.md`
+2. `.claude/skills/agents/report-output-common.md`
 
 ## Pre-Work Checks
 Structure of the prompt received from the parent Claude:
@@ -198,7 +202,9 @@ Does not interact with the user. Generates deliverables solely from the prompt p
 - Delete: Not allowed
 
 ## Rules to Load
-Before starting work, always Read: `.claude/rules/core.md` / `.claude/skills/agents/report-output-common.md`
+Before starting work, always load the following:
+1. `.claude/rules/core.md`
+2. `.claude/skills/agents/report-output-common.md`
 
 ## Work Flow
 {Steps for generating deliverables}
@@ -269,4 +275,8 @@ Approval confirmation is handled by the parent Claude — do not perform it in t
 - After generating files, include the file list in the final message and exit (approval confirmation is handled by the parent Claude)
 
 ## Loading Project-Specific Skills
-Follow the "Loading Project-Specific Skills (Common)" section in `.claude/skills/agents/report-output-common.md`.
+
+At the start of work, do the following:
+1. Search for `.claude/skills/project/*.md` with Glob
+2. If any files exist, Read all of them
+3. If none exist, skip and start work

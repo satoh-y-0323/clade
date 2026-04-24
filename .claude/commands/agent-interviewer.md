@@ -87,45 +87,82 @@ Glob で `.claude/reports/requirements-report-*.md` を検索する。
 - 制約・懸念
 - 既存コード調査結果（機能追加・バグ修正の場合）
 
-### Step 4〜8: サブエージェント起動・承認フロー
+### Step 4: サブエージェントの一発起動
 
-`.claude/skills/agents/parent-workflow-common.md` に従って実行する。変数は以下:
+Agent ツールで `subagent_type: interviewer` を指定して起動する。プロンプトに以下を含める:
 
-- `{agent_type}`: `interviewer`
-- `{report_baseName}`: `requirements-report`
-- `{approval_category}`: `requirements`
-- `{report_jp_name}`: `要件定義レポート`
-- `{approval_target_jp}`: `レポート`
-- `{request_summary}`: `要件定義レポートの作成`
-- `{extra_output_instructions}`: 省略
-- `{prompt_body}`:
-  ```
-  ## 上流レポートのパス（存在する場合）
-  - 前回 requirements-report: {パス または「なし」}
+```
+## 作業依頼
+要件定義レポートの作成
 
-  ## ユーザーとの Q&A 結果
+## 上流レポートのパス（存在する場合）
+- 前回 requirements-report: {パス または「なし」}
 
-  ### Q1: 作業種別
-  A: {回答}
+## ユーザーとの Q&A 結果
 
-  ### Q2: やりたいこと
-  A: {回答}
+### Q1: 作業種別
+A: {回答}
 
-  ### Q3: 理由・背景
-  A: {回答}
+### Q2: やりたいこと
+A: {回答}
 
-  ### Q4: 完了条件
-  A: {回答}
+### Q3: 理由・背景
+A: {回答}
 
-  ### Q5: 優先度
-  A: {回答}
+### Q4: 完了条件
+A: {回答}
 
-  ### Q6: 制約・懸念
-  A: {回答}
+### Q5: 優先度
+A: {回答}
 
-  ### 既存コード調査結果（機能追加・バグ修正の場合）
-  {調査結果またはなし}
-  ```
+### Q6: 制約・懸念
+A: {回答}
+
+### 既存コード調査結果（機能追加・バグ修正の場合）
+{調査結果またはなし}
+
+## 出力指示
+- 出力先: `.claude/reports/requirements-report-*.md`（write-report.js 経由）
+- 最終メッセージにレポートファイルパスを必ず含めること（形式: `ファイル: .claude/reports/requirements-report-YYYYMMDD-HHmmss.md`）
+- AskUserQuestion / SendMessage は使わないこと
+- レポート生成後は終了すること（承認確認は親 Claude が担当）
+```
+
+否認後の再生成時はプロンプトに以下を追加する:
+```
+## 再生成モード
+- 前回レポート: {前回レポートパス}
+- ユーザーからの修正指示: {指示内容}
+```
+
+### Step 5: レポートパスの受け取り
+
+サブエージェントの最終出力から正規表現 `.claude/reports/requirements-report-\d{8}-\d{6}\.md` でレポートファイルパスを抽出する。
+
+### Step 6: 承認確認
+
+ユーザーに以下をテキストで提示する:
+
+```
+要件定義レポートを `{ファイルパス}` に保存しました。内容を確認して、このレポートを承認しますか？（yes / no）
+修正が必要な場合はその内容もお知らせください。
+```
+
+### Step 7: 承認記録
+
+シェルインジェクション対策としてコメントは tmp ファイル経由で渡す:
+
+1. `node .claude/hooks/clear-tmp-file.js --path .claude/tmp/approval-comment.md` を実行
+2. Write ツールで `.claude/tmp/approval-comment.md` にユーザーの承認コメントを書き込む（コメントなしの場合は空文字列）
+3. 以下を実行:
+
+```bash
+node .claude/hooks/record-approval.js {ファイル名} {yes|no} requirements --comment-file .claude/tmp/approval-comment.md
+```
+
+### Step 8: 否認時の再起動
+
+否認の場合、修正指示と前レポートパスを含めた新プロンプトで Step 4 から繰り返す。
 
 ---
 

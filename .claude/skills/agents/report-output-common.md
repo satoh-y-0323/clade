@@ -93,12 +93,3 @@ Step 3. フィルタ後のリストから最新を Read
 | security-reviewer | requirements + architecture + plan | — |
 
 `approvals.jsonl` は履歴ファイル全体を Read する（フィルタ不要・追記専用ファイル）。
-
-## プロジェクト固有スキルの読み込み（共通）
-
-各エージェントの `## プロジェクト固有スキルの読み込み` セクションは以下の手順を指す。
-
-作業開始時に以下を実行する:
-1. Glob で `.claude/skills/project/*.md` を検索し、存在するファイルがあれば全て Read する
-2. エージェント固有のサブディレクトリ（`.claude/skills/project/<agent-name>/*.md`）を参照するよう指定されている場合は、そちらも Glob 検索して存在するファイルを全て Read する
-3. どちらも存在しない場合はスキップして作業を開始する

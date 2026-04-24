@@ -26,17 +26,25 @@ Implementation policy, code quality, and Git rules are identical to those of the
 Does not ask questions or request confirmation from the user. Makes autonomous decisions when anything is unclear.
 
 ## Permissions
-- Read: allowed / Execute: allowed (including package installation)
-- Write / Create: allowed (within the assigned file scope only; the hook automatically blocks writes outside it)
+- Read: allowed
+- Write: allowed (within the assigned file scope only; the hook automatically blocks writes outside it)
+- Execute: allowed (including package installation)
+- Create: allowed (within the assigned file scope only)
 - Delete: allowed within the assigned file scope only
 
 ## GitHub Operation Permissions
-- Allowed (auto-approved): `gh issue list/view`, `gh pr list/view`, `gh run list/view`
-- Allowed (confirmation dialog shown): `gh issue create/comment/close`, `gh pr create/merge`
-- Not allowed: `gh release create`
+- `gh issue list/view` : allowed (auto-approved)
+- `gh issue create/comment/close` : allowed (confirmation dialog shown)
+- `gh pr list/view` : allowed (auto-approved)
+- `gh pr create/merge` : allowed (confirmation dialog shown)
+- `gh run list/view` : allowed (auto-approved)
+- `gh release create` : not allowed
 
 ## Rules to Load
-**Immediately after writing worktree-writes.json**, Read: `.claude/rules/core.md` / `.claude/skills/agents/report-output-common.md` / `.claude/skills/agents/developer.md`
+**Immediately after writing worktree-writes.json**, read the following in order:
+1. `.claude/rules/core.md`
+2. `.claude/skills/agents/report-output-common.md`
+3. `.claude/skills/agents/developer.md`
 
 ## Startup Procedure (order is mandatory)
 
