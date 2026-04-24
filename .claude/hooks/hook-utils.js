@@ -5,7 +5,15 @@
  */
 
 'use strict';
-const fs = require('fs');
+const fs             = require('fs');
+const path           = require('path');
+const { execSync }   = require('child_process');
+
+// ---------------------------------------------------------------------------
+// セッション JSON ブロック用定数
+// ---------------------------------------------------------------------------
+const SESSION_JSON_START = '<!-- CLADE:SESSION:JSON';
+const SESSION_JSON_END   = '-->';
 
 /**
  * stdin から Claude Code hook の入力 JSON を読み込んで返す。
@@ -109,9 +117,6 @@ function upsertFactsSection(tmpContent, factsSection) {
 // セッション JSON ブロック
 // ---------------------------------------------------------------------------
 
-const SESSION_JSON_START = '<!-- CLADE:SESSION:JSON';
-const SESSION_JSON_END   = '-->';
-
 /**
  * セッションデータから CLADE:SESSION:JSON ブロック文字列を生成する。
  * @param {object} data
@@ -175,7 +180,6 @@ function upsertSessionJsonBlock(tmpContent, data) {
  */
 function isWorktree() {
   try {
-    const { execSync } = require('child_process');
     const gitDir    = execSync('git rev-parse --git-dir',        { encoding: 'utf8' }).trim();
     const commonDir = execSync('git rev-parse --git-common-dir', { encoding: 'utf8' }).trim();
     return gitDir !== commonDir;
@@ -191,7 +195,6 @@ function isWorktree() {
  */
 function getProjectRoot() {
   try {
-    const { execSync } = require('child_process');
     const gitCommonDir = execSync('git rev-parse --git-common-dir', { encoding: 'utf8' }).trim();
     const absGitDir = path.isAbsolute(gitCommonDir)
       ? gitCommonDir

@@ -5,7 +5,15 @@
  */
 
 'use strict';
-const fs = require('fs');
+const fs             = require('fs');
+const path           = require('path');
+const { execSync }   = require('child_process');
+
+// ---------------------------------------------------------------------------
+// Session JSON block constants
+// ---------------------------------------------------------------------------
+const SESSION_JSON_START = '<!-- CLADE:SESSION:JSON';
+const SESSION_JSON_END   = '-->';
 
 /**
  * Reads the Claude Code hook input JSON from stdin and returns it.
@@ -109,9 +117,6 @@ function upsertFactsSection(tmpContent, factsSection) {
 // Session JSON block
 // ---------------------------------------------------------------------------
 
-const SESSION_JSON_START = '<!-- CLADE:SESSION:JSON';
-const SESSION_JSON_END   = '-->';
-
 /**
  * Builds a CLADE:SESSION:JSON block string from session data.
  * @param {object} data
@@ -175,7 +180,6 @@ function upsertSessionJsonBlock(tmpContent, data) {
  */
 function isWorktree() {
   try {
-    const { execSync } = require('child_process');
     const gitDir    = execSync('git rev-parse --git-dir',        { encoding: 'utf8' }).trim();
     const commonDir = execSync('git rev-parse --git-common-dir', { encoding: 'utf8' }).trim();
     return gitDir !== commonDir;
@@ -191,7 +195,6 @@ function isWorktree() {
  */
 function getProjectRoot() {
   try {
-    const { execSync } = require('child_process');
     const gitCommonDir = execSync('git rev-parse --git-common-dir', { encoding: 'utf8' }).trim();
     const absGitDir = path.isAbsolute(gitCommonDir)
       ? gitCommonDir
