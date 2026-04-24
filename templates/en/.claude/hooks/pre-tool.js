@@ -14,13 +14,25 @@ if (tool !== 'Bash') process.exit(0);
 
 const cmd = (hookInput.tool_input || {}).command || '';
 
+// If cmd is not a string, skip (safe fallback)
+if (typeof cmd !== 'string') process.exit(0);
+
 // git force push: warn (do not block)
-if (/git\s+push\s+(--force|-f)\b/.test(cmd)) {
+// --force-with-lease is also a form of force-overwrite, so include it in the warning
+if (/git\s+push\s+(--force|--force-with-lease|-f)\b/.test(cmd)) {
   process.stderr.write('[PreToolUse WARNING] Detected a git force push. Please confirm with the user before running it.\n');
 }
 
-// rm -rf / or ~: block
-if (/rm\s+-rf\s+[/~]/.test(cmd)) {
+// rm -rf variants (dangerous target): block
+// Covers -rf / -fr / -r -f / -f -r / --recursive --force and similar variants
+if (
+  /rm\s+-rf\s+[/~.]/.test(cmd)  ||   // rm -rf /path, rm -rf ~, rm -rf ./path
+  /rm\s+-fr\s+[/~.]/.test(cmd)  ||   // rm -fr /path
+  /rm\s+-r\s+-f\s+/.test(cmd)   ||   // rm -r -f path
+  /rm\s+-f\s+-r\s+/.test(cmd)   ||   // rm -f -r path
+  /rm\s+--recursive\s+--force\s+/.test(cmd) ||
+  /rm\s+--force\s+--recursive\s+/.test(cmd)
+) {
   process.stderr.write(`[PreToolUse BLOCK] Blocked a dangerous command: ${cmd}\n`);
   process.exit(2);
 }
