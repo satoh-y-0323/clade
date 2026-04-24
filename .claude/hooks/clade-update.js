@@ -26,6 +26,7 @@ const RELEASES_LATEST_PATH = `/repos/${GITHUB_REPO}/releases/latest`;
 
 const MAX_REDIRECTS = 5;
 const MAX_RESPONSE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_DOWNLOAD_SIZE = 100 * 1024 * 1024; // 100MB
 
 const CLADE_MARKER_START = '<!-- CLADE:START -->';
 const CLADE_MARKER_END = '<!-- CLADE:END -->';
@@ -153,8 +154,16 @@ function httpsDownload(url, extraHeaders = {}, _redirectCount = 0) {
         return;
       }
 
+      let totalSize = 0;
       const chunks = [];
-      res.on('data', (chunk) => chunks.push(chunk));
+      res.on('data', (chunk) => {
+        totalSize += chunk.length;
+        if (totalSize > MAX_DOWNLOAD_SIZE) {
+          req.destroy(new Error('ダウンロードサイズが上限を超えました'));
+          return;
+        }
+        chunks.push(chunk);
+      });
       res.on('end', () => {
         if (res.statusCode >= 400) {
           reject(new Error(`HTTP ${res.statusCode}`));
@@ -331,15 +340,16 @@ async function extractZip(zipBuffer, destDir) {
 
   // PowerShell の Expand-Archive を使用（Windows 環境向け）
   // 展開先ディレクトリ内に zip を展開する
-  // シングルクォートと $ をエスケープ（PowerShell 文字列内の変数展開防止）
-  const escapedZipPath = zipPath.replace(/'/g, "''").replace(/\$/g, '`$');
-  const escapedDestDir = destDir.replace(/'/g, "''").replace(/\$/g, '`$');
+  // -LiteralPath を使用することで PowerShell のワイルドカード展開を無効化し、
+  // シングルクォートエスケープ（''）でコマンド文字列インジェクションを防止する
+  const escapedZipPath = zipPath.replace(/'/g, "''");
+  const escapedDestDir = destDir.replace(/'/g, "''");
   const result = spawnSync(
     'powershell',
     [
       '-NoProfile',
       '-Command',
-      `Expand-Archive -Force -Path '${escapedZipPath}' -DestinationPath '${escapedDestDir}'`,
+      `Expand-Archive -Force -LiteralPath '${escapedZipPath}' -DestinationPath '${escapedDestDir}'`,
     ],
     { encoding: 'utf8' }
   );
