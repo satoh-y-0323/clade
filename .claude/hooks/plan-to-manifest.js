@@ -92,6 +92,11 @@ function getIndent(line) {
 
 function parseScalar(s) {
   s = s.trim();
+  // クォートされていない場合のみインラインコメントを除去
+  if (!s.startsWith('"') && !s.startsWith("'")) {
+    const commentIdx = s.indexOf(' #');
+    if (commentIdx !== -1) s = s.slice(0, commentIdx).trim();
+  }
   if (s.startsWith('[') && s.endsWith(']')) {
     const inner = s.slice(1, -1).trim();
     if (!inner) return [];
@@ -327,6 +332,8 @@ function buildPrompt(group, absolutePlanPath) {
       'security-reviewer': 'security-review-report',
     };
     const reportBaseName = reportBaseNames[agent] || `${agent}-report`;
+    // """ デリミタ内へのパス直接埋め込み対策: パス内の """ を ''' に置換
+    const safePlanPath = absolutePlanPath.replace(/"""/g, "'''");
 
     return [
       `Use the Agent tool with subagent_type "${agent}" to review the code.`,
@@ -337,7 +344,7 @@ function buildPrompt(group, absolutePlanPath) {
       `${reportBaseName} の作成（自動実行）`,
       ``,
       `## plan-report`,
-      `${absolutePlanPath}`,
+      `${safePlanPath}`,
       ``,
       `## レビュー対象タスク`,
       `${tasks.join(', ')}`,

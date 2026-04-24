@@ -92,6 +92,11 @@ function getIndent(line) {
 
 function parseScalar(s) {
   s = s.trim();
+  // Strip inline comments only when the value is not quoted
+  if (!s.startsWith('"') && !s.startsWith("'")) {
+    const commentIdx = s.indexOf(' #');
+    if (commentIdx !== -1) s = s.slice(0, commentIdx).trim();
+  }
   if (s.startsWith('[') && s.endsWith(']')) {
     const inner = s.slice(1, -1).trim();
     if (!inner) return [];
@@ -318,6 +323,8 @@ function buildPrompt(group, absolutePlanPath) {
       'security-reviewer': 'security-review-report',
     };
     const reportBaseName = reportBaseNames[agent] || `${agent}-report`;
+    // Sanitize path against """ delimiter injection: replace """ with ''' before embedding
+    const safePlanPath = absolutePlanPath.replace(/"""/g, "'''");
 
     return [
       `Use the Agent tool with subagent_type "${agent}" to review the code.`,
@@ -328,7 +335,7 @@ function buildPrompt(group, absolutePlanPath) {
       `Generate ${reportBaseName} (automated execution)`,
       ``,
       `## plan-report`,
-      `${absolutePlanPath}`,
+      `${safePlanPath}`,
       ``,
       `## Review target tasks`,
       `${tasks.join(', ')}`,
