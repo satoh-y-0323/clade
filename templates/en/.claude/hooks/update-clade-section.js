@@ -154,10 +154,13 @@ function removeRuleFromContent(content, ruleName) {
     return { newContent: content, notFound: true };
   }
 
-  // Remove all occurrences within the section, handling both CRLF and LF
+  // Remove all occurrences within the section, handling both CRLF and LF.
+  // The final replaceAll handles the edge case where ruleEntry is the last line
+  // with no trailing newline (e.g. file does not end with a newline).
   const newSection = sectionContent
     .replaceAll(ruleEntry + '\r\n', '')
-    .replaceAll(ruleEntry + '\n', '');
+    .replaceAll(ruleEntry + '\n', '')
+    .replaceAll(ruleEntry, '');
 
   return {
     newContent: content.slice(0, markerIdx) + newSection + content.slice(searchEnd),

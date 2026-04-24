@@ -155,9 +155,11 @@ function removeRuleFromContent(content, ruleName) {
   }
 
   // セクション内のみ対象に、CRLF / LF の両方を replaceAll で全削除
+  // 末尾改行なしでファイルが終わるエッジケース（ruleEntry が最終行）にも対応する
   const newSection = sectionContent
     .replaceAll(ruleEntry + '\r\n', '')
-    .replaceAll(ruleEntry + '\n', '');
+    .replaceAll(ruleEntry + '\n', '')
+    .replaceAll(ruleEntry, '');
 
   return {
     newContent: content.slice(0, markerIdx) + newSection + content.slice(searchEnd),
