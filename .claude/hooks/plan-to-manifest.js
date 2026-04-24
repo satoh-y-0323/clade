@@ -112,7 +112,6 @@ function parseYaml(text) {
     if (s.startsWith('[') && s.endsWith(']')) {
       const inner = s.slice(1, -1).trim();
       if (!inner) return [];
-      // 注意: 要素値にカンマを含むケースは未対応（既知の制限）
       return inner.split(',').map(x => x.trim()).filter(Boolean);
     }
     if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {

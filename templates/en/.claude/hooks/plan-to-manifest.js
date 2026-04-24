@@ -112,7 +112,6 @@ function parseYaml(text) {
     if (s.startsWith('[') && s.endsWith(']')) {
       const inner = s.slice(1, -1).trim();
       if (!inner) return [];
-      // Note: elements with commas in their values are not supported (known limitation)
       return inner.split(',').map(x => x.trim()).filter(Boolean);
     }
     if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
