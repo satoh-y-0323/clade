@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.27.0] - 2026-04-25
+
+### New
+
+- `plan-updater` エージェントを追加。developer 実装完了後・reviewer 実行前に自動呼び出しされ、plan-report YAML フロントマターから reviewer 並列グループを削除する。これにより reviewer フェーズは常に逐次実行となる（将来: `git diff --stat` による自動判断に拡張予定）
+- `core.md`: Step 5.5 として plan-updater 呼び出しをワークフローに追加
+- `agent-planner.md`: developer 並列化条件を観測可能な基準（実装ファイル3つ以上・複雑なロジック・ファイル重複なし）に変更。clade-parallel の固定オーバーヘッド（10分以上）の注記を追加
+- `plan-to-manifest.js`: タイムアウト値を全面改訂（developer small: 50分/40分 idle、medium: 100分/60分、large: 200分/80分、reviewer small: 50分、medium: 150分、large: 750分）
+
+---
+
 ## [v1.26.0] - 2026-04-24
 
 ### New
