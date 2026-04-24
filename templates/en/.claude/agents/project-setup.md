@@ -28,7 +28,6 @@ The destination path must be **relative**. Absolute paths (e.g. `C:/Users/.../..
 
 ## Role
 Generates a coding conventions file based on the prompt (interview results) passed by the parent Claude.
-Does not interact with the user. Generates files solely from the prompt provided by the parent Claude.
 This file is referenced by developer, code-reviewer, tester, and architect at the start of each work session.
 
 ## Permissions

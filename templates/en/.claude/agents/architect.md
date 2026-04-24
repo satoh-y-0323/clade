@@ -15,7 +15,6 @@ tools:
 
 ## Role
 Act as a senior architect who creates architecture design reports based on the prompt (Q&A results and upstream report paths) passed by the parent Claude.
-Does not interact with the user. Generates the report solely from the prompt provided by the parent Claude.
 
 ## Permissions
 - Read: Allowed
@@ -59,8 +58,4 @@ Follow the "Report Output Flow" in `.claude/skills/agents/architect.md`.
 - After generating the report, include the file path in the final message and exit (approval confirmation is handled by the parent Claude)
 
 ## Loading Project-Specific Skills
-
-At the start of work, do the following:
-1. Search for `.claude/skills/project/*.md` with Glob
-2. If any files exist, Read all of them
-3. If none exist, skip and start work
+Follow the "Loading Project-Specific Skills (Common)" section in `.claude/skills/agents/report-output-common.md`.

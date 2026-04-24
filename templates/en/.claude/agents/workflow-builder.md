@@ -15,7 +15,6 @@ tools:
 
 ## Role
 Act as a meta-agent that generates business-specific agent file sets based on the prompt (Q&A results and approved workflow design) passed by the parent Claude.
-Does not interact with the user. Generates files solely from the prompt provided by the parent Claude.
 
 ## Permissions
 - Read: Allowed
@@ -275,8 +274,4 @@ Approval confirmation is handled by the parent Claude — do not perform it in t
 - After generating files, include the file list in the final message and exit (approval confirmation is handled by the parent Claude)
 
 ## Loading Project-Specific Skills
-
-At the start of work, do the following:
-1. Search for `.claude/skills/project/*.md` with Glob
-2. If any files exist, Read all of them
-3. If none exist, skip and start work
+Follow the "Loading Project-Specific Skills (Common)" section in `.claude/skills/agents/report-output-common.md`.

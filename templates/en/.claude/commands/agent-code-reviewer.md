@@ -27,67 +27,30 @@ Organize the following:
 - Upstream report paths (if present)
 - Special notes from the user (areas to focus on, etc.)
 
-### Step 4: Single-shot sub-agent launch
+### Step 4-8: Sub-agent launch and approval flow
 
-Launch with `subagent_type: code-reviewer` via the Agent tool. Include the following in the prompt:
+Follow `.claude/skills/agents/parent-workflow-common.md` with the following variables:
 
-```
-## Work request
-Create code review report
+- `{agent_type}`: `code-reviewer`
+- `{report_baseName}`: `code-review-report`
+- `{approval_category}`: `code-review`
+- `{report_en_name}`: `code review report`
+- `{approval_target_en}`: `report`
+- `{request_summary}`: `Create code review report`
+- `{extra_output_instructions}`: omit
+- `{prompt_body}`:
+  ```
+  ## Upstream report paths (if present)
+  - requirements-report: {path or "none"}
+  - architecture-report: {path or "none"}
+  - plan-report: {path or "none"}
 
-## Upstream report paths (if present)
-- requirements-report: {path or "none"}
-- architecture-report: {path or "none"}
-- plan-report: {path or "none"}
+  ## Review targets
+  {target files, PR, or commit range}
 
-## Review targets
-{target files, PR, or commit range}
-
-## Special notes
-{areas the user wants focused on, or "none"}
-
-## Output instructions
-- Output destination: `.claude/reports/code-review-report-*.md` (via write-report.js)
-- The final message must include the report file path (format: `File: .claude/reports/code-review-report-YYYYMMDD-HHmmss.md`)
-- Do not use AskUserQuestion / SendMessage
-- Exit after generating the report (approval confirmation is handled by the parent Claude)
-```
-
-For regeneration after rejection, add the following to the prompt:
-```
-## Regeneration mode
-- Previous report: {previous report path}
-- User's revision instructions: {instructions}
-```
-
-### Step 5: Receive report path
-
-Extract the report file path from the sub-agent's final output using the regex `.claude/reports/code-review-report-\d{8}-\d{6}\.md`.
-
-### Step 6: Approval confirmation
-
-Present the following to the user as text:
-
-```
-The code review report has been saved to `{file path}`. Please review the content — do you approve this report? (yes / no)
-If revisions are needed, please describe them.
-```
-
-### Step 7: Record approval
-
-To prevent shell injection, pass the comment via a tmp file:
-
-1. Run `node .claude/hooks/clear-tmp-file.js --path .claude/tmp/approval-comment.md`
-2. Use the Write tool to save the user's approval comment to `.claude/tmp/approval-comment.md` (empty string if no comment)
-3. Run:
-
-```bash
-node .claude/hooks/record-approval.js {filename} {yes|no} code-review --comment-file .claude/tmp/approval-comment.md
-```
-
-### Step 8: Restart on rejection
-
-If rejected, repeat from Step 4 with a new prompt that includes the revision instructions and the previous report path.
+  ## Special notes
+  {areas the user wants focused on, or "none"}
+  ```
 
 ---
 

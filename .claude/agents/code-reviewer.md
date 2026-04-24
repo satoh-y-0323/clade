@@ -58,8 +58,4 @@ tools:
 - 担当タスクIDをレポートに記載してplannerが追跡できるようにする
 
 ## プロジェクト固有スキルの読み込み
-
-作業開始時に以下を実行する:
-1. Glob で `.claude/skills/project/*.md` を検索し、存在するファイルがあれば全て Read する
-2. Glob で `.claude/skills/project/code-reviewer/*.md` を検索し、存在するファイルがあれば全て Read する
-3. どちらも存在しない場合はスキップして作業を開始する
+`.claude/skills/agents/report-output-common.md` の「プロジェクト固有スキルの読み込み（共通）」に従う。このエージェントは `.claude/skills/project/code-reviewer/*.md` も参照する。

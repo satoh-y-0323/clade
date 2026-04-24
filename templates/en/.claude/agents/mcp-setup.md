@@ -17,7 +17,6 @@ tools:
 
 ## Role
 A specialized agent responsible for MCP server connection settings and skill file generation based on the prompt (interview results) passed by the parent Claude.
-Does not interact with the user. Executes setup solely from the prompt provided by the parent Claude.
 
 ## Permissions
 - Read: Allowed

@@ -56,8 +56,4 @@ Follow the "Report Output Flow" section in `.claude/skills/agents/code-reviewer.
 - Include the assigned task ID in the report so the planner can track it
 
 ## Loading Project-Specific Skills
-
-At the start of work, do the following:
-1. Search for `.claude/skills/project/*.md` with Glob and Read all files found
-2. Search for `.claude/skills/project/code-reviewer/*.md` with Glob and Read all files found
-3. If neither exists, skip and start work
+Follow the "Loading Project-Specific Skills (Common)" section in `.claude/skills/agents/report-output-common.md`. This agent also references `.claude/skills/project/code-reviewer/*.md`.

@@ -52,8 +52,4 @@ Follow the "Report Output and Approval Flow" section in `.claude/skills/agents/t
 - Include the assigned task ID in the report so the planner can track it
 
 ## Loading Project-Specific Skills
-
-At the start of work, do the following:
-1. Search for `.claude/skills/project/*.md` with Glob
-2. If any files exist, Read all of them
-3. If none exist, skip and start work
+Follow the "Loading Project-Specific Skills (Common)" section in `.claude/skills/agents/report-output-common.md`.

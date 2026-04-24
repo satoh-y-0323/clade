@@ -190,34 +190,14 @@ For regeneration after rejection, add the following to the prompt:
 - User's revision instructions: {instructions}
 ```
 
-### Step 5: Receive report path
+### Step 5-8: Approval flow
 
-Extract the report file path from the sub-agent's final output using the regex `.claude/reports/plan-report-\d{8}-\d{6}\.md`.
+Follow Steps 5-8 of `.claude/skills/agents/parent-workflow-common.md` with the following variables:
 
-### Step 6: Approval confirmation
-
-Present the following to the user as text:
-
-```
-The work plan report has been saved to `{file path}`. Please review the content — do you approve this plan? (yes / no)
-If revisions are needed, please describe them.
-```
-
-### Step 7: Record approval
-
-To prevent shell injection, pass the comment via a tmp file:
-
-1. Run `node .claude/hooks/clear-tmp-file.js --path .claude/tmp/approval-comment.md`
-2. Use the Write tool to save the user's approval comment to `.claude/tmp/approval-comment.md` (empty string if no comment)
-3. Run:
-
-```bash
-node .claude/hooks/record-approval.js {filename} {yes|no} plan --comment-file .claude/tmp/approval-comment.md
-```
-
-### Step 8: Restart on rejection
-
-If rejected, repeat from Step 4 with a new prompt that includes the revision instructions and the previous report path.
+- `{report_baseName}`: `plan-report`
+- `{approval_category}`: `plan`
+- `{report_en_name}`: `work plan report`
+- `{approval_target_en}`: `plan`
 
 ---
 

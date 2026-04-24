@@ -87,82 +87,45 @@ Organize the user's answers into the following structure:
 - Constraints/concerns
 - Existing code investigation results (for feature additions or bug fixes)
 
-### Step 4: Single-shot sub-agent launch
+### Step 4-8: Sub-agent launch and approval flow
 
-Launch with `subagent_type: interviewer` via the Agent tool. Include the following in the prompt:
+Follow `.claude/skills/agents/parent-workflow-common.md` with the following variables:
 
-```
-## Work request
-Create requirements definition report
+- `{agent_type}`: `interviewer`
+- `{report_baseName}`: `requirements-report`
+- `{approval_category}`: `requirements`
+- `{report_en_name}`: `requirements definition report`
+- `{approval_target_en}`: `report`
+- `{request_summary}`: `Create requirements definition report`
+- `{extra_output_instructions}`: omit
+- `{prompt_body}`:
+  ```
+  ## Upstream report path (if present)
+  - Previous requirements-report: {path or "none"}
 
-## Upstream report path (if present)
-- Previous requirements-report: {path or "none"}
+  ## Q&A results with user
 
-## Q&A results with user
+  ### Q1: Type of work
+  A: {answer}
 
-### Q1: Type of work
-A: {answer}
+  ### Q2: What you want
+  A: {answer}
 
-### Q2: What you want
-A: {answer}
+  ### Q3: Reason/background
+  A: {answer}
 
-### Q3: Reason/background
-A: {answer}
+  ### Q4: Completion criteria
+  A: {answer}
 
-### Q4: Completion criteria
-A: {answer}
+  ### Q5: Priority
+  A: {answer}
 
-### Q5: Priority
-A: {answer}
+  ### Q6: Constraints/concerns
+  A: {answer}
 
-### Q6: Constraints/concerns
-A: {answer}
-
-### Existing code investigation results (for feature additions or bug fixes)
-{results or none}
-
-## Output instructions
-- Output destination: `.claude/reports/requirements-report-*.md` (via write-report.js)
-- The final message must include the report file path (format: `File: .claude/reports/requirements-report-YYYYMMDD-HHmmss.md`)
-- Do not use AskUserQuestion / SendMessage
-- Exit after generating the report (approval confirmation is handled by the parent Claude)
-```
-
-For regeneration after rejection, add the following to the prompt:
-```
-## Regeneration mode
-- Previous report: {previous report path}
-- User's revision instructions: {instructions}
-```
-
-### Step 5: Receive report path
-
-Extract the report file path from the sub-agent's final output using the regex `.claude/reports/requirements-report-\d{8}-\d{6}\.md`.
-
-### Step 6: Approval confirmation
-
-Present the following to the user as text:
-
-```
-The requirements definition report has been saved to `{file path}`. Please review the content — do you approve this report? (yes / no)
-If revisions are needed, please describe them.
-```
-
-### Step 7: Record approval
-
-To prevent shell injection, pass the comment via a tmp file:
-
-1. Run `node .claude/hooks/clear-tmp-file.js --path .claude/tmp/approval-comment.md`
-2. Use the Write tool to save the user's approval comment to `.claude/tmp/approval-comment.md` (empty string if no comment)
-3. Run:
-
-```bash
-node .claude/hooks/record-approval.js {filename} {yes|no} requirements --comment-file .claude/tmp/approval-comment.md
-```
-
-### Step 8: Restart on rejection
-
-If rejected, repeat from Step 4 with a new prompt that includes the revision instructions and the previous report path.
+  ### Existing code investigation results (for feature additions or bug fixes)
+  {results or none}
+  ```
 
 ---
 
