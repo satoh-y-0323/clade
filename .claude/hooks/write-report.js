@@ -80,9 +80,15 @@ const isAppend = modeOrContent === 'append';
 
 if (isNew) {
   // 新規出力モード
-  const content    = resolveContent(rest);
-  const timestamp  = generateTimestamp();
-  const outputPath = resolveNewPath(baseName, timestamp);
+  const content   = resolveContent(rest);
+  const timestamp = generateTimestamp();
+  let outputPath;
+  try {
+    outputPath = resolveNewPath(baseName, timestamp);
+  } catch (err) {
+    console.error(err.message);
+    process.exit(1);
+  }
 
   writeToFile(outputPath, content);
 
