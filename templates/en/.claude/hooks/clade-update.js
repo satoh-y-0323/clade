@@ -634,6 +634,7 @@ async function runApplyMode() {
   }
 
   // 3. Download and extract release asset
+  // (temporaryDir is created here; cleanup is guaranteed by the finally block below)
   const temporaryDir = fs.mkdtempSync(path.join(os.tmpdir(), 'clade-update-'));
 
   try {
@@ -784,6 +785,12 @@ function runRollbackMode() {
   }
 
   const latestMessage = getLatestCommitMessage();
+  // Note: isBackupCommitMessage uses prefix-only matching (startsWith).
+  // A commit manually crafted with the same prefix could pass this check.
+  // However, exploiting this requires local git write access, at which point
+  // direct repository manipulation is already possible — so the residual risk is low.
+  // If stronger guarantees are needed, consider recording the backup commit hash
+  // to a file and using `git reset --hard <hash>` instead.
   if (!isBackupCommitMessage(latestMessage)) {
     process.stderr.write(
       'The latest commit is not a backup commit. Please run --apply first.\n'
