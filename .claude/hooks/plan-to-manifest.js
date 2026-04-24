@@ -13,15 +13,15 @@ const path = require('path');
 // ===== scale → timeout マッピング表（一元管理） =====
 const SCALE_TIMEOUTS = {
   developer: {
-    small:  { timeout_sec: 900,  idle_timeout_sec: 600 },
-    medium: { timeout_sec: 1800, idle_timeout_sec: 900 },
-    large:  { timeout_sec: 3600, idle_timeout_sec: 1200 },
+    small:  { timeout_sec: 3000,  idle_timeout_sec: 2400 },
+    medium: { timeout_sec: 6000,  idle_timeout_sec: 3600 },
+    large:  { timeout_sec: 12000, idle_timeout_sec: 4800 },
   },
   reviewer: {
     // reviewer は idle_timeout_sec を設定しない（runner.py が read_only で強制 None にする）
-    small:  { timeout_sec: 600 },
-    medium: { timeout_sec: 1800 },
-    large:  { timeout_sec: 9000 },
+    small:  { timeout_sec: 3000 },
+    medium: { timeout_sec: 9000 },
+    large:  { timeout_sec: 45000 },
   },
 };
 

@@ -101,6 +101,17 @@ Step 5. /agent-tester → テスト再実行・test-report 出力・承認
 
 ### フェーズ4: レビュー・計画更新
 
+#### Step 5.5: plan-updater の実行
+
+Step 5 完了後・Step 6+7 の前に、Agent ツールで `subagent_type: plan-updater` を起動する。
+プロンプトに最新の plan-report の絶対パスを渡す。
+
+plan-updater は plan-report の YAML フロントマターから reviewer 並列グループを削除する。
+これにより Step 6+7 は常に逐次実行となる。
+
+> **将来の拡張:** plan-updater の内部ロジックで `git diff --stat` の変更ファイル数を確認し、
+> 大規模レビューの場合のみ reviewer グループを残す自動判断を実装予定。
+
 #### Step 6+7: レビュー実行
 
 plan-report の YAML フロントマターに `phase: reviewer` の `parallel_groups` が1件以上存在し、かつ clade-parallel が導入済みの場合 → **clade-parallel で並列実行する:**

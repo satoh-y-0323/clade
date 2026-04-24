@@ -13,15 +13,15 @@ const path = require('path');
 // ===== scale → timeout mapping table (single source of truth) =====
 const SCALE_TIMEOUTS = {
   developer: {
-    small:  { timeout_sec: 900,  idle_timeout_sec: 600 },
-    medium: { timeout_sec: 1800, idle_timeout_sec: 900 },
-    large:  { timeout_sec: 3600, idle_timeout_sec: 1200 },
+    small:  { timeout_sec: 3000,  idle_timeout_sec: 2400 },
+    medium: { timeout_sec: 6000,  idle_timeout_sec: 3600 },
+    large:  { timeout_sec: 12000, idle_timeout_sec: 4800 },
   },
   reviewer: {
     // reviewer does not set idle_timeout_sec (runner.py forces it to None for read_only tasks)
-    small:  { timeout_sec: 600 },
-    medium: { timeout_sec: 1800 },
-    large:  { timeout_sec: 9000 },
+    small:  { timeout_sec: 3000 },
+    medium: { timeout_sec: 9000 },
+    large:  { timeout_sec: 45000 },
   },
 };
 

@@ -101,12 +101,15 @@ The sub-agent prompt must also include the following YAML frontmatter output rul
 ## YAML Frontmatter Output Rules
 
 Output a YAML frontmatter block at the very beginning of the plan-report (before the Markdown body)
-**only when all three conditions below are met**. Omit the frontmatter entirely otherwise.
+**only when all four conditions below are met**. Omit the frontmatter entirely otherwise.
 
 **Conditions:**
 1. Two or more task groups exist that can be implemented independently (no mutual dependencies)
-2. The files each group handles can be clearly separated
-3. Shared interfaces and type definitions can be finalized in advance
+2. Three or more implementation files are involved, with complex logic
+3. The files each group handles can be clearly separated (no file overlap between groups)
+4. Shared interfaces and type definitions can be finalized in advance
+
+> **Note:** clade-parallel has a fixed overhead of 10+ minutes, so parallelization is only worthwhile when a single-agent run would take 30+ minutes. The above conditions are guidelines calibrated to meet this threshold.
 
 **Format:**
 
@@ -148,13 +151,13 @@ Specify small / medium / large for each phase.
 ### Scale selection criteria
 Use qualitative judgment based on task size and complexity. The following are guidelines:
 
-| scale  | Approximate task count | Scenario |
-|--------|------------------------|----------|
-| small  | 1–2 | Small fixes, adding a single file |
-| medium | 3–5 | Typical feature addition (default) |
-| large  | 6+  | Large-scale refactors, simultaneous updates across multiple subsystems |
+| scale  | Approximate task count | timeout | idle_timeout | Scenario |
+|--------|------------------------|---------|-------------|----------|
+| small  | 3–4 | 50 min | 40 min | Minimum threshold for parallelization. 3–4 files, single-feature parallel implementation |
+| medium | 5–8 | 100 min | 60 min | Standard parallel implementation (default). Spans multiple features |
+| large  | 9+  | 200 min | 80 min | Simultaneous implementation across multiple subsystems, large-scale refactor |
 
-Task count is a guideline — even a single task can be large if it involves heavy I/O or a slow build.
+Task count is a guideline — fewer files can still be large if they involve heavy I/O or a slow build.
 
 ### Per-group overrides
 In principle, only write `phase_scales`. If a specific group needs a different timeout, write `timeout_sec` directly on that group (group direct values take priority over phase_scales).

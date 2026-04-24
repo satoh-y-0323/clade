@@ -101,6 +101,17 @@ Reports present at the end of this phase: + test-report
 
 ### Phase 4: Review and plan update
 
+#### Step 5.5: Run plan-updater
+
+After Step 5 completes and before Step 6+7, launch `subagent_type: plan-updater` via the Agent tool.
+Pass the absolute path of the latest plan-report in the prompt.
+
+plan-updater removes reviewer parallel groups from the plan-report YAML frontmatter.
+This ensures Step 6+7 always runs sequentially.
+
+> **Future extension:** plan-updater will be enhanced to check `git diff --stat` change counts
+> and conditionally retain reviewer groups for large-scale reviews.
+
 #### Step 6+7: Run reviews
 
 If the plan-report's YAML frontmatter contains at least one `parallel_groups` entry with `phase: reviewer`, and clade-parallel is installed → **run in parallel via clade-parallel:**
