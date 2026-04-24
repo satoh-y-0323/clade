@@ -25,13 +25,17 @@ function clearFileHistory() {
     const fullPath = path.join(FILE_HISTORY_DIR, entry.name);
     try {
       if (entry.isDirectory()) {
-        fs.rmSync(fullPath, { recursive: true, force: true });
+        fs.rmSync(fullPath, { recursive: true });
       } else {
         fs.unlinkSync(fullPath);
       }
       deleted++;
     } catch (err) {
-      console.warn(`[clear-file-history] Failed to delete: ${entry.name} (${err.message})`);
+      if (err.code === 'ENOENT') {
+        // already gone — skip silently
+      } else {
+        console.warn(`[clear-file-history] Failed to delete: ${entry.name} (${err.message})`);
+      }
     }
   }
 
