@@ -128,6 +128,7 @@ const stdinTimeout = setTimeout(() => {
 }, 5000);
 
 process.stdin.setEncoding('utf8');
+process.stdin.on('error', () => {}); // suppress errors emitted by destroy() calls
 process.stdin.on('data', chunk => {
   raw += chunk;
   if (raw.length > MAX_INPUT) {
