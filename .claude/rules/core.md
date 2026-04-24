@@ -87,10 +87,7 @@ clade-parallel run {developer-manifest パス}
 ```
 完了後、全タスク成功ならユーザーに報告する。失敗タスクがある場合は失敗タスク名・終了コード・stderr の概要をユーザーに報告し、対応方針（再実行 or 逐次モードでの修正）を確認する。
 
-**タイムアウト値の目安:**
-- `timeout_sec`: 小規模 900 / 中規模 1800 / 大規模 3600
-- `idle_timeout_sec`: 小規模 600 / 中規模 900 / 大規模 1200
-- 固定起動コスト（worktree 作成 + claude 起動）が 60〜120 秒あるため、`idle_timeout_sec` は最低でも 300 秒以上に設定すること
+タイムアウトは plan-report の `phase_scales` で指定する（詳細は `.claude/commands/agent-planner.md` 参照）。
 
 上記以外（`phase: developer` グループなし / clade-parallel 未導入）→ **逐次実行:**
 ```
@@ -114,10 +111,9 @@ clade-parallel run {reviewer-manifest パス}
 ```
 完了後、生成された code-review-report と security-review-report を Read してユーザーに報告・承認を求める。
 
-**タイムアウト値の目安:**
-- `timeout_sec`: 小規模 600 / 中規模 1800 / 大規模 9000
-- `idle_timeout_sec`: **設定しないこと**（`read_only: true` タスクでは runner.py が強制 None にする）
-- reviewer タスクの `cwd` は `plan-to-manifest.js` が自動で `../..` を付与する（設定不要）
+タイムアウトは plan-report の `phase_scales.reviewer` で指定する。
+`idle_timeout_sec` は runner.py が read_only タスクで強制 None にするため指定不要。
+reviewer タスクの `cwd` は `plan-to-manifest.js` が自動で `../..` を付与する（設定不要）。
 
 上記以外（`phase: reviewer` グループなし / clade-parallel 未導入）→ **逐次実行:**
 ```

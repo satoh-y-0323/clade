@@ -87,10 +87,7 @@ clade-parallel run {developer-manifest path}
 ```
 After completion, report all-success to the user, or report failed task name, exit code, and stderr summary and ask how to proceed (retry or fix in sequential mode).
 
-**Timeout guidelines:**
-- `timeout_sec`: small 900 / medium 1800 / large 3600
-- `idle_timeout_sec`: small 600 / medium 900 / large 1200
-- Fixed startup cost (worktree creation + claude launch) is 60–120 seconds, so set `idle_timeout_sec` to at least 300 seconds
+Timeouts are specified via `phase_scales` in the plan-report (see `.claude/commands/agent-planner.md` for details).
 
 Otherwise (no `phase: developer` groups / clade-parallel not installed) → **run sequentially:**
 ```
@@ -114,10 +111,9 @@ clade-parallel run {reviewer-manifest path}
 ```
 After completion, Read the generated code-review-report and security-review-report, then report to the user and request approval.
 
-**Timeout guidelines:**
-- `timeout_sec`: small 600 / medium 1800 / large 9000
-- `idle_timeout_sec`: **Do not set** (runner.py forces it to None for `read_only: true` tasks)
-- `cwd` for reviewer tasks is auto-prefixed with `../..` by `plan-to-manifest.js` (no need to set)
+Timeouts are specified via `phase_scales.reviewer` in the plan-report.
+`idle_timeout_sec` is not needed — runner.py forces it to None for read_only tasks.
+`cwd` for reviewer tasks is auto-prefixed with `../..` by `plan-to-manifest.js` (no need to set).
 
 Otherwise (no `phase: reviewer` groups / clade-parallel not installed) → **run sequentially:**
 ```

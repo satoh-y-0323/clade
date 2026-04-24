@@ -10,6 +10,24 @@
 const fs   = require('fs');
 const path = require('path');
 
+// ===== scale → timeout マッピング表（一元管理） =====
+const SCALE_TIMEOUTS = {
+  developer: {
+    small:  { timeout_sec: 900,  idle_timeout_sec: 600 },
+    medium: { timeout_sec: 1800, idle_timeout_sec: 900 },
+    large:  { timeout_sec: 3600, idle_timeout_sec: 1200 },
+  },
+  reviewer: {
+    // reviewer は idle_timeout_sec を設定しない（runner.py が read_only で強制 None にする）
+    small:  { timeout_sec: 600 },
+    medium: { timeout_sec: 1800 },
+    large:  { timeout_sec: 9000 },
+  },
+};
+
+const DEFAULT_SCALE = 'medium';
+const VALID_SCALES  = ['small', 'medium', 'large'];
+
 // ===== 引数チェック =====
 let planReportPath = null;
 let phaseFilter = null;
@@ -153,12 +171,56 @@ function filterGroupsByPhase(groups, filter) {
   return filtered;
 }
 
+/**
+ * group の phase と phase_scales から、使用すべき scale を決定する
+ * @param {object} group - parallel_groups 内のグループ定義
+ * @param {object} phaseScales - plan-report の phase_scales マップ（未指定時は {}）
+ * @returns {string} - 'small' | 'medium' | 'large'
+ */
+function resolveScale(group, phaseScales) {
+  const phase = group.phase || 'developer';
+  const scale = phaseScales[phase];
+  if (scale && VALID_SCALES.includes(scale)) return scale;
+  if (scale) {
+    console.warn(`Warning: phase_scales.${phase} の値 "${scale}" は無効です。"medium" にフォールバックします。有効値: ${VALID_SCALES.join(', ')}`);
+  }
+  return DEFAULT_SCALE;
+}
+
+/**
+ * group の phase と scale から、timeout_sec と idle_timeout_sec を解決する
+ * 優先順位: group 直書き > phase_scales 由来 > medium デフォルト
+ * @param {object} group
+ * @param {object} phaseScales
+ * @returns {{ timeoutSec: number, idleTimeoutSec: number | null }}
+ */
+function resolveTimeouts(group, phaseScales) {
+  const phase  = group.phase || 'developer';
+  const scale  = resolveScale(group, phaseScales);
+  const mapped = (SCALE_TIMEOUTS[phase] && SCALE_TIMEOUTS[phase][scale]) || {};
+
+  const timeoutSec = typeof group.timeout_sec === 'number'
+    ? group.timeout_sec
+    : (typeof mapped.timeout_sec === 'number' ? mapped.timeout_sec : 900);
+
+  // reviewer は idle_timeout_sec を出さない（mapped.idle_timeout_sec が undefined のため自然に null）
+  const idleTimeoutSec = typeof group.idle_timeout_sec === 'number'
+    ? group.idle_timeout_sec
+    : (typeof mapped.idle_timeout_sec === 'number' ? mapped.idle_timeout_sec : null);
+
+  return { timeoutSec, idleTimeoutSec };
+}
+
 // ===== パース & バリデーション =====
 const parsed = parseYaml(frontmatter);
 if (!parsed.parallel_groups) {
   console.error('Error: 並列グループが定義されていません（parallel_groups キーが見つかりません）');
   process.exit(1);
 }
+
+const phaseScales = (parsed.phase_scales && typeof parsed.phase_scales === 'object')
+  ? parsed.phase_scales
+  : {};
 
 const groups = filterGroupsByPhase(parsed.parallel_groups, phaseFilter);
 if (Object.keys(groups).length === 0) {
@@ -316,13 +378,12 @@ function yamlListBlock(items, indent) {
   return items.map(item => `${pad}- ${item}`).join('\n');
 }
 
-function buildTaskYaml(id, group, absolutePlanPath) {
-  const agent          = group.agent || 'worktree-developer';
-  const readOnly       = group.read_only === true;
-  const writes         = Array.isArray(group.writes) ? group.writes : [];
-  const timeoutSec     = typeof group.timeout_sec === 'number' ? group.timeout_sec : 900;
-  const idleTimeoutSec = typeof group.idle_timeout_sec === 'number' ? group.idle_timeout_sec : null;
-  const prompt         = buildPrompt(group, absolutePlanPath);
+function buildTaskYaml(id, group, absolutePlanPath, phaseScales) {
+  const agent                     = group.agent || 'worktree-developer';
+  const readOnly                  = group.read_only === true;
+  const writes                    = Array.isArray(group.writes) ? group.writes : [];
+  const { timeoutSec, idleTimeoutSec } = resolveTimeouts(group, phaseScales);
+  const prompt                    = buildPrompt(group, absolutePlanPath);
 
   // プロンプト: 6スペースでインデント（tasks > list item > prompt key の下）
   const promptIndented = prompt.split('\n').map(l => `      ${l}`).join('\n');
@@ -369,7 +430,7 @@ const orderedKeys = [
   ...groupKeys.filter(k => k !== 'pre_implementation'),
 ];
 
-const taskYamls = orderedKeys.map(key => buildTaskYaml(key, groups[key], absolutePlanPath));
+const taskYamls = orderedKeys.map(key => buildTaskYaml(key, groups[key], absolutePlanPath, phaseScales));
 
 const manifestContent = [
   '---',

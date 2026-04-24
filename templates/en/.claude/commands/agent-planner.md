@@ -111,12 +111,14 @@ Output a YAML frontmatter block at the very beginning of the plan-report (before
 **Format:**
 
 ---
+phase_scales:
+  developer: medium   # default scale for the developer phase (small | medium | large)
+  reviewer: small     # default scale for the reviewer phase (small | medium | large)
+
 parallel_groups:
   pre_implementation:          # Lead group (omit this key entirely if not needed)
     tasks: [T0]
     agent: worktree-developer
-    timeout_sec: 900           # small: 900 / medium: 1800 / large: 3600
-    idle_timeout_sec: 600      # small: 600 / medium: 900 / large: 1200 (accounts for worktree startup 60-120s + read time)
     read_only: false
     writes:
       - src/types/shared.ts
@@ -125,8 +127,6 @@ parallel_groups:
     tasks: [T1, T2]
     agent: worktree-developer
     depends_on: [pre_implementation]   # only when pre_implementation exists
-    timeout_sec: 1200
-    idle_timeout_sec: 600
     read_only: false
     writes:
       - src/user/**
@@ -135,23 +135,50 @@ parallel_groups:
     tasks: [T3, T4]
     agent: worktree-developer
     depends_on: [pre_implementation]
-    timeout_sec: 1200
-    idle_timeout_sec: 600
     read_only: false
     writes:
       - src/auth/**
 ---
 
+## Scale specification (phase_scales)
+
+Write `phase_scales` at the top of the frontmatter (above `parallel_groups`).
+Specify small / medium / large for each phase.
+
+### Scale selection criteria
+Use qualitative judgment based on task size and complexity. The following are guidelines:
+
+| scale  | Approximate task count | Scenario |
+|--------|------------------------|----------|
+| small  | 1–2 | Small fixes, adding a single file |
+| medium | 3–5 | Typical feature addition (default) |
+| large  | 6+  | Large-scale refactors, simultaneous updates across multiple subsystems |
+
+Task count is a guideline — even a single task can be large if it involves heavy I/O or a slow build.
+
+### Per-group overrides
+In principle, only write `phase_scales`. If a specific group needs a different timeout, write `timeout_sec` directly on that group (group direct values take priority over phase_scales).
+
+```yaml
+  group-heavy:
+    tasks: [T5]
+    agent: worktree-developer
+    timeout_sec: 3600  # extend for this group only (overrides phase_scales)
+    read_only: false
+    writes:
+      - src/heavy/**
+```
+
 **Field descriptions:**
 
 | Field | Description |
 |---|---|
+| `phase_scales` | Per-phase scale map. Keys are phase names (`developer` / `reviewer`), values are `small` / `medium` / `large` |
 | `parallel_groups` | Map of groups. Keys are `pre_implementation` / `group-a` / `group-b` / ... |
 | `group-*.name` | Display name for the group |
 | `group-*.tasks` | List of task IDs handled by this group (use inline notation `[T1, T2]`) |
 | `group-*.agent` | Agent to run. Use `worktree-developer` for parallel implementation, `code-reviewer` / `security-reviewer` for parallel review |
-| `group-*.timeout_sec` | Total execution time limit (seconds). Default 900 when omitted. Adjust based on estimated duration of the parallel section |
-| `group-*.idle_timeout_sec` | Silence time limit (seconds). **Required for worktree-developer** (small: 600 / medium: 900 / large: 1200). **Must not be set** for `read_only: true` groups (runner.py forces it to None) |
+| `group-*.timeout_sec` | Total execution time limit (seconds). Normally auto-resolved from `phase_scales`; omit unless overriding individually |
 | `group-*.read_only` | YAML boolean (`true` / `false`). Use `false` for `worktree-developer`, `true` for `code-reviewer` / `security-reviewer` |
 | `group-*.writes` | File patterns this group writes to (**no overlap between groups**; omit for `read_only: true` groups) |
 | `group-*.depends_on` | List of dependency group keys (use inline notation `[pre_implementation]`) |
@@ -164,19 +191,21 @@ parallel_groups:
 **Example with `read_only: true` (parallel review):**
 ```yaml
 ---
+phase_scales:
+  reviewer: small     # default scale for the reviewer phase
+
 parallel_groups:
   code-reviewer:
     phase: reviewer          # picked up by clade-parallel in the reviewer phase
     tasks: [review]
     agent: code-reviewer
-    timeout_sec: 600         # small: 600 / medium: 1800 / large: 9000
     read_only: true
     # cwd is auto-prefixed with ../.. by plan-to-manifest.js (no need to set)
+    # idle_timeout_sec is not needed — runner.py forces it to None for read_only tasks
   security-reviewer:
     phase: reviewer
     tasks: [security]
     agent: security-reviewer
-    timeout_sec: 600         # small: 600 / medium: 1800 / large: 9000
     read_only: true
     # cwd is auto-prefixed with ../.. by plan-to-manifest.js (no need to set)
 ---

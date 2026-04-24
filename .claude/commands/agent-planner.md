@@ -108,12 +108,14 @@ YAML フロントマターを出力する。満たさない場合はフロント
 
 ```yaml
 ---
+phase_scales:
+  developer: medium   # developer フェーズ全体のデフォルト scale（small | medium | large）
+  reviewer: small     # reviewer フェーズ全体のデフォルト scale（small | medium | large）
+
 parallel_groups:
   pre_implementation:          # 先行着手グループ（不要な場合はキーごと省略）
     tasks: [T0]
     agent: worktree-developer
-    timeout_sec: 900           # 小規模:900 / 中規模:1800 / 大規模:3600
-    idle_timeout_sec: 600      # 小規模:600 / 中規模:900 / 大規模:1200（worktree 起動60〜120秒+読み込み時間を考慮）
     read_only: false
     writes:
       - src/types/shared.ts
@@ -122,8 +124,6 @@ parallel_groups:
     tasks: [T1, T2]
     agent: worktree-developer
     depends_on: [pre_implementation]   # pre_implementation がある場合のみ
-    timeout_sec: 1200
-    idle_timeout_sec: 600
     read_only: false
     writes:
       - src/user/**
@@ -132,24 +132,51 @@ parallel_groups:
     tasks: [T3, T4]
     agent: worktree-developer
     depends_on: [pre_implementation]
-    timeout_sec: 1200
-    idle_timeout_sec: 600
     read_only: false
     writes:
       - src/auth/**
 ---
 ```
 
+## scale の指定（phase_scales）
+
+plan-report のフロントマター冒頭（`parallel_groups` より上）に `phase_scales` を記述する。
+各 phase に対して small / medium / large のいずれかを指定する。
+
+### scale の判断基準
+タスクの規模感・複雑度から質的に判断する。以下は目安:
+
+| scale  | 担当タスク数の目安 | 想定シナリオ |
+|--------|-----|-------------|
+| small  | 1〜2 | 小さな修正・単一ファイルの追加 |
+| medium | 3〜5 | 通常の機能追加（デフォルト） |
+| large  | 6以上 | 大規模リファクタ・複数サブシステムの同時更新 |
+
+タスク数は目安であり、1タスクでも I/O が多い・ビルドが重い場合は large を選んでよい。
+
+### 個別調整が必要なグループ
+原則は `phase_scales` のみ書くこと。特定グループだけ timeout を変えたい場合のみ、そのグループに `timeout_sec` を直書きする（グループ直書きが phase_scales より優先される）。
+
+```yaml
+  group-heavy:
+    tasks: [T5]
+    agent: worktree-developer
+    timeout_sec: 3600  # このグループだけ延長（phase_scales より優先される）
+    read_only: false
+    writes:
+      - src/heavy/**
+```
+
 **フィールド説明:**
 
 | フィールド | 内容 |
 |---|---|
+| `phase_scales` | フェーズ単位の scale マップ。キーは phase 名（`developer` / `reviewer`）、値は `small` / `medium` / `large` |
 | `parallel_groups` | グループのマップ。キーは `pre_implementation` / `group-a` / `group-b` / ... |
 | `group-*.name` | グループの表示名 |
 | `group-*.tasks` | そのグループが担当するタスクID のリスト（インライン記法 `[T1, T2]` を使用）|
 | `group-*.agent` | 実行エージェント。並列実装は `worktree-developer`、並列レビューは `code-reviewer` / `security-reviewer` |
-| `group-*.timeout_sec` | 合計実行時間制限（秒）。省略時デフォルト 900。並列化箇所の推定時間に応じて調整する |
-| `group-*.idle_timeout_sec` | 無音時間制限（秒）。**worktree-developer には必須**（小規模:600 / 中規模:900 / 大規模:1200）。`read_only: true` のグループには**設定禁止**（runner.py が強制 None にする） |
+| `group-*.timeout_sec` | 合計実行時間制限（秒）。通常は `phase_scales` から自動解決されるため省略可。個別調整時のみ直書きする |
 | `group-*.read_only` | YAML boolean で指定（`true` / `false`）。`worktree-developer` は `false`、`code-reviewer` / `security-reviewer` は `true` |
 | `group-*.writes` | そのグループが書き込むファイルパターン（**グループ間で重複禁止**。`read_only: true` のグループでは省略）|
 | `group-*.depends_on` | 依存グループのキー名リスト（インライン記法 `[pre_implementation]` を使用）|
@@ -162,19 +189,21 @@ parallel_groups:
 **`read_only: true` を使う場合（並列レビュー）の例:**
 ```yaml
 ---
+phase_scales:
+  reviewer: small     # reviewer フェーズ全体のデフォルト scale
+
 parallel_groups:
   code-reviewer:
     phase: reviewer          # clade-parallel が reviewer フェーズで拾う
     tasks: [review]
     agent: code-reviewer
-    timeout_sec: 600         # 小規模:600 / 中規模:1800 / 大規模:9000
     read_only: true
     # cwd は plan-to-manifest.js が自動で ../.. を付与（設定不要）
+    # idle_timeout_sec は runner.py が read_only で強制 None にするため設定不要
   security-reviewer:
     phase: reviewer
     tasks: [security]
     agent: security-reviewer
-    timeout_sec: 600         # 小規模:600 / 中規模:1800 / 大規模:9000
     read_only: true
     # cwd は plan-to-manifest.js が自動で ../.. を付与（設定不要）
 ---
