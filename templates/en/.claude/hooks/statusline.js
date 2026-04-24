@@ -23,7 +23,7 @@ function renderOutput() {
     // fallback to empty object
   }
 
-  // ANSI color codes
+  // ANSI color / style codes
   const GREEN  = '\x1b[32m';
   const RED    = '\x1b[31m';
   const YELLOW = '\x1b[33m';
@@ -32,6 +32,7 @@ function renderOutput() {
   const DIM    = '\x1b[2m';
   const RESET  = '\x1b[0m';
 
+  // Gauge characters and size
   const BLOCK       = '█';
   const BLOCK_EMPTY = '░';
   const TOTAL_CELLS = 10;
@@ -60,7 +61,7 @@ function renderOutput() {
     // Claude Code passes resets_at as Unix timestamp (seconds), not milliseconds
     const tsMs = typeof resetsAt === 'number' ? resetsAt * 1000 : new Date(resetsAt).getTime();
     const diffMs = tsMs - Date.now();
-    if (diffMs <= 0) return '';
+    if (diffMs <= 0) return 'reset';
     const diffSec = Math.floor(diffMs / 1000);
     const days  = Math.floor(diffSec / 86400);
     const hours = Math.floor((diffSec % 86400) / 3600);
