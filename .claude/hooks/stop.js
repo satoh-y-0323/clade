@@ -19,9 +19,14 @@ const sessionFile = path.join(sessionDir, `${dateStr}.tmp`);
 if (!fs.existsSync(sessionDir)) fs.mkdirSync(sessionDir, { recursive: true });
 
 // セッションファイルが未作成なら雛形を生成
-if (!fs.existsSync(sessionFile)) {
-  fs.writeFileSync(sessionFile, createSessionTemplate(dateStr), 'utf8');
+// wx フラグ（排他的作成）を使うことで existsSync と writeFileSync の間の
+// TOCTOU（Time-of-check Time-of-use）競合を防ぐ
+try {
+  fs.writeFileSync(sessionFile, createSessionTemplate(dateStr), { encoding: 'utf8', flag: 'wx' });
   process.stderr.write(`[Stop] セッションファイルを作成しました: ${sessionFile}\n`);
+} catch (e) {
+  if (e.code !== 'EEXIST') throw e;
+  // 既存ファイルの場合はスキップ（正常）
 }
 
 process.stderr.write('[Stop] セッション終了処理が完了しました\n');
@@ -51,14 +56,18 @@ try {
           errorLines.push(entry);
         }
       } catch (_) {
-        // パース失敗行はスキップ
+        // パース失敗行はスキップ（ファイル破損の可能性があるためエラーカウントに計上）
+        errCount++;
+        recentErrors.push('(JSONL parse error)');
       }
     }
 
     // 直近5件のエラーコマンドを取得
+    // cmd が Markdown 見出し記号（#）で始まる場合、セッションファイルの構造を壊す可能性があるため
+    // 行頭の # をエスケープする（upsertFactsSection が ## を次セクション開始として誤検出する問題を防ぐ）
     recentErrors = errorLines
       .slice(-5)
-      .map(entry => entry.cmd || '(不明)');
+      .map(entry => (entry.cmd || '(不明)').replace(/^#/gm, '\\#'));
   }
 
   // 記録時刻を JST で YYYY-MM-DD HH:mm:ss 形式に変換

@@ -18,10 +18,15 @@ const sessionFile = path.join(sessionDir, `${dateStr}.tmp`);
 
 if (!fs.existsSync(sessionDir)) fs.mkdirSync(sessionDir, { recursive: true });
 
-// Create session file template if it does not exist yet
-if (!fs.existsSync(sessionFile)) {
-  fs.writeFileSync(sessionFile, createSessionTemplate(dateStr), 'utf8');
+// Create session file template if it does not exist yet.
+// Use the 'wx' flag (exclusive create) to prevent a TOCTOU race condition
+// between the existsSync check and the writeFileSync call.
+try {
+  fs.writeFileSync(sessionFile, createSessionTemplate(dateStr), { encoding: 'utf8', flag: 'wx' });
   process.stderr.write(`[Stop] Session file created: ${sessionFile}\n`);
+} catch (e) {
+  if (e.code !== 'EEXIST') throw e;
+  // File already exists — skip (normal)
 }
 
 process.stderr.write('[Stop] Stop hook completed.\n');
@@ -51,14 +56,18 @@ try {
           errorLines.push(entry);
         }
       } catch (_) {
-        // Skip lines that fail to parse
+        // Skip lines that fail to parse (likely file corruption — count as an error for visibility)
+        errCount++;
+        recentErrors.push('(JSONL parse error)');
       }
     }
 
-    // Get up to 5 most recent error commands
+    // Get up to 5 most recent error commands.
+    // Escape leading '#' characters to prevent upsertFactsSection from misinterpreting
+    // Markdown headings (e.g. '## fake-section') in cmd strings as section boundaries.
     recentErrors = errorLines
       .slice(-5)
-      .map(entry => entry.cmd || '(unknown)');
+      .map(entry => (entry.cmd || '(unknown)').replace(/^#/gm, '\\#'));
   }
 
   // Convert recorded time to local YYYY-MM-DD HH:mm:ss format
