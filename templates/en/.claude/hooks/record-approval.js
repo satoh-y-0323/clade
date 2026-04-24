@@ -37,7 +37,7 @@ if (commentFileIdx !== -1) {
   // --comment-file path guard: only allow paths within the project root
   const resolvedCommentPath = path.resolve(commentFilePath);
   const allowedRoot = path.resolve(process.cwd());
-  if (!resolvedCommentPath.startsWith(allowedRoot + path.sep)) {
+  if (!resolvedCommentPath.startsWith(allowedRoot + path.sep) && resolvedCommentPath !== allowedRoot) {
     console.error('[record-approval] --comment-file must be a path within the repository.');
     process.exit(1);
   }

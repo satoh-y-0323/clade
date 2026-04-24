@@ -37,7 +37,7 @@ if (commentFileIdx !== -1) {
   // --comment-file パス検証: プロジェクトルート配下のみ許可
   const resolvedCommentPath = path.resolve(commentFilePath);
   const allowedRoot = path.resolve(process.cwd());
-  if (!resolvedCommentPath.startsWith(allowedRoot + path.sep)) {
+  if (!resolvedCommentPath.startsWith(allowedRoot + path.sep) && resolvedCommentPath !== allowedRoot) {
     console.error('[record-approval] --comment-file にはリポジトリ内のパスのみ指定できます。');
     process.exit(1);
   }
