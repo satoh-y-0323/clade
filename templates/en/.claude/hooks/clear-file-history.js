@@ -5,6 +5,7 @@
  * Called from the custom command /clear-file-history and /init-session.
  */
 
+'use strict';
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -22,12 +23,16 @@ function clearFileHistory() {
 
   for (const entry of entries) {
     const fullPath = path.join(FILE_HISTORY_DIR, entry.name);
-    if (entry.isDirectory()) {
-      fs.rmSync(fullPath, { recursive: true, force: true });
-    } else {
-      fs.unlinkSync(fullPath);
+    try {
+      if (entry.isDirectory()) {
+        fs.rmSync(fullPath, { recursive: true, force: true });
+      } else {
+        fs.unlinkSync(fullPath);
+      }
+      deleted++;
+    } catch (err) {
+      console.warn(`[clear-file-history] Failed to delete: ${entry.name} (${err.message})`);
     }
-    deleted++;
   }
 
   console.log(`[clear-file-history] Deleted ${deleted} item(s).`);
