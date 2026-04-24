@@ -2,10 +2,20 @@
 // Context gauge statusline script
 // Displays context usage + optional rate limit gauges (when plan provides rate_limits data)
 
+// stdin の最大受け入れサイズ（64 KB を超えたら破棄して接続を閉じる）
+const MAX_INPUT = 64 * 1024;
+
 let raw = '';
-process.stdin.setEncoding('utf8');
-process.stdin.on('data', chunk => (raw += chunk));
-process.stdin.on('end', () => {
+let outputDone = false;
+
+/**
+ * 受信済みデータを解析して statusline を stdout に書き出す。
+ * タイムアウト・stdin close のいずれの経路でも1回だけ呼ばれる。
+ */
+function renderOutput() {
+  if (outputDone) return;
+  outputDone = true;
+
   let data = {};
   try {
     data = JSON.parse(raw);
@@ -109,4 +119,23 @@ process.stdin.on('end', () => {
   }
 
   process.stdout.write(parts.join('  ') + '\n');
+}
+
+// stdin が正常に閉じられない場合のフェールセーフ（5秒後にデフォルト値で処理を継続）
+const stdinTimeout = setTimeout(() => {
+  process.stdin.destroy();
+  renderOutput();
+}, 5000);
+
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', chunk => {
+  raw += chunk;
+  if (raw.length > MAX_INPUT) {
+    raw = raw.slice(0, MAX_INPUT);
+    process.stdin.destroy();
+  }
+});
+process.stdin.on('end', () => {
+  clearTimeout(stdinTimeout);
+  renderOutput();
 });
