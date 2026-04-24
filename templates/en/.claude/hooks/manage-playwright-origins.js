@@ -125,6 +125,16 @@ if (command === 'list') {
     process.exit(1);
   }
 
+  // URL validation: prevent injection of separator characters, newlines, and control characters
+  if (origin.includes(';') || origin.includes('\n') || origin.includes('\r') || /[\x00-\x1f]/.test(origin)) {
+    console.error(`Error: Origin must not contain semicolons, newlines, or control characters: "${origin}"`);
+    process.exit(1);
+  }
+  if (!origin.startsWith('http://') && !origin.startsWith('https://')) {
+    console.error(`Error: Origin must start with http:// or https://: "${origin}"`);
+    process.exit(1);
+  }
+
   const extras = getExtraOrigins(settings);
   const newExtras = extras.filter(o => o !== origin);
 

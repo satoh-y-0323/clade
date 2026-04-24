@@ -125,6 +125,16 @@ if (command === 'list') {
     process.exit(1);
   }
 
+  // URL バリデーション: セパレーター文字・改行・制御文字の混入を防ぐ
+  if (origin.includes(';') || origin.includes('\n') || origin.includes('\r') || /[\x00-\x1f]/.test(origin)) {
+    console.error(`エラー: オリジンにセミコロン・改行・制御文字を含めることはできません: "${origin}"`);
+    process.exit(1);
+  }
+  if (!origin.startsWith('http://') && !origin.startsWith('https://')) {
+    console.error(`エラー: オリジンは http:// または https:// で始まる必要があります: "${origin}"`);
+    process.exit(1);
+  }
+
   const extras = getExtraOrigins(settings);
   const newExtras = extras.filter(o => o !== origin);
 
