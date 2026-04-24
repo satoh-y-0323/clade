@@ -26,7 +26,13 @@ function enableSandbox() {
   }
 
   const raw = fs.readFileSync(SETTINGS_PATH, 'utf-8');
-  const settings = JSON.parse(raw);
+  let settings;
+  try {
+    settings = JSON.parse(raw);
+  } catch (e) {
+    console.error(`[enable-sandbox] settings.json の JSON 解析に失敗しました: ${e.message}`);
+    return { success: false, alreadyEnabled: false };
+  }
 
   if (settings.sandbox && settings.sandbox.enabled === true) {
     console.log('[enable-sandbox] sandbox はすでに有効です。');
@@ -44,7 +50,7 @@ function enableSandbox() {
       allowLocalBinding: false,
       allowedDomains: []
     },
-    enableWeakerNestedSandbox: false
+    enableWeakerNestedSandbox: true
   };
   fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2) + '\n', 'utf-8');
   console.log('[enable-sandbox] sandbox を有効化しました。Claude Code 再起動後に反映されます。');

@@ -26,7 +26,13 @@ function enableSandbox() {
   }
 
   const raw = fs.readFileSync(SETTINGS_PATH, 'utf-8');
-  const settings = JSON.parse(raw);
+  let settings;
+  try {
+    settings = JSON.parse(raw);
+  } catch (e) {
+    console.error(`[enable-sandbox] Failed to parse settings.json: ${e.message}`);
+    return { success: false, alreadyEnabled: false };
+  }
 
   if (settings.sandbox && settings.sandbox.enabled === true) {
     console.log('[enable-sandbox] Sandbox is already enabled.');
@@ -44,7 +50,7 @@ function enableSandbox() {
       allowLocalBinding: false,
       allowedDomains: []
     },
-    enableWeakerNestedSandbox: false
+    enableWeakerNestedSandbox: true
   };
   fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2) + '\n', 'utf-8');
   console.log('[enable-sandbox] Sandbox has been enabled. It will take effect after restarting Claude Code.');
