@@ -53,8 +53,12 @@ function getScannedAt() {
 
 // ---- File reading utilities --------------------------------------------------
 
+// Maximum size for .tmp files (files exceeding 1 MB are skipped)
+const MAX_TMP_SIZE = 1024 * 1024;
+
 /**
  * Returns the list of .tmp file paths to process from the sessions directory.
+ * Files exceeding MAX_TMP_SIZE are skipped with a warning to stderr.
  * @param {boolean} sinceToday - if true, only include today's file
  * @returns {string[]}
  */
@@ -66,18 +70,34 @@ function resolveTmpFilePaths(sinceToday) {
     .filter(f => f.endsWith('.tmp'))
     .map(f => path.join(SESSIONS_DIR, f));
 
-  if (!sinceToday) {
-    return allFiles;
-  }
   const todayStr = getTodayStr();
-  return allFiles.filter(f => path.basename(f) === `${todayStr}.tmp`);
+  const filtered = sinceToday
+    ? allFiles.filter(f => path.basename(f) === `${todayStr}.tmp`)
+    : allFiles;
+
+  return filtered.filter(filePath => {
+    try {
+      const stat = fs.statSync(filePath);
+      if (stat.size > MAX_TMP_SIZE) {
+        process.stderr.write(
+          `[cluster-promote-core] skip large file ${filePath}: ${stat.size} bytes\n`
+        );
+        return false;
+      }
+    } catch (err) {
+      process.stderr.write(`[cluster-promote-core] stat failed ${filePath}: ${err.message}\n`);
+      return false;
+    }
+    return true;
+  });
 }
 
 /**
  * Extracts the text of a named section (## heading) from a .tmp file's content.
- * Matching is done by partial match (key phrase before parentheses/brackets),
- * so slight variations like "## Approaches That Were Tried but Failed (none this time)"
- * are still matched correctly.
+ * Matching uses startsWith("## " + keyword) to avoid false positives from
+ * short keywords matching unrelated headings.
+ * Since keyword is the phrase before any parentheses/brackets, a title like
+ * "## Approaches That Were Tried but Failed (none this time)" is still matched.
  * @param {string} content - file content
  * @param {string} sectionTitle - e.g. "## Approaches That Were Tried but Failed"
  * @returns {string} section body (up to the next ## heading, or end of file)
@@ -92,7 +112,7 @@ function extractSection(content, sectionTitle) {
   for (const line of lines) {
     if (line.startsWith('## ')) {
       if (inSection) break; // next section starts — stop collecting
-      if (line.includes(keyword)) {
+      if (line.startsWith('## ' + keyword)) {
         inSection = true;
         continue;
       }
@@ -246,6 +266,16 @@ function parseListItems(text) {
 }
 
 /**
+ * Strips control characters (including ANSI escape sequences) for safe terminal output.
+ * Not called in --json mode (raw data is preserved in JSON output).
+ * @param {string} str
+ * @returns {string}
+ */
+function sanitizeForTerminal(str) {
+  return String(str).replace(/[\x00-\x1f\x7f-\x9f]/g, '');
+}
+
+/**
  * Parses bash-log.jsonl and extracts rule candidates from error records.
  * @returns {CandidateRule[]}
  */
@@ -274,9 +304,12 @@ function extractFromBashLog() {
     }
 
     if (record.err === true) {
-      const cmd = record.cmd || record.command || '(unknown command)';
+      const cmd = record.cmd || record.command || '';
       const errDetail = record.stderr || record.out || '';
-      const title = `Command error: ${String(cmd).slice(0, 60)}`;
+      // Avoid "null" or "undefined" appearing in the title when cmd is falsy
+      const title = cmd
+        ? `Command error: ${String(cmd).slice(0, 60)}`
+        : '(no command info)';
       const summary = errDetail ? String(errDetail).slice(0, 200) : '(no error detail)';
       rules.push({
         type: 'rule',
@@ -338,14 +371,19 @@ function runScan(sinceToday, outputJson) {
   if (rulesWithId.length > 0) {
     process.stdout.write('=== Rule Candidates ===\n');
     for (const r of rulesWithId) {
-      process.stdout.write(`[${r.id}] ${r.title}\n    ${r.summary}\n    Source: ${r.source}\n\n`);
+      // Strip control characters / ANSI escapes for human-readable output
+      const title   = sanitizeForTerminal(r.title);
+      const summary = sanitizeForTerminal(r.summary);
+      process.stdout.write(`[${r.id}] ${title}\n    ${summary}\n    Source: ${r.source}\n\n`);
     }
   }
 
   if (skillsWithId.length > 0) {
     process.stdout.write('=== Skill Candidates ===\n');
     for (const s of skillsWithId) {
-      process.stdout.write(`[${s.id}] ${s.title}\n    ${s.summary}\n    Source: ${s.source}\n\n`);
+      const title   = sanitizeForTerminal(s.title);
+      const summary = sanitizeForTerminal(s.summary);
+      process.stdout.write(`[${s.id}] ${title}\n    ${summary}\n    Source: ${s.source}\n\n`);
     }
   }
 }

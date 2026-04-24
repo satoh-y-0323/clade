@@ -49,8 +49,12 @@ function getScannedAt() {
 
 // ---- ファイル読み込みユーティリティ --------------------------------------
 
+// .tmp ファイルの読み込みサイズ上限（1 MB を超えるファイルはスキップする）
+const MAX_TMP_SIZE = 1024 * 1024;
+
 /**
  * sessions ディレクトリから対象の .tmp ファイルパス一覧を返す。
+ * サイズ上限（MAX_TMP_SIZE）を超えるファイルは警告を出力してスキップする。
  * @param {boolean} sinceToday - true の場合は当日ファイルのみ
  * @returns {string[]}
  */
@@ -62,17 +66,33 @@ function resolveTmpFilePaths(sinceToday) {
     .filter(f => f.endsWith('.tmp'))
     .map(f => path.join(SESSIONS_DIR, f));
 
-  if (!sinceToday) {
-    return allFiles;
-  }
   const todayStr = getTodayStr();
-  return allFiles.filter(f => path.basename(f) === `${todayStr}.tmp`);
+  const filtered = sinceToday
+    ? allFiles.filter(f => path.basename(f) === `${todayStr}.tmp`)
+    : allFiles;
+
+  return filtered.filter(filePath => {
+    try {
+      const stat = fs.statSync(filePath);
+      if (stat.size > MAX_TMP_SIZE) {
+        process.stderr.write(
+          `[cluster-promote-core] skip large file ${filePath}: ${stat.size} bytes\n`
+        );
+        return false;
+      }
+    } catch (err) {
+      process.stderr.write(`[cluster-promote-core] stat failed ${filePath}: ${err.message}\n`);
+      return false;
+    }
+    return true;
+  });
 }
 
 /**
  * .tmp ファイルの内容から指定セクション（## 見出し）のテキストを抽出する。
- * 見出しの照合は部分一致（括弧・補足を除いたキーフレーズを含む）で行う。
- * 例: "## 試みたが失敗したアプローチ（今回は特になし）" も抽出対象になる。
+ * 見出しの照合は "## " + キーフレーズで始まる行のみを対象とする（startsWith）。
+ * キーフレーズは括弧・補足を除いた部分なので、
+ * "## 試みたが失敗したアプローチ（今回は特になし）" も正しく抽出される。
  * @param {string} content - ファイル内容
  * @param {string} sectionTitle - 例: "## 試みたが失敗したアプローチ"
  * @returns {string} セクション本文（次の ## の直前まで、または末尾まで）
@@ -87,7 +107,7 @@ function extractSection(content, sectionTitle) {
   for (const line of lines) {
     if (line.startsWith('## ')) {
       if (inSection) break; // 次のセクション開始 → 終了
-      if (line.includes(keyword)) {
+      if (line.startsWith('## ' + keyword)) {
         inSection = true;
         continue;
       }
@@ -241,6 +261,16 @@ function parseListItems(text) {
 }
 
 /**
+ * 制御文字（ANSI エスケープシーケンスを含む）を除去して端末出力を安全にする。
+ * --json モードでは呼び出さない（JSON には生データをそのまま含める）。
+ * @param {string} str
+ * @returns {string}
+ */
+function sanitizeForTerminal(str) {
+  return String(str).replace(/[\x00-\x1f\x7f-\x9f]/g, '');
+}
+
+/**
  * bash-log.jsonl を解析してルール候補を抽出する。
  * @returns {CandidateRule[]}
  */
@@ -269,9 +299,12 @@ function extractFromBashLog() {
     }
 
     if (record.err === true) {
-      const cmd = record.cmd || record.command || '(不明なコマンド)';
+      const cmd = record.cmd || record.command || '';
       const errDetail = record.stderr || record.out || '';
-      const title = `コマンドエラー: ${String(cmd).slice(0, 60)}`;
+      // cmd が falsy の場合に "null" や "undefined" がタイトルに混入しないよう分岐する
+      const title = cmd
+        ? `コマンドエラー: ${String(cmd).slice(0, 60)}`
+        : '(コマンド情報なし)';
       const summary = errDetail ? String(errDetail).slice(0, 200) : 'エラー詳細なし';
       rules.push({
         type: 'rule',
@@ -333,14 +366,19 @@ function runScan(sinceToday, outputJson) {
   if (rulesWithId.length > 0) {
     process.stdout.write('=== ルール候補 ===\n');
     for (const r of rulesWithId) {
-      process.stdout.write(`[${r.id}] ${r.title}\n    ${r.summary}\n    ソース: ${r.source}\n\n`);
+      // 人間が読める出力では制御文字・ANSI エスケープを除去する
+      const title   = sanitizeForTerminal(r.title);
+      const summary = sanitizeForTerminal(r.summary);
+      process.stdout.write(`[${r.id}] ${title}\n    ${summary}\n    ソース: ${r.source}\n\n`);
     }
   }
 
   if (skillsWithId.length > 0) {
     process.stdout.write('=== スキル候補 ===\n');
     for (const s of skillsWithId) {
-      process.stdout.write(`[${s.id}] ${s.title}\n    ${s.summary}\n    ソース: ${s.source}\n\n`);
+      const title   = sanitizeForTerminal(s.title);
+      const summary = sanitizeForTerminal(s.summary);
+      process.stdout.write(`[${s.id}] ${title}\n    ${summary}\n    ソース: ${s.source}\n\n`);
     }
   }
 }
