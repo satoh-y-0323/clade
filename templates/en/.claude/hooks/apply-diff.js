@@ -30,12 +30,29 @@ function main() {
   const targetIdx = args.indexOf('--target');
   const newIdx = args.indexOf('--new');
 
-  if (targetIdx === -1 || newIdx === -1 || !args[targetIdx + 1] || !args[newIdx + 1]) {
+  if (targetIdx === -1 || newIdx === -1 ||
+      !args[targetIdx + 1] || args[targetIdx + 1].startsWith('--') ||
+      !args[newIdx + 1]    || args[newIdx + 1].startsWith('--')) {
     usageAndExit();
   }
 
   const targetPath = args[targetIdx + 1];
   const newPath = args[newIdx + 1];
+
+  // Path traversal guard: only allow paths within the project root
+  const allowedRoot = path.resolve(process.cwd());
+
+  const resolvedTarget = path.resolve(targetPath);
+  if (!resolvedTarget.startsWith(allowedRoot + path.sep) && resolvedTarget !== allowedRoot) {
+    console.error('[apply-diff] Path outside repository is not allowed (--target).');
+    process.exit(1);
+  }
+
+  const resolvedNew = path.resolve(newPath);
+  if (!resolvedNew.startsWith(allowedRoot + path.sep) && resolvedNew !== allowedRoot) {
+    console.error('[apply-diff] Path outside repository is not allowed (--new).');
+    process.exit(1);
+  }
 
   if (!fs.existsSync(newPath)) {
     console.error(`[apply-diff] .new file not found: ${newPath}`);
