@@ -1,5 +1,12 @@
 # 変更履歴
 
+## [v1.26.0] - 2026-04-24
+
+### New
+
+- `plan-to-manifest.js`: clade-parallel v0.6.0 の `max_retries` フィールドに対応。plan-report フロントマターのグループに `max_retries: N` を指定すると manifest に出力される。省略時（デフォルト 0）は行を出力しない
+- `agent-planner.md`: フィールド説明テーブルに `group-*.max_retries` を追加
+
 ## [v1.25.0] - 2026-04-24
 
 ### New

@@ -1,6 +1,6 @@
 # Clade
 
-[![version](https://img.shields.io/badge/version-1.25.0-blue)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-1.26.0-blue)](CHANGELOG.md)
 
 [日本語版はこちら](README.ja.md)
 
