@@ -54,23 +54,23 @@ function main() {
     process.exit(1);
   }
 
-  if (!fs.existsSync(newPath)) {
+  if (!fs.existsSync(resolvedNew)) {
     console.error(`[apply-diff] .new ファイルが見つかりません: ${newPath}`);
     process.exit(1);
   }
 
-  const content = fs.readFileSync(newPath, 'utf8');
-  fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-  fs.writeFileSync(targetPath, content, 'utf8');
+  const content = fs.readFileSync(resolvedNew, 'utf8');
+  fs.mkdirSync(path.dirname(resolvedTarget), { recursive: true });
+  fs.writeFileSync(resolvedTarget, content, 'utf8');
 
   try {
-    fs.unlinkSync(newPath);
+    fs.unlinkSync(resolvedNew);
   } catch (error) {
     console.error(`[apply-diff] .new ファイルの削除に失敗しました: ${newPath} (${error.message})`);
     process.exit(1);
   }
 
-  const relative = path.relative(process.cwd(), targetPath).replace(/\\/g, '/');
+  const relative = path.relative(process.cwd(), resolvedTarget).replace(/\\/g, '/');
   console.log(`[apply-diff] 上書き完了: ${relative}`);
 }
 
