@@ -24,6 +24,9 @@ const GITHUB_API_HOST = 'api.github.com';
 const GITHUB_REPO = 'satoh-y-0323/clade';
 const RELEASES_LATEST_PATH = `/repos/${GITHUB_REPO}/releases/latest`;
 
+const MAX_REDIRECTS = 5;
+const MAX_RESPONSE_SIZE = 10 * 1024 * 1024; // 10MB
+
 const CLADE_MARKER_START = '<!-- CLADE:START -->';
 const CLADE_MARKER_END = '<!-- CLADE:END -->';
 
@@ -54,9 +57,14 @@ function fetchGitHubToken() {
  * @param {string} host
  * @param {string} urlPath
  * @param {Record<string, string>} [extraHeaders]
+ * @param {number} [_redirectCount]
  * @returns {Promise<string>}
  */
-function httpsGet(host, urlPath, extraHeaders = {}) {
+function httpsGet(host, urlPath, extraHeaders = {}, _redirectCount = 0) {
+  if (_redirectCount > MAX_REDIRECTS) {
+    return Promise.reject(new Error('Too many redirects'));
+  }
+
   return new Promise((resolve, reject) => {
     const options = {
       hostname: host,
@@ -71,9 +79,13 @@ function httpsGet(host, urlPath, extraHeaders = {}) {
 
     const req = https.request(options, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        // リダイレクト対応
+        // リダイレクト対応（リダイレクト先ホストが GITHUB_API_HOST と一致しない場合はエラー）
         const redirectUrl = new URL(res.headers.location);
-        httpsGet(redirectUrl.hostname, redirectUrl.pathname + redirectUrl.search, extraHeaders)
+        if (redirectUrl.hostname !== GITHUB_API_HOST) {
+          reject(new Error(`httpsGet: 予期しないリダイレクト先: ${redirectUrl.hostname}`));
+          return;
+        }
+        httpsGet(redirectUrl.hostname, redirectUrl.pathname + redirectUrl.search, extraHeaders, _redirectCount + 1)
           .then(resolve)
           .catch(reject);
         return;
@@ -82,6 +94,9 @@ function httpsGet(host, urlPath, extraHeaders = {}) {
       let data = '';
       res.on('data', (chunk) => {
         data += chunk;
+        if (data.length > MAX_RESPONSE_SIZE) {
+          req.destroy(new Error('レスポンスサイズが上限を超えました'));
+        }
       });
       res.on('end', () => {
         if (res.statusCode >= 400) {
@@ -104,10 +119,15 @@ function httpsGet(host, urlPath, extraHeaders = {}) {
  * HTTPS でバイナリデータをダウンロードして Buffer を返す
  * @param {string} url
  * @param {Record<string, string>} [extraHeaders]
+ * @param {number} [_redirectCount]
  * @returns {Promise<Buffer>}
  */
-function httpsDownload(url, extraHeaders = {}) {
+function httpsDownload(url, extraHeaders = {}, _redirectCount = 0) {
   const ALLOWED_HOSTS = ['api.github.com', 'codeload.github.com', 'objects.githubusercontent.com'];
+
+  if (_redirectCount > MAX_REDIRECTS) {
+    return Promise.reject(new Error('Too many redirects'));
+  }
 
   return new Promise((resolve, reject) => {
     const parsedUrl = new URL(url);
@@ -129,7 +149,7 @@ function httpsDownload(url, extraHeaders = {}) {
           : Object.fromEntries(
               Object.entries(extraHeaders).filter(([k]) => k.toLowerCase() !== 'authorization')
             );
-        httpsDownload(res.headers.location, safeHeaders).then(resolve).catch(reject);
+        httpsDownload(res.headers.location, safeHeaders, _redirectCount + 1).then(resolve).catch(reject);
         return;
       }
 
@@ -311,8 +331,9 @@ async function extractZip(zipBuffer, destDir) {
 
   // PowerShell の Expand-Archive を使用（Windows 環境向け）
   // 展開先ディレクトリ内に zip を展開する
-  const escapedZipPath = zipPath.replace(/'/g, "''");
-  const escapedDestDir = destDir.replace(/'/g, "''");
+  // シングルクォートと $ をエスケープ（PowerShell 文字列内の変数展開防止）
+  const escapedZipPath = zipPath.replace(/'/g, "''").replace(/\$/g, '`$');
+  const escapedDestDir = destDir.replace(/'/g, "''").replace(/\$/g, '`$');
   const result = spawnSync(
     'powershell',
     [
@@ -361,6 +382,21 @@ function findReleaseDir(extractDir) {
 }
 
 // ============================================================
+// Helpers: Security
+// ============================================================
+
+/**
+ * resolvedPath が projectRoot 配下にあることを確認する（パストラバーサル防御）
+ * @param {string} resolvedPath
+ * @param {string} projectRoot
+ * @returns {boolean}
+ */
+function isWithinProjectRoot(resolvedPath, projectRoot) {
+  const normalizedRoot = path.resolve(projectRoot);
+  return resolvedPath.startsWith(normalizedRoot + path.sep) || resolvedPath === normalizedRoot;
+}
+
+// ============================================================
 // Helpers: File copy logic
 // ============================================================
 
@@ -379,7 +415,7 @@ function copyFilesFromManifest(manifest, releaseDir, projectRoot, sourceIsEnglis
   const jaOnlyList = managed.ja_only || [];
 
   // commands
-  for (const file of managed.commands) {
+  for (const file of (managed.commands || [])) {
     // ja_only チェック: source が EN の場合、ja_only は source に存在しないのでスキップ
     const jaOnlyKey = `commands/${file}`;
     if (sourceIsEnglish && jaOnlyList.includes(jaOnlyKey)) {
@@ -390,26 +426,38 @@ function copyFilesFromManifest(manifest, releaseDir, projectRoot, sourceIsEnglis
     if (!fs.existsSync(srcPath)) continue;
 
     const destPath = path.join(projectRoot, `${targetPrefix}.claude/commands`, file);
+    if (!isWithinProjectRoot(path.resolve(destPath), projectRoot)) {
+      process.stderr.write(`警告: パストラバーサルを検出したためコピーをスキップ: commands/${file}\n`);
+      continue;
+    }
     copyFile(srcPath, destPath);
   }
 
   // hooks（clade-update.js 自身は除く）
-  for (const file of managed.hooks) {
+  for (const file of (managed.hooks || [])) {
     if (file === 'clade-update.js') continue;
 
     const srcPath = path.join(releaseDir, `${releasePrefixBase}hooks`, file);
     if (!fs.existsSync(srcPath)) continue;
 
     const destPath = path.join(projectRoot, `${targetPrefix}.claude/hooks`, file);
+    if (!isWithinProjectRoot(path.resolve(destPath), projectRoot)) {
+      process.stderr.write(`警告: パストラバーサルを検出したためコピーをスキップ: hooks/${file}\n`);
+      continue;
+    }
     copyFile(srcPath, destPath);
   }
 
   // rules
-  for (const file of managed.rules) {
+  for (const file of (managed.rules || [])) {
     const srcPath = path.join(releaseDir, `${releasePrefixBase}rules`, file);
     if (!fs.existsSync(srcPath)) continue;
 
     const destPath = path.join(projectRoot, `${targetPrefix}.claude/rules`, file);
+    if (!isWithinProjectRoot(path.resolve(destPath), projectRoot)) {
+      process.stderr.write(`警告: パストラバーサルを検出したためコピーをスキップ: rules/${file}\n`);
+      continue;
+    }
     copyFile(srcPath, destPath);
   }
 
@@ -422,6 +470,10 @@ function copyFilesFromManifest(manifest, releaseDir, projectRoot, sourceIsEnglis
     if (!fs.existsSync(srcPath)) continue;
 
     const destPath = path.join(projectRoot, `${targetPrefix}.claude/agents`, file);
+    if (!isWithinProjectRoot(path.resolve(destPath), projectRoot)) {
+      process.stderr.write(`警告: パストラバーサルを検出したためコピーをスキップ: agents/${file}\n`);
+      continue;
+    }
     copyFile(srcPath, destPath);
   }
 
@@ -434,6 +486,10 @@ function copyFilesFromManifest(manifest, releaseDir, projectRoot, sourceIsEnglis
     if (!fs.existsSync(srcPath)) continue;
 
     const destPath = path.join(projectRoot, `${targetPrefix}.claude/skills`, file);
+    if (!isWithinProjectRoot(path.resolve(destPath), projectRoot)) {
+      process.stderr.write(`警告: パストラバーサルを検出したためコピーをスキップ: skills/${file}\n`);
+      continue;
+    }
     copyFile(srcPath, destPath);
   }
 
@@ -446,11 +502,15 @@ function copyFilesFromManifest(manifest, releaseDir, projectRoot, sourceIsEnglis
     if (!fs.existsSync(srcPath)) continue;
 
     const destPath = path.join(projectRoot, `${targetPrefix}.claude/skills/agents`, file);
+    if (!isWithinProjectRoot(path.resolve(destPath), projectRoot)) {
+      process.stderr.write(`警告: パストラバーサルを検出したためコピーをスキップ: skills/agents/${file}\n`);
+      continue;
+    }
     copyFile(srcPath, destPath);
   }
 
   // other（CLAUDE.md はマーカー区間のみ更新、settings.local.json.example/その他はコピー）
-  for (const file of managed.other) {
+  for (const file of (managed.other || [])) {
     if (file === 'CLAUDE.md') {
       // CLAUDE.md はマーカー区間のみ更新（別関数で処理）
       continue;
@@ -464,6 +524,10 @@ function copyFilesFromManifest(manifest, releaseDir, projectRoot, sourceIsEnglis
     if (!fs.existsSync(srcPath)) continue;
 
     const destPath = path.join(projectRoot, `${targetPrefix}.claude`, file);
+    if (!isWithinProjectRoot(path.resolve(destPath), projectRoot)) {
+      process.stderr.write(`警告: パストラバーサルを検出したためコピーをスキップ: ${file}\n`);
+      continue;
+    }
     copyFile(srcPath, destPath);
   }
 }
@@ -568,6 +632,11 @@ function removeObsoleteFiles(manifest, projectRoot, targetIsEnglish) {
 
   for (const file of removedFiles) {
     const filePath = path.join(projectRoot, `${targetPrefix}.claude`, file);
+    // パストラバーサル防御: projectRoot 外への削除を拒否
+    if (!isWithinProjectRoot(path.resolve(filePath), projectRoot)) {
+      process.stderr.write(`警告: パストラバーサルを検出したため削除をスキップ: ${file}\n`);
+      continue;
+    }
     if (fs.existsSync(filePath)) {
       try { fs.unlinkSync(filePath); } catch (_) {}
     }
@@ -583,11 +652,16 @@ function removeObsoleteFiles(manifest, projectRoot, targetIsEnglish) {
 function copyJaOnlyFiles(manifest, releaseDir, projectRoot) {
   const managed = manifest.managed_files;
 
-  for (const filePath of managed.ja_only) {
+  for (const filePath of (managed.ja_only || [])) {
     const srcPath = path.join(releaseDir, '.claude', filePath);
     if (!fs.existsSync(srcPath)) continue;
 
     const destPath = path.join(projectRoot, '.claude', filePath);
+    // パストラバーサル防御: projectRoot 外へのコピーを拒否
+    if (!isWithinProjectRoot(path.resolve(destPath), projectRoot)) {
+      process.stderr.write(`警告: パストラバーサルを検出したためコピーをスキップ: ${filePath}\n`);
+      continue;
+    }
     copyFile(srcPath, destPath);
   }
 }
@@ -601,11 +675,16 @@ function copyJaOnlyFiles(manifest, releaseDir, projectRoot) {
 function copyEnOnlyFiles(manifest, releaseDir, projectRoot) {
   const managed = manifest.managed_files;
 
-  for (const filePath of managed.en_only) {
+  for (const filePath of (managed.en_only || [])) {
     const srcPath = path.join(releaseDir, 'templates/en/.claude', filePath);
     if (!fs.existsSync(srcPath)) continue;
 
     const destPath = path.join(projectRoot, 'templates/en/.claude', filePath);
+    // パストラバーサル防御: projectRoot 外へのコピーを拒否
+    if (!isWithinProjectRoot(path.resolve(destPath), projectRoot)) {
+      process.stderr.write(`警告: パストラバーサルを検出したためコピーをスキップ: ${filePath}\n`);
+      continue;
+    }
     copyFile(srcPath, destPath);
   }
 }
@@ -628,6 +707,7 @@ function updateClaudeMdMarkerSection(localClaudeMdPath, releaseClaudeMdPath) {
 
   const localContent = fs.readFileSync(localClaudeMdPath, 'utf8');
 
+  // ⚠️ CLAUDE.md 内にマーカーは1組のみ存在することを前提とする
   const startIdx = localContent.indexOf(CLADE_MARKER_START);
   const endIdx = localContent.indexOf(CLADE_MARKER_END);
 
@@ -691,6 +771,7 @@ async function runCheckMode(options = {}) {
     latest_version: latestVersion,
     has_update: hasUpdate,
     changelog,
+    // TODO: 将来的にファイル単位の差分情報を populate する
     changes: {
       ja: { added: [], updated: [], removed: [] },
       en: { added: [], updated: [], removed: [] },
@@ -774,7 +855,12 @@ async function runApplyMode() {
     process.stderr.write(`更新中にエラーが発生しました: ${error.message}\n`);
     if (backupCommitCreated) {
       process.stderr.write('バックアップコミットに戻しています...\n');
-      runGit(['reset', '--hard', 'HEAD~1']);
+      const rollbackResult = runGit(['reset', '--hard', 'HEAD~1']);
+      if (rollbackResult.status !== 0) {
+        process.stderr.write(
+          `バックアップへの復元に失敗しました: ${rollbackResult.stderr}\n手動で git reset --hard HEAD~1 を実行してください\n`
+        );
+      }
     }
     process.exit(1);
   } finally {
@@ -905,8 +991,16 @@ async function runApplyFilesMode(releaseDir, latestVersion) {
     }
 
     // 完了コミット
-    runGit(['add', '-A']);
-    runGit(['commit', '-m', `chore: update clade to ${latestVersion}`]);
+    const addResult2 = runGit(['add', '-A']);
+    if (addResult2.status !== 0) {
+      throw new Error(`git add に失敗しました: ${addResult2.stderr}`);
+    }
+    const commitResult2 = runGit(['commit', '-m', `chore: update clade to ${latestVersion}`]);
+    if (commitResult2.status !== 0 &&
+        !commitResult2.stdout.includes('nothing to commit') &&
+        !commitResult2.stderr.includes('nothing to commit')) {
+      throw new Error(`更新コミットに失敗しました: ${commitResult2.stderr}`);
+    }
 
     // 結果を JSON で stdout に出力（update.md が解析して対話ループに使う）
     const result = {
@@ -928,6 +1022,10 @@ async function runApplyFilesMode(releaseDir, latestVersion) {
     process.exit(0);
   } catch (error) {
     process.stderr.write(`ファイルコピー中にエラーが発生しました: ${error.message}\n`);
+    process.stderr.write(
+      '注意: git reset --hard は git 追跡ファイルのみを復元します。ディスク上のファイルが不整合な状態になっている場合は手動で確認してください。\n' +
+      '必要に応じて node .claude/hooks/clade-update.js --rollback を実行してください。\n'
+    );
     process.exit(1);
   }
 }
@@ -959,7 +1057,9 @@ function runRollbackMode() {
     process.exit(1);
   }
 
-  // 3. git reset --hard HEAD~1
+  // 3. ロールバック対象コミット情報を表示してから git reset --hard HEAD~1
+  const commitInfo = runGit(['log', '-1', '--format=%h %s']);
+  process.stdout.write(`ロールバック対象: ${commitInfo.stdout.trim()}\n`);
   const resetResult = runGit(['reset', '--hard', 'HEAD~1']);
   if (resetResult.status !== 0) {
     process.stderr.write(`git reset に失敗しました: ${resetResult.stderr}\n`);
@@ -981,9 +1081,19 @@ const versionFileIndex = args.indexOf('--version-file');
 const versionFile = versionFileIndex !== -1 ? args[versionFileIndex + 1] : undefined;
 
 // --project-root オプション（テスト用）
+// ⚠️ テスト専用フラグ。プロダクション用途では使用しないこと。
 const projectRootIndex = args.indexOf('--project-root');
 if (projectRootIndex !== -1 && args[projectRootIndex + 1]) {
-  _projectRootOverride = path.resolve(args[projectRootIndex + 1]);
+  const resolvedProjectRoot = path.resolve(args[projectRootIndex + 1]);
+  const currentWorkingDir = path.resolve(process.cwd());
+  // 現在の作業ディレクトリのサブディレクトリであることを検証
+  if (!resolvedProjectRoot.startsWith(currentWorkingDir + path.sep) && resolvedProjectRoot !== currentWorkingDir) {
+    process.stderr.write(
+      `不正な --project-root: 現在の作業ディレクトリ (${currentWorkingDir}) のサブディレクトリを指定してください\n`
+    );
+    process.exit(1);
+  }
+  _projectRootOverride = resolvedProjectRoot;
 }
 
 if (mode === '--check') {
@@ -997,10 +1107,17 @@ if (mode === '--check') {
     process.exit(1);
   });
 } else if (mode === '--apply-files') {
-  const releaseDir = args[1];
+  const rawReleaseDir = args[1];
   const latestVersion = args[2];
-  if (!releaseDir || !latestVersion) {
+  if (!rawReleaseDir || !latestVersion) {
     process.stderr.write('使用方法: node clade-update.js --apply-files <releaseDir> <version>\n');
+    process.exit(1);
+  }
+  // セキュリティ検証: releaseDir は os.tmpdir() 配下の clade-update- プレフィックスパスに限定
+  const releaseDir = path.resolve(rawReleaseDir);
+  const expectedBase = path.join(os.tmpdir(), 'clade-update-');
+  if (!releaseDir.startsWith(expectedBase)) {
+    process.stderr.write('不正な releaseDir: clade-update 一時ディレクトリ以外は使用できません\n');
     process.exit(1);
   }
   runApplyFilesMode(releaseDir, latestVersion).catch((error) => {
