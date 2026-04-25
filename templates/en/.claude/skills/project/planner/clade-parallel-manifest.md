@@ -5,14 +5,14 @@ Rules for writing clade-parallel YAML frontmatter in plan-reports.
 ## Field specifications
 
 ### timeout_sec
-- Default: **900** (when omitted)
+- Default: **900** (ultimate fallback when omitted)
 - Total execution time limit (seconds)
-- Set based on the estimated duration of the parallel section. Can be omitted if the default is sufficient.
+- Normally auto-resolved from `phase_scales` — no need to write directly. Only write per-group if individual adjustment is needed (group direct value takes priority over `phase_scales`)
 
 ### idle_timeout_sec (new in v0.5)
 - Default: **none** (optional)
 - Forces the task to terminate if there is no stdout/stderr output for N seconds
-- **Must be set for worktree-developer** (guideline: 600; adjust based on dev scale)
+- **Should be set for worktree-developer** (auto-resolved from `phase_scales` — no need to write directly)
 - **Must not be set** for `read_only: true` tasks (silently ignored at runtime with a stderr warning)
 
 ### read_only
@@ -35,11 +35,25 @@ Rules for writing clade-parallel YAML frontmatter in plan-reports.
 
 ## Timeout decision matrix
 
-| Agent | phase | read_only | timeout_sec | idle_timeout_sec |
-|---|---|---|---|---|
-| worktree-developer | developer (or omitted) | false | Adjust based on dev scale (increase if 900 is insufficient) | **Required** (guideline: 600, adjust as needed) |
-| code-reviewer | reviewer | true | Default (900) is usually sufficient | **Must not be set** |
-| security-reviewer | reviewer | true | Default (900) is usually sufficient | **Must not be set** |
+Specifying a scale in `phase_scales` lets `plan-to-manifest.js` resolve timeouts automatically. Direct values are only for individual group adjustments.
+
+### developer phase (worktree-developer)
+
+| scale | timeout_sec | idle_timeout_sec | Scenario |
+|---|---|---|---|
+| small  | 3000 (50 min)  | 2400 (40 min) | Minimum parallelization threshold. 3–4 files, single feature |
+| medium | 6000 (100 min) | 3600 (60 min) | Standard parallel implementation (default). Spans multiple features |
+| large  | 12000 (200 min)| 4800 (80 min) | Multiple subsystems in parallel, large-scale refactor |
+
+### reviewer phase (code-reviewer / security-reviewer)
+
+`idle_timeout_sec` **must not be set** (runner.py forces it to None for read_only tasks).
+
+| scale | timeout_sec | Scenario |
+|---|---|---|
+| small  | 3000 (50 min)  | Small-scale review |
+| medium | 9000 (150 min) | Standard review (default) |
+| large  | 45000 (750 min)| Large-scale, wide-ranging review |
 
 ## Common mistakes
 
@@ -47,7 +61,7 @@ Rules for writing clade-parallel YAML frontmatter in plan-reports.
 |---|---|
 | `read_only: "true"` | `read_only: true` |
 | Setting idle_timeout_sec with read_only: true | Remove idle_timeout_sec |
-| Not setting idle_timeout_sec for worktree-developer | Add `idle_timeout_sec: 600` or similar |
+| Writing timeout_sec / idle_timeout_sec directly for worktree-developer | Use `phase_scales` to auto-resolve (only write directly for individual group adjustment) |
 | Writing symlink-resolved physical paths in writes | Write the path exactly as it appears in the manifest |
 | Omitting `phase:` for reviewer groups | Use `phase: reviewer` explicitly (omitting it treats the group as developer phase, excluding it from `--phase reviewer`) |
 | Putting multiple rounds' groups in the same plan-report | The planner generates a new plan-report file per round (1 file = 1 round only) |
@@ -58,6 +72,10 @@ Define both developer and reviewer groups in the same plan-report and execute th
 
 ```yaml
 ---
+phase_scales:
+  developer: medium   # small: 50min/40min idle  medium: 100min/60min idle  large: 200min/80min idle
+  reviewer: small     # small: 50min  medium: 150min  large: 750min
+
 parallel_groups:
   # ---- developer phase (extracted with --phase developer) ----
   group-frontend:
@@ -66,8 +84,7 @@ parallel_groups:
     read_only: false
     tasks: [T1, T2]
     writes: ["src/frontend/**"]
-    timeout_sec: 1800
-    idle_timeout_sec: 600
+    # timeout_sec / idle_timeout_sec are auto-resolved from phase_scales (no need to write)
 
   group-backend:
     phase: developer
@@ -75,8 +92,6 @@ parallel_groups:
     read_only: false
     tasks: [T3, T4]
     writes: ["src/backend/**"]
-    timeout_sec: 1800
-    idle_timeout_sec: 600
 
   # ---- reviewer phase (extracted with --phase reviewer) ----
   code-review-group:
@@ -84,14 +99,13 @@ parallel_groups:
     agent: code-reviewer
     read_only: true
     tasks: [review]
-    timeout_sec: 900
+    # timeout_sec is auto-resolved from phase_scales. idle_timeout_sec must not be set.
 
   security-review-group:
     phase: reviewer
     agent: security-reviewer
     read_only: true
     tasks: [security]
-    timeout_sec: 900
 ---
 ```
 
