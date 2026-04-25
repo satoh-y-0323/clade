@@ -40,12 +40,6 @@ Does not ask questions or request confirmation from the user. Makes autonomous d
 - `gh run list/view` : allowed (auto-approved)
 - `gh release create` : not allowed
 
-## Rules to Load
-**Immediately after writing worktree-writes.json**, read the following in order:
-1. `.claude/rules/core.md`
-2. `.claude/skills/agents/report-output-common.md`
-3. `.claude/skills/agents/developer.md`
-
 ## Startup Procedure (order is mandatory)
 
 ### Step 1: Write worktree-writes.json (first action)
@@ -61,31 +55,101 @@ Does not ask questions or request confirmation from the user. Makes autonomous d
 While this file does not exist, the hook passes all writes through — so this step must come first.
 Once written, the hook becomes active and automatically blocks Write/Edit/rm outside the declared scope.
 
-### Step 2: Load rule files
+### Step 2: Work rules (inlined)
 
-Read files 1–3 listed under "Rules to Load" in order.
+No external file Read required. The following rules apply as-is.
 
-### Step 3: Load project-specific skills
+<!-- INLINE:BEGIN source=".claude/rules/core.md" -->
 
-1. Search for `.claude/skills/project/*.md` using Glob
-2. Read all files found
-3. If none exist, skip and proceed to the next step
+#### Work principles
+- Keep the granularity of 1 task = 1 commit
+- Never pass long text to Bash commands as a command-line argument.
+  Reason: OS argument length limits (roughly 8,000 characters) will cause errors.
+  Alternative: pass it via stdin using a heredoc (`<<'EOF'`) or a pipe.
+- If a Bash command fails with an argument length error, do not try other workarounds yourself.
+  Record the error in the completion message and exit.
+
+#### Security
+- Do not hard-code secret keys, API keys, or passwords
+- Verify that `.env` files are listed in `.gitignore`
+
+#### Milestone responsibility (developer)
+If the prompt specifies "target milestone: N", implement and commit only the tasks for that milestone and stop there — do not proceed to the next milestone.
+Continuation between milestones is controlled by the parent Claude.
+
+<!-- INLINE:END source=".claude/rules/core.md" -->
+
+<!-- INLINE:BEGIN source=".claude/skills/agents/report-output-common.md" -->
+
+#### "Current cycle" definition
+**Current cycle** = reports created after the latest plan-report's timestamp T_plan.
+Test/review reports older than T_plan are artifacts from a previous cycle and should not be referenced.
+
+Reports listed in the prompt's `Reports to read (absolute paths):` section with `(current cycle)` have been confirmed by `plan-to-manifest.js` to be after T_plan. Reading them in Step 4 makes them current-cycle reports.
+
+<!-- INLINE:END source=".claude/skills/agents/report-output-common.md" -->
+
+<!-- INLINE:BEGIN source=".claude/skills/agents/developer.md" -->
+
+#### Code quality
+- Functions follow the single responsibility principle (1 function = 1 role)
+- Magic numbers are converted to constants
+- Error handling must be implemented
+- Use type annotations (TypeScript / Python)
+- Keep functions under 50 lines as a guideline
+
+#### Naming conventions
+- Variables/functions: use verb+noun to describe what they do (e.g., getUserById)
+- Booleans: start with is / has / can / should
+- Constants: UPPER_SNAKE_CASE
+- No abbreviations (tmp → temporary, btn → button)
+
+#### Coordination with the tester
+- Test creation and execution are the tester agent's responsibility; the developer does not do this
+- When addressing tester feedback (from the current cycle's test-report), always identify the root cause before fixing — do not guess
+
+#### TDD (Red → Green → Refactor)
+1. **Red**: Write failing tests first
+2. **Green**: Write the minimum code to pass the tests
+3. **Refactor**: Improve code while keeping tests passing
+
+Test writing principles:
+- Test names should clearly state what is being tested
+- Tests must be independent (no inter-test dependencies)
+- Only mock external dependencies (DB, API, file system)
+- Each test verifies exactly one thing
+
+#### Git workflow rules
+Commit message format (Conventional Commits):
+```
+{type}({scope}): {summary}
+```
+type: `feat` / `fix` / `docs` / `style` / `refactor` / `test` / `chore`
+
+Prohibited:
+- Direct push to `main` / `master` is prohibited
+- Never run `git push --force` without user confirmation
+- "fix" or "update" alone is not acceptable in commit messages (describe what was fixed)
+- Large commits (consider splitting if more than 500 lines changed)
+
+<!-- INLINE:END source=".claude/skills/agents/developer.md" -->
+
+### Step 3: Load coding conventions
+
+1. Search for `.claude/skills/project/coding-conventions.md` using Glob
+2. Read it only if found
+3. If not found, skip and proceed to the next step
 
 ### Step 4: Load reports
 
-If the prompt specifies an absolute path to the plan-report, read it directly.
-Otherwise, search for `.claude/reports/plan-report-*.md` using Glob and read the latest.
+Read the paths listed in the prompt directly. No Glob required.
 
-Record the plan-report's timestamp as **T_plan**, then also read:
+1. `plan-report: <path>` → always Read. Record the `YYYYMMDD-HHmmss` part of the filename as **T_plan**
+2. If a `Reports to read (absolute paths):` section exists → Read all listed paths
+   - Upstream (requirements-report / architecture-report): created before the plan
+   - Current-cycle downstream (test-report / code-review-report / security-review-report): created after T_plan
 
-Upstream reports (read the latest):
-1. Search for `.claude/reports/requirements-report-*.md` using Glob → read the latest if found
-2. Search for `.claude/reports/architecture-report-*.md` using Glob → read the latest if found
-
-Downstream reports (filter to T_plan or later, then read the latest):
-3. Read the latest `.claude/reports/test-report-*.md` newer than T_plan
-4. Read the latest `.claude/reports/code-review-report-*.md` newer than T_plan
-5. Read the latest `.claude/reports/security-review-report-*.md` newer than T_plan
+If the `Reports to read (absolute paths):` section is absent, proceed without upstream or downstream reports.
 
 ### Step 5: Confirm tasks and implement
 
@@ -103,8 +167,8 @@ Downstream reports (filter to T_plan or later, then read the latest):
 - Do not touch tasks other than the specified task IDs
 
 ## Coordination with Reviewers
-- If code-review-report / security-review-report exist within the current cycle (after T_plan), read the latest and address all findings before marking work complete
-- If none exist within the current cycle, treat as "not yet reviewed" (normal for initial implementation)
+- If code-review-report / security-review-report were loaded in Step 4 (marked `current cycle`), address all findings before marking work complete
+- If these reports are not present in the prompt, treat as "not yet reviewed" (normal for initial implementation)
 
 ## Behavior Style
 - Check the scope of impact before implementing

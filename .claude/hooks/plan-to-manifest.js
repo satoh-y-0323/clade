@@ -331,7 +331,55 @@ function getTimestamp() {
   return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
 }
 
-function buildPrompt(group, absolutePlanPath) {
+/**
+ * plan-report のタイムスタンプを基準に、現時点で存在するレポートの絶対パスを返す。
+ * worktree-developer の prompt に埋め込むことで、起動時の Glob を不要にする。
+ *
+ * @param {string} absolutePlanPath - plan-report の絶対パス
+ * @returns {{ requirements: string|null, architecture: string|null,
+ *             test: string|null, codeReview: string|null, securityReview: string|null }}
+ */
+function findReportPaths(absolutePlanPath) {
+  const reportsDir = path.resolve('.claude/reports');
+  const empty = { requirements: null, architecture: null, test: null, codeReview: null, securityReview: null };
+  if (!fs.existsSync(reportsDir)) return empty;
+
+  // plan-report-YYYYMMDD-HHmmss.md → YYYYMMDD-HHmmss
+  const planBase  = path.basename(absolutePlanPath, '.md');
+  const tsMatch   = planBase.match(/^plan-report-(\d{8}-\d{6})$/);
+  const planTs    = tsMatch ? tsMatch[1] : null;
+
+  const files = fs.readdirSync(reportsDir);
+
+  function latestOf(baseName) {
+    const matched = files
+      .filter(f => f.startsWith(baseName + '-') && f.endsWith('.md'))
+      .sort().reverse();
+    return matched.length > 0 ? path.join(reportsDir, matched[0]) : null;
+  }
+
+  function latestAfter(baseName) {
+    if (!planTs) return null;
+    const matched = files
+      .filter(f => {
+        if (!f.startsWith(baseName + '-') || !f.endsWith('.md')) return false;
+        const ts = f.slice(baseName.length + 1, -3);
+        return /^\d{8}-\d{6}$/.test(ts) && ts > planTs;
+      })
+      .sort().reverse();
+    return matched.length > 0 ? path.join(reportsDir, matched[0]) : null;
+  }
+
+  return {
+    requirements:   latestOf('requirements-report'),
+    architecture:   latestOf('architecture-report'),
+    test:           latestAfter('test-report'),
+    codeReview:     latestAfter('code-review-report'),
+    securityReview: latestAfter('security-review-report'),
+  };
+}
+
+function buildPrompt(group, absolutePlanPath, reportPaths) {
   const agent    = group.agent || 'worktree-developer';
   const readOnly = group.read_only === true;
   const tasks    = Array.isArray(group.tasks) ? group.tasks : [group.tasks];
@@ -380,15 +428,30 @@ function buildPrompt(group, absolutePlanPath) {
     ? writes.map(w => `  - ${w}`).join('\n')
     : '  （なし）';
 
-  return [
+  // 存在するレポートの絶対パスを列挙する（worktree-developer 側の Glob を不要にする）
+  const reportLines = [];
+  if (reportPaths.requirements)   reportLines.push(`- requirements-report: ${reportPaths.requirements}`);
+  if (reportPaths.architecture)   reportLines.push(`- architecture-report: ${reportPaths.architecture}`);
+  if (reportPaths.test)           reportLines.push(`- test-report（現サイクル）: ${reportPaths.test}`);
+  if (reportPaths.codeReview)     reportLines.push(`- code-review-report（現サイクル）: ${reportPaths.codeReview}`);
+  if (reportPaths.securityReview) reportLines.push(`- security-review-report（現サイクル）: ${reportPaths.securityReview}`);
+
+  const parts = [
     `plan-report の ${tasks.join(', ')} を実装してください。`,
     `plan-report: ${absolutePlanPath}`,
+  ];
+  if (reportLines.length > 0) {
+    parts.push(`読み込むレポート（絶対パス）:\n${reportLines.join('\n')}`);
+  }
+  parts.push(
     `担当ファイル範囲（writes）:`,
     writesLines,
     `担当ファイル範囲外への書き込みは行わないこと。`,
     `Use the Agent tool with subagent_type "${agent}" and pass the above as prompt.`,
     `Do not ask questions. Execute immediately and exit.`,
-  ].join('\n');
+  );
+
+  return parts.join('\n');
 }
 
 function yamlListBlock(items, indent) {
@@ -396,12 +459,12 @@ function yamlListBlock(items, indent) {
   return items.map(item => `${pad}- ${item}`).join('\n');
 }
 
-function buildTaskYaml(id, group, absolutePlanPath, phaseScales) {
+function buildTaskYaml(id, group, absolutePlanPath, phaseScales, reportPaths) {
   const agent                     = group.agent || 'worktree-developer';
   const readOnly                  = group.read_only === true;
   const writes                    = Array.isArray(group.writes) ? group.writes : [];
   const { timeoutSec, idleTimeoutSec } = resolveTimeouts(group, phaseScales);
-  const prompt                    = buildPrompt(group, absolutePlanPath);
+  const prompt                    = buildPrompt(group, absolutePlanPath, reportPaths);
 
   // プロンプト: 6スペースでインデント（tasks > list item > prompt key の下）
   const promptIndented = prompt.split('\n').map(l => `      ${l}`).join('\n');
@@ -453,7 +516,8 @@ const orderedKeys = [
   ...groupKeys.filter(k => k !== 'pre_implementation'),
 ];
 
-const taskYamls = orderedKeys.map(key => buildTaskYaml(key, groups[key], absolutePlanPath, phaseScales));
+const reportPaths = findReportPaths(absolutePlanPath);
+const taskYamls = orderedKeys.map(key => buildTaskYaml(key, groups[key], absolutePlanPath, phaseScales, reportPaths));
 
 const manifestContent = [
   '---',
