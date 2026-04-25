@@ -1,5 +1,16 @@
 # 変更履歴
 
+## [v1.29.0] - 2026-04-26
+
+### New
+
+- `plan-to-manifest.js`: clade-parallel v0.8.0 の `retry_delay_sec` / `retry_backoff_factor` フィールドに対応。`max_retries > 0` のグループに指数バックオフ付きリトライを設定可能（rate limit 対策）。これらのフィールドを含む場合は manifest の `clade_plan_version` を自動的に `"0.5"` に切り替える（含まない場合は `"0.4"`）
+- `core.md` / `agent-planner.md`: clade-parallel v0.8.0 の `--resume` フラグに対応。失敗時の対応方針として「成功済みタスクをスキップして再実行」を Step 4 / Step 6+7 に追記
+
+### Fix
+
+- `agent-planner.md`: YAML フロントマターの出力条件を「3条件」から「4条件」に修正
+
 ## [v1.28.0] - 2026-04-25
 
 ### Changed
