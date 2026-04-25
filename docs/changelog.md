@@ -1,5 +1,12 @@
 # 変更履歴
 
+## [v1.28.0] - 2026-04-25
+
+### Changed
+
+- `worktree-developer`: 外部参照していた3つのルールファイル（`core.md`・`report-output-common.md`・`developer.md`）の内容を `INLINE:BEGIN/END` マーカー付きでエージェント定義ファイルに直接埋め込み。並列 N インスタンスで計 3N 回の Read を削減。`coding-conventions.md` のみ条件付き Read として維持
+- `plan-to-manifest.js`: manifest 生成時にレポートファイルの絶対パスを解決して各タスクのプロンプトに埋め込む `findReportPaths()` を追加。`worktree-developer` 起動時の最大 5 Glob を排除（N=4 並列で最大 20 Glob 削減）
+
 ## [v1.27.0] - 2026-04-25
 
 ### New
