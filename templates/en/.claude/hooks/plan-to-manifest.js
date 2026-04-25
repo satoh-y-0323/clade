@@ -370,6 +370,20 @@ function findReportPaths(absolutePlanPath) {
   };
 }
 
+/**
+ * Returns manifest version '0.5' if any group uses retry_delay_sec / retry_backoff_factor,
+ * otherwise returns '0.4'.
+ * @param {object} groups - parallel_groups map
+ * @returns {string} - '0.5' | '0.4'
+ */
+function resolveManifestVersion(groups) {
+  const hasBackoffFields = Object.values(groups).some(
+    g => (typeof g.retry_delay_sec === 'number' && g.retry_delay_sec > 0) ||
+         (typeof g.retry_backoff_factor === 'number' && g.retry_backoff_factor > 1.0)
+  );
+  return hasBackoffFields ? '0.5' : '0.4';
+}
+
 function buildPrompt(group, absolutePlanPath, reportPaths) {
   const agent    = group.agent || 'worktree-developer';
   const readOnly = group.read_only === true;
@@ -495,6 +509,13 @@ function buildTaskYaml(id, group, absolutePlanPath, phaseScales, reportPaths) {
   if (typeof group.max_retries === 'number' && group.max_retries > 0) {
     yaml += `\n    max_retries: ${group.max_retries}`;
   }
+  // retry_delay_sec / retry_backoff_factor: manifest v0.5+ (omit when not set)
+  if (typeof group.retry_delay_sec === 'number' && group.retry_delay_sec > 0) {
+    yaml += `\n    retry_delay_sec: ${group.retry_delay_sec}`;
+  }
+  if (typeof group.retry_backoff_factor === 'number' && group.retry_backoff_factor > 1.0) {
+    yaml += `\n    retry_backoff_factor: ${group.retry_backoff_factor}`;
+  }
 
   return yaml;
 }
@@ -510,9 +531,10 @@ const orderedKeys = [
 const reportPaths = findReportPaths(absolutePlanPath);
 const taskYamls = orderedKeys.map(key => buildTaskYaml(key, groups[key], absolutePlanPath, phaseScales, reportPaths));
 
+const manifestVersion = resolveManifestVersion(groups);
 const manifestContent = [
   '---',
-  'clade_plan_version: "0.3"',
+  `clade_plan_version: "${manifestVersion}"`,
   'tasks:',
   taskYamls.join('\n'),
   '---',

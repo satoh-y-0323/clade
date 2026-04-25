@@ -170,6 +170,18 @@ plan-report のフロントマター冒頭（`parallel_groups` より上）に `
       - src/heavy/**
 ```
 
+rate limit が頻発する場合の推奨設定（manifest v0.5 以降）:
+
+```yaml
+  # rate limit 対策の設定例（manifest v0.5）
+  group-api-tasks:
+    tasks: [T1, T2, T3]
+    max_retries: 3
+    retry_delay_sec: 30
+    retry_backoff_factor: 2.0
+    # → rate limit 時: 30s → 60s → 120s と待機してリトライ
+```
+
 **フィールド説明:**
 
 | フィールド | 内容 |
@@ -181,6 +193,8 @@ plan-report のフロントマター冒頭（`parallel_groups` より上）に `
 | `group-*.agent` | 実行エージェント。並列実装は `worktree-developer`、並列レビューは `code-reviewer` / `security-reviewer` |
 | `group-*.timeout_sec` | 合計実行時間制限（秒）。通常は `phase_scales` から自動解決されるため省略可。個別調整時のみ直書きする |
 | `group-*.max_retries` | 失敗時の最大リトライ回数（省略時は 0 = リトライなし）。一時的な失敗が疑われるタスクに設定する。通常は省略してよい |
+| `group-*.retry_delay_sec` | リトライ前の基本待機秒数（秒）。`max_retries > 0` のとき有効。`retry_backoff_factor` と組み合わせて指数バックオフ設定が可能。省略時は `0.0`（遅延なし）。最大 3600。（manifest v0.5 以降） |
+| `group-*.retry_backoff_factor` | リトライ遅延の倍率（指数バックオフ）。`1.0` = 固定遅延、`2.0` = リトライごとに遅延が2倍。省略時は `1.0`。最大 100.0。遅延の計算式: `retry_delay_sec × (retry_backoff_factor ^ attempt)`。（manifest v0.5 以降） |
 | `group-*.read_only` | YAML boolean で指定（`true` / `false`）。`worktree-developer` は `false`、`code-reviewer` / `security-reviewer` は `true` |
 | `group-*.writes` | そのグループが書き込むファイルパターン（**グループ間で重複禁止**。`read_only: true` のグループでは省略）|
 | `group-*.depends_on` | 依存グループのキー名リスト（インライン記法 `[pre_implementation]` を使用）|

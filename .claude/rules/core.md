@@ -85,7 +85,7 @@ plan-report の YAML フロントマターに `phase: developer` の `parallel_g
 node .claude/hooks/plan-to-manifest.js --phase developer {plan-report の絶対パス}
 clade-parallel run {developer-manifest パス}
 ```
-完了後、全タスク成功ならユーザーに報告する。失敗タスクがある場合は失敗タスク名・終了コード・stderr の概要をユーザーに報告し、対応方針（再実行 or 逐次モードでの修正）を確認する。
+完了後、全タスク成功ならユーザーに報告する。失敗タスクがある場合は失敗タスク名・終了コード・stderr の概要をユーザーに報告し、対応方針（`clade-parallel run --resume {developer-manifest パス}` で成功済みタスクをスキップして再実行 / 逐次モードでの修正）を確認する。
 
 タイムアウトは plan-report の `phase_scales` で指定する（詳細は `.claude/commands/agent-planner.md` 参照）。
 
@@ -120,7 +120,7 @@ plan-report の YAML フロントマターに `phase: reviewer` の `parallel_gr
 node .claude/hooks/plan-to-manifest.js --phase reviewer {plan-report の絶対パス}
 clade-parallel run {reviewer-manifest パス}
 ```
-完了後、生成された code-review-report と security-review-report を Read してユーザーに報告・承認を求める。
+完了後、生成された code-review-report と security-review-report を Read してユーザーに報告・承認を求める。失敗タスクがある場合は失敗タスク名・終了コード・stderr の概要をユーザーに報告し、対応方針（`clade-parallel run --resume {reviewer-manifest パス}` で成功済みタスクをスキップして再実行 / 逐次モードでの修正）を確認する。
 
 タイムアウトは plan-report の `phase_scales.reviewer` で指定する。
 `idle_timeout_sec` は runner.py が read_only タスクで強制 None にするため指定不要。

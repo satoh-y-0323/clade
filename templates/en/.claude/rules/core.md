@@ -85,7 +85,7 @@ If the plan-report's YAML frontmatter contains at least one `parallel_groups` en
 node .claude/hooks/plan-to-manifest.js --phase developer {absolute path to plan-report}
 clade-parallel run {developer-manifest path}
 ```
-After completion, report all-success to the user, or report failed task name, exit code, and stderr summary and ask how to proceed (retry or fix in sequential mode).
+After completion, report all-success to the user, or report failed task name, exit code, and stderr summary and ask how to proceed (`clade-parallel run --resume {developer-manifest path}` to re-run skipping already-succeeded tasks / fix in sequential mode).
 
 Timeouts are specified via `phase_scales` in the plan-report (see `.claude/commands/agent-planner.md` for details).
 
@@ -120,7 +120,7 @@ If the plan-report's YAML frontmatter contains at least one `parallel_groups` en
 node .claude/hooks/plan-to-manifest.js --phase reviewer {absolute path to plan-report}
 clade-parallel run {reviewer-manifest path}
 ```
-After completion, Read the generated code-review-report and security-review-report, then report to the user and request approval.
+After completion, Read the generated code-review-report and security-review-report, then report to the user and request approval. If any tasks failed, report the failed task name, exit code, and stderr summary to the user, and ask how to proceed (`clade-parallel run --resume {reviewer-manifest path}` to re-run skipping already-succeeded tasks / fix in sequential mode).
 
 Timeouts are specified via `phase_scales.reviewer` in the plan-report.
 `idle_timeout_sec` is not needed — runner.py forces it to None for read_only tasks.

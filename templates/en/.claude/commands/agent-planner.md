@@ -172,6 +172,18 @@ In principle, only write `phase_scales`. If a specific group needs a different t
       - src/heavy/**
 ```
 
+Recommended settings when rate limits occur frequently (manifest v0.5+):
+
+```yaml
+  # Example: rate limit mitigation (manifest v0.5)
+  group-api-tasks:
+    tasks: [T1, T2, T3]
+    max_retries: 3
+    retry_delay_sec: 30
+    retry_backoff_factor: 2.0
+    # → on rate limit: waits 30s → 60s → 120s before each retry
+```
+
 **Field descriptions:**
 
 | Field | Description |
@@ -183,6 +195,8 @@ In principle, only write `phase_scales`. If a specific group needs a different t
 | `group-*.agent` | Agent to run. Use `worktree-developer` for parallel implementation, `code-reviewer` / `security-reviewer` for parallel review |
 | `group-*.timeout_sec` | Total execution time limit (seconds). Normally auto-resolved from `phase_scales`; omit unless overriding individually |
 | `group-*.max_retries` | Maximum number of retries on failure (default 0 = no retries). Set for tasks where transient failures are expected. Normally omit. |
+| `group-*.retry_delay_sec` | Base wait time before retry (seconds). Active when `max_retries > 0`. Can be combined with `retry_backoff_factor` for exponential backoff. Default: `0.0` (no delay). Max: 3600. (manifest v0.5+) |
+| `group-*.retry_backoff_factor` | Retry delay multiplier (exponential backoff). `1.0` = fixed delay, `2.0` = delay doubles each retry. Default: `1.0`. Max: 100.0. Formula: `retry_delay_sec × (retry_backoff_factor ^ attempt)`. (manifest v0.5+) |
 | `group-*.read_only` | YAML boolean (`true` / `false`). Use `false` for `worktree-developer`, `true` for `code-reviewer` / `security-reviewer` |
 | `group-*.writes` | File patterns this group writes to (**no overlap between groups**; omit for `read_only: true` groups) |
 | `group-*.depends_on` | List of dependency group keys (use inline notation `[pre_implementation]`) |
