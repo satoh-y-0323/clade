@@ -588,9 +588,19 @@ const taskYamls = orderedKeys.map(key => buildTaskYaml(key, groups[key], absolut
 
 const manifestVersion = resolveManifestVersion(groups);
 
-// concurrency_limits が存在する場合のみトップレベルセクションを出力
-const concurrencyLimitsYaml = Object.keys(concurrencyLimits).length > 0
-  ? 'concurrency_limits:\n' + Object.entries(concurrencyLimits)
+// フィルタリング後のグループで実際に使われる concurrency_group のみ抽出
+const usedConcurrencyGroups = new Set(
+  Object.values(groups)
+    .filter(g => typeof g.concurrency_group === 'string' && g.concurrency_group.length > 0)
+    .map(g => g.concurrency_group)
+);
+const filteredConcurrencyLimits = Object.fromEntries(
+  Object.entries(concurrencyLimits).filter(([group]) => usedConcurrencyGroups.has(group))
+);
+
+// 実際に使われるグループのみトップレベルセクションを出力
+const concurrencyLimitsYaml = Object.keys(filteredConcurrencyLimits).length > 0
+  ? 'concurrency_limits:\n' + Object.entries(filteredConcurrencyLimits)
       .map(([group, limit]) => `  ${group}: ${limit}`)
       .join('\n') + '\n'
   : '';

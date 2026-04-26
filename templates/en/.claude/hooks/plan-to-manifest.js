@@ -579,9 +579,19 @@ const taskYamls = orderedKeys.map(key => buildTaskYaml(key, groups[key], absolut
 
 const manifestVersion = resolveManifestVersion(groups);
 
-// Output the top-level concurrency_limits section only when it is non-empty
-const concurrencyLimitsYaml = Object.keys(concurrencyLimits).length > 0
-  ? 'concurrency_limits:\n' + Object.entries(concurrencyLimits)
+// Extract only the concurrency groups actually used by the filtered tasks
+const usedConcurrencyGroups = new Set(
+  Object.values(groups)
+    .filter(g => typeof g.concurrency_group === 'string' && g.concurrency_group.length > 0)
+    .map(g => g.concurrency_group)
+);
+const filteredConcurrencyLimits = Object.fromEntries(
+  Object.entries(concurrencyLimits).filter(([group]) => usedConcurrencyGroups.has(group))
+);
+
+// Output the top-level section only for groups actually referenced by filtered tasks
+const concurrencyLimitsYaml = Object.keys(filteredConcurrencyLimits).length > 0
+  ? 'concurrency_limits:\n' + Object.entries(filteredConcurrencyLimits)
       .map(([group, limit]) => `  ${group}: ${limit}`)
       .join('\n') + '\n'
   : '';
