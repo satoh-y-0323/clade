@@ -408,10 +408,12 @@ function findReportPaths(absolutePlanPath) {
 }
 
 /**
- * グループに retry_delay_sec / retry_backoff_factor が含まれる場合は manifest v0.5 を返す。
- * それ以外は v0.4 を返す。
+ * グループのフィールドから適切な manifest バージョンを決定する。
+ * - concurrency_group が存在する場合: '0.7'
+ * - retry_delay_sec / retry_backoff_factor が存在する場合: '0.5'
+ * - それ以外: '0.4'
  * @param {object} groups - parallel_groups のマップ
- * @returns {string} - '0.5' | '0.4'
+ * @returns {string} - '0.7' | '0.5' | '0.4'
  */
 function resolveManifestVersion(groups) {
   // v0.7: concurrency_group が1つでも存在する場合
@@ -434,6 +436,9 @@ function buildPrompt(group, absolutePlanPath, reportPaths) {
   const tasks    = Array.isArray(group.tasks)
     ? group.tasks
     : (group.tasks != null ? [group.tasks] : []);
+  if (tasks.length === 0) {
+    console.warn(`[buildPrompt] Group "${group.agent || 'unknown'}" has no tasks defined. Check "tasks:" field in plan-report.`);
+  }
   const writes   = Array.isArray(group.writes) ? group.writes : [];
 
   if (readOnly) {
@@ -544,7 +549,7 @@ function buildTaskYaml(id, group, absolutePlanPath, phaseScales, reportPaths) {
   }
 
   yaml += `    read_only: ${readOnly}\n`;
-  yaml += `    timeout_sec: ${timeoutSec}`;
+  yaml += `    timeout_sec: ${timeoutSec}`;  // 末尾 \n なし（taskYamls.join('\n') で区切り行が入る）
 
   // idle_timeout_sec: read_only: true のタスクには設定しない
   if (!readOnly && idleTimeoutSec !== null) {
@@ -602,7 +607,7 @@ const manifestContent = [
   .join('\n');
 
 // ===== 出力 =====
-const outputDir = path.resolve('.claude/manifests');
+const outputDir = path.resolve(__dirname, '../manifests');
 if (!fs.existsSync(outputDir)) {
   fs.mkdirSync(outputDir, { recursive: true });
 }

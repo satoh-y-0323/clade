@@ -399,10 +399,12 @@ function findReportPaths(absolutePlanPath) {
 }
 
 /**
- * Returns manifest version '0.5' if any group uses retry_delay_sec / retry_backoff_factor,
- * otherwise returns '0.4'.
+ * Determines the appropriate manifest version from group fields.
+ * - concurrency_group present: '0.7'
+ * - retry_delay_sec / retry_backoff_factor present: '0.5'
+ * - otherwise: '0.4'
  * @param {object} groups - parallel_groups map
- * @returns {string} - '0.5' | '0.4'
+ * @returns {string} - '0.7' | '0.5' | '0.4'
  */
 function resolveManifestVersion(groups) {
   // v0.7: at least one concurrency_group exists
@@ -425,6 +427,9 @@ function buildPrompt(group, absolutePlanPath, reportPaths) {
   const tasks    = Array.isArray(group.tasks)
     ? group.tasks
     : (group.tasks != null ? [group.tasks] : []);
+  if (tasks.length === 0) {
+    console.warn(`[buildPrompt] Group "${group.agent || 'unknown'}" has no tasks defined. Check "tasks:" field in plan-report.`);
+  }
   const writes   = Array.isArray(group.writes) ? group.writes : [];
 
   if (readOnly) {
@@ -535,7 +540,7 @@ function buildTaskYaml(id, group, absolutePlanPath, phaseScales, reportPaths) {
   }
 
   yaml += `    read_only: ${readOnly}\n`;
-  yaml += `    timeout_sec: ${timeoutSec}`;
+  yaml += `    timeout_sec: ${timeoutSec}`;  // no trailing \n (taskYamls.join('\n') inserts the separator)
 
   // idle_timeout_sec: do not set for read_only: true tasks
   if (!readOnly && idleTimeoutSec !== null) {
@@ -593,7 +598,7 @@ const manifestContent = [
   .join('\n');
 
 // ===== Output =====
-const outputDir = path.resolve('.claude/manifests');
+const outputDir = path.resolve(__dirname, '../manifests');
 if (!fs.existsSync(outputDir)) {
   fs.mkdirSync(outputDir, { recursive: true });
 }
