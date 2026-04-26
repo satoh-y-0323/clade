@@ -20,9 +20,10 @@ export default defineConfig({
       { text: 'はじめ方', link: '/getting-started' },
       { text: 'エージェント', link: '/agents' },
       { text: 'ワークフロー', link: '/workflow' },
+      { text: '並列開発', link: '/parallel' },
       { text: 'カスタマイズ', link: '/customization' },
       {
-        text: 'v1.29.0',
+        text: 'v1.30.0',
         items: [
           { text: '変更履歴', link: '/changelog' },
           { text: 'GitHub', link: 'https://github.com/satoh-y-0323/clade' },
@@ -45,6 +46,7 @@ export default defineConfig({
         items: [
           { text: 'エージェント一覧', link: '/agents' },
           { text: 'ワークフロー', link: '/workflow' },
+          { text: '並列開発', link: '/parallel' },
           { text: 'セッション管理', link: '/session' },
         ]
       },

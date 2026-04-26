@@ -83,6 +83,10 @@ VS Code 拡張には現在既知のバグがあり、プロジェクトレベル
 
 ## 最近の更新
 
+### [v1.30.0] - 2026-04-26
+
+clade-parallel v1.0.0 に対応。`concurrency_group` / `concurrency_limits` フィールドを追加し、同一グループのタスクに同時実行上限を設定可能に（manifest v0.7）。`clade-parallel run` に `--report` フラグを追加し、全タスク完了後に実行サマリを JSON で出力。`plan-to-manifest.js` のパス解決を `__dirname` ベースに変更し、cwd 依存を排除。
+
 ### [v1.29.0] - 2026-04-26
 
 clade-parallel v0.8.0 に対応。`retry_delay_sec` / `retry_backoff_factor` フィールドを追加し、rate limit 時の指数バックオフ付きリトライを設定可能に。バックオフフィールド使用時は manifest の `clade_plan_version` を自動的に `"0.5"` に切り替え。`--resume` フラグの説明を Step 4 / Step 6+7 の失敗時対応に追記。
@@ -90,9 +94,5 @@ clade-parallel v0.8.0 に対応。`retry_delay_sec` / `retry_backoff_factor` フ
 ### [v1.28.0] - 2026-04-25
 
 `worktree-developer` の起動コストを削減。外部ルールファイル3件の内容を `INLINE:BEGIN/END` マーカー付きでエージェント定義ファイルに直接埋め込み（並列 N インスタンスで 3N 回の Read を削減）。`plan-to-manifest.js` に `findReportPaths()` を追加し、manifest 生成時にレポートパスを解決してプロンプトに埋め込むことで起動時の Glob を排除（N=4 で最大 20 Glob 削減）。
-
-### [v1.27.0] - 2026-04-25
-
-`plan-updater` エージェントを追加。developer 実装完了後・reviewer 実行前に自動呼び出しされ、plan-report から reviewer 並列グループを削除することで reviewer フェーズを常に逐次実行に保つ。clade-parallel の固定オーバーヘッド（10分以上）を踏まえてタイムアウト値と並列化判断基準も全面改訂。
 
 [すべての変更履歴を見る →](/changelog)

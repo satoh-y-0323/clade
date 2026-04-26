@@ -1,5 +1,19 @@
 # 変更履歴
 
+## [v1.30.0] - 2026-04-26
+
+### New
+
+- `plan-to-manifest.js`: clade-parallel v1.0.0 の `concurrency_group` / `concurrency_limits` フィールドに対応（manifest v0.7）。同一グループのタスクに同時実行上限を設定可能（rate limit 対策）。フィールドを含む場合は manifest の `clade_plan_version` を自動的に `"0.7"` に切り替え
+- `core.md`: `clade-parallel run` コマンドに `--report` フラグを追加。全タスク完了後に実行サマリを JSON で出力
+- `agent-planner.md` / `clade-parallel-manifest.md`: `concurrency_group` / `concurrency_limits` のスキーマ例・フィールド説明・使いどころを追記
+
+### Fix
+
+- `plan-to-manifest.js`: `findReportPaths` / `outputDir` のパス解決を `__dirname` ベースに変更（cwd 依存を排除）
+- `plan-to-manifest.js`: `buildPrompt` の `tasks` null ガード・空配列警告・改行コードサニタイズ・ヌルバイトチェック・`readdirSync` try/catch を追加
+- `plan-to-manifest.js`: `resolveManifestVersion` の JSDoc を v0.7 対応に更新
+
 ## [v1.29.0] - 2026-04-26
 
 ### New
