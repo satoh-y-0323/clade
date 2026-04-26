@@ -23,7 +23,7 @@ export default defineConfig({
       { text: '並列開発', link: '/parallel' },
       { text: 'カスタマイズ', link: '/customization' },
       {
-        text: 'v1.30.0',
+        text: 'v1.30.1',
         items: [
           { text: '変更履歴', link: '/changelog' },
           { text: 'GitHub', link: 'https://github.com/satoh-y-0323/clade' },

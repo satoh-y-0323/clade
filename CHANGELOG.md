@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.30.1] - 2026-04-26
+
+### Fix
+
+- `plan-to-manifest.js`: `--phase reviewer` でフィルタ後のタスクが `concurrency_group` を持たない場合、`concurrency_limits` をマニフェストに出力しないよう修正。clade-parallel の「未使用グループ警告」を解消
+
+---
+
 ## [v1.30.0] - 2026-04-26
 
 ### New
