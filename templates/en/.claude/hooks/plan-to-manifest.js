@@ -54,6 +54,11 @@ if (phaseFilter !== null && !VALID_PHASES.includes(phaseFilter)) {
   process.exit(1);
 }
 
+if (planReportPath.includes('\0')) {
+  console.error('Error: Path contains null bytes');
+  process.exit(1);
+}
+
 const absolutePlanPath = path.resolve(planReportPath);
 if (!fs.existsSync(absolutePlanPath)) {
   console.error(`Error: plan-report not found: ${absolutePlanPath}`);
@@ -83,6 +88,12 @@ if (!frontmatter) {
 //   - Inline list parsing in parseScalar ([a, b, c]) uses a simple split(',').
 //     Elements whose values contain commas are not parsed correctly.
 //     The current schema does not use comma-containing values, so there is no practical impact.
+//   - parseScalar's inline comment removal (' #' pattern) does not account for
+//     unquoted string values that contain ' #' (e.g. values with URL fragments).
+//     No such fields exist in the current schema.
+//   - (security) The custom parser does not support list-of-maps, so fields could be
+//     silently misinterpreted if the plan-report schema is extended in the future.
+//     Consider replacing with js-yaml or a similar standard library when extending the schema.
 
 function parseYaml(text) {
   // _lines and _pos are scoped inside parseYaml as closure variables to prevent
@@ -246,6 +257,7 @@ const concurrencyLimits = (parsed.concurrency_limits && typeof parsed.concurrenc
 
 const groups = filterGroupsByPhase(parsed.parallel_groups, phaseFilter);
 if (Object.keys(groups).length === 0) {
+  console.error(`[plan-to-manifest] No groups matched phase="${phaseFilter || '(all)'}". Exiting with 0.`);
   process.exit(0);
 }
 
@@ -281,6 +293,8 @@ function patternsConflict(p1, p2) {
   if (!hasWildcard(n1) && matchGlob(n1, n2)) return true;
   if (!hasWildcard(n2) && matchGlob(n2, n1)) return true;
   // Both have wildcards: check if fixed prefixes overlap
+  // Note: conservative (may produce false positives). e.g. src/** and src/a/** are flagged
+  // as conflicting even when actual writes are separate. Intentional safe-side design.
   if (hasWildcard(n1) && hasWildcard(n2)) {
     const pref1 = getFixedPrefix(n1), pref2 = getFixedPrefix(n2);
     return pref1.startsWith(pref2) || pref2.startsWith(pref1);
@@ -323,6 +337,7 @@ if (conflicts.length > 0) {
 
 // ===== Generate manifest =====
 function getTimestamp() {
+  // Local time (aligned with write-report.js). If switching to UTC, update both scripts together.
   const now = new Date();
   const pad = n => String(n).padStart(2, '0');
   return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
@@ -337,7 +352,8 @@ function getTimestamp() {
  *             test: string|null, codeReview: string|null, securityReview: string|null }}
  */
 function findReportPaths(absolutePlanPath) {
-  const reportsDir = path.resolve('.claude/reports');
+  // Resolve via __dirname to avoid cwd dependency (e.g. clade-parallel subprocess changes cwd)
+  const reportsDir = path.resolve(__dirname, '../reports');
   const empty = { requirements: null, architecture: null, test: null, codeReview: null, securityReview: null };
   if (!fs.existsSync(reportsDir)) return empty;
 
@@ -346,7 +362,13 @@ function findReportPaths(absolutePlanPath) {
   const tsMatch  = planBase.match(/^plan-report-(\d{8}-\d{6})$/);
   const planTs   = tsMatch ? tsMatch[1] : null;
 
-  const files = fs.readdirSync(reportsDir);
+  let files;
+  try {
+    files = fs.readdirSync(reportsDir);
+  } catch {
+    console.warn('[plan-to-manifest] Warning: failed to read reports directory');
+    return empty;
+  }
 
   function latestOf(baseName) {
     const matched = files
@@ -400,7 +422,9 @@ function resolveManifestVersion(groups) {
 function buildPrompt(group, absolutePlanPath, reportPaths) {
   const agent    = group.agent || 'worktree-developer';
   const readOnly = group.read_only === true;
-  const tasks    = Array.isArray(group.tasks) ? group.tasks : [group.tasks];
+  const tasks    = Array.isArray(group.tasks)
+    ? group.tasks
+    : (group.tasks != null ? [group.tasks] : []);
   const writes   = Array.isArray(group.writes) ? group.writes : [];
 
   if (readOnly) {
@@ -410,7 +434,7 @@ function buildPrompt(group, absolutePlanPath, reportPaths) {
     };
     const reportBaseName = reportBaseNames[agent] || `${agent}-report`;
     // Sanitize path against """ delimiter injection: replace """ with ''' before embedding
-    const safePlanPath = absolutePlanPath.replace(/"""/g, "'''");
+    const safePlanPath = absolutePlanPath.replace(/"""/g, "'''").replace(/[\r\n]/g, '');
 
     return [
       `Use the Agent tool with subagent_type "${agent}" to review the code.`,
@@ -565,7 +589,8 @@ const manifestContent = [
   taskYamls.join('\n'),
   '---',
   '',
-].filter(line => line !== null).join('\n');
+].filter(line => line !== null)  // skip the section when concurrencyLimits is empty
+  .join('\n');
 
 // ===== Output =====
 const outputDir = path.resolve('.claude/manifests');

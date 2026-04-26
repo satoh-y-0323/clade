@@ -54,6 +54,11 @@ if (phaseFilter !== null && !VALID_PHASES.includes(phaseFilter)) {
   process.exit(1);
 }
 
+if (planReportPath.includes('\0')) {
+  console.error('Error: パスにヌルバイトが含まれています');
+  process.exit(1);
+}
+
 const absolutePlanPath = path.resolve(planReportPath);
 if (!fs.existsSync(absolutePlanPath)) {
   console.error(`Error: plan-report not found: ${absolutePlanPath}`);
@@ -83,6 +88,12 @@ if (!frontmatter) {
 //   - parseScalar のインラインリスト解析 ([a, b, c]) は単純な split(',') を使用。
 //     要素値にカンマが含まれるケースは正しく解析されない。
 //     現行スキーマではカンマ入り文字列は使用されていないため実害なし。
+//   - parseScalar のインラインコメント除去（' #' パターン）は
+//     クォートなし文字列値に ' #' が含まれる（例: URL フラグメントを含む値）ケースを未考慮。
+//     現行スキーマでは該当フィールドなし。
+//   - (security) 自作パーサーは list-of-maps 未対応のため、plan-report フォーマットが
+//     今後拡張される場合はフィールドが無音で誤解析される可能性がある。
+//     スキーマ拡張時は js-yaml 等の標準ライブラリへの置き換えを検討すること。
 
 function parseYaml(text) {
   // _lines と _pos を parseYaml のローカルスコープに閉じ込めることで
@@ -246,6 +257,7 @@ const concurrencyLimits = (parsed.concurrency_limits && typeof parsed.concurrenc
 
 const groups = filterGroupsByPhase(parsed.parallel_groups, phaseFilter);
 if (Object.keys(groups).length === 0) {
+  console.error(`[plan-to-manifest] No groups matched phase="${phaseFilter || '(all)'}". Exiting with 0.`);
   process.exit(0);
 }
 
@@ -288,6 +300,8 @@ function patternsConflict(p1, p2) {
   if (!hasWildcard(n1) && matchGlob(n1, n2)) return true;
   if (!hasWildcard(n2) && matchGlob(n2, n1)) return true;
   // 両方ワイルドカードあり → 固定プレフィックスの包含関係で判定
+  // 注意: 保守的な判定（偽陽性あり）。例: src/** と src/a/** は衝突と判定されるが
+  // 実際の書き込みは分離されている場合がある。安全側に倒した設計で意図的。
   if (hasWildcard(n1) && hasWildcard(n2)) {
     const prefix1 = getFixedPrefix(n1);
     const prefix2 = getFixedPrefix(n2);
@@ -332,6 +346,7 @@ if (conflicts.length > 0) {
 
 // ===== マニフェスト生成 =====
 function getTimestamp() {
+  // ローカル時刻ベース（write-report.js と統一。UTCへの変更は両スクリプト同時に行うこと）
   const now = new Date();
   const pad = n => String(n).padStart(2, '0');
   return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
@@ -346,7 +361,8 @@ function getTimestamp() {
  *             test: string|null, codeReview: string|null, securityReview: string|null }}
  */
 function findReportPaths(absolutePlanPath) {
-  const reportsDir = path.resolve('.claude/reports');
+  // __dirname ベースで解決することで cwd 変更の影響を受けない（clade-parallel サブプロセス対策）
+  const reportsDir = path.resolve(__dirname, '../reports');
   const empty = { requirements: null, architecture: null, test: null, codeReview: null, securityReview: null };
   if (!fs.existsSync(reportsDir)) return empty;
 
@@ -355,7 +371,13 @@ function findReportPaths(absolutePlanPath) {
   const tsMatch   = planBase.match(/^plan-report-(\d{8}-\d{6})$/);
   const planTs    = tsMatch ? tsMatch[1] : null;
 
-  const files = fs.readdirSync(reportsDir);
+  let files;
+  try {
+    files = fs.readdirSync(reportsDir);
+  } catch {
+    console.warn('[plan-to-manifest] Warning: reports ディレクトリの読み取りに失敗しました');
+    return empty;
+  }
 
   function latestOf(baseName) {
     const matched = files
@@ -409,7 +431,9 @@ function resolveManifestVersion(groups) {
 function buildPrompt(group, absolutePlanPath, reportPaths) {
   const agent    = group.agent || 'worktree-developer';
   const readOnly = group.read_only === true;
-  const tasks    = Array.isArray(group.tasks) ? group.tasks : [group.tasks];
+  const tasks    = Array.isArray(group.tasks)
+    ? group.tasks
+    : (group.tasks != null ? [group.tasks] : []);
   const writes   = Array.isArray(group.writes) ? group.writes : [];
 
   if (readOnly) {
@@ -419,7 +443,7 @@ function buildPrompt(group, absolutePlanPath, reportPaths) {
     };
     const reportBaseName = reportBaseNames[agent] || `${agent}-report`;
     // """ デリミタ内へのパス直接埋め込み対策: パス内の """ を ''' に置換
-    const safePlanPath = absolutePlanPath.replace(/"""/g, "'''");
+    const safePlanPath = absolutePlanPath.replace(/"""/g, "'''").replace(/[\r\n]/g, '');
 
     return [
       `Use the Agent tool with subagent_type "${agent}" to review the code.`,
@@ -574,7 +598,8 @@ const manifestContent = [
   taskYamls.join('\n'),
   '---',
   '',
-].filter(line => line !== null).join('\n');
+].filter(line => line !== null)  // concurrencyLimits が空の場合のセクションをスキップ
+  .join('\n');
 
 // ===== 出力 =====
 const outputDir = path.resolve('.claude/manifests');
