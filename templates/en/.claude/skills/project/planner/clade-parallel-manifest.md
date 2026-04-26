@@ -33,6 +33,25 @@ Rules for writing clade-parallel YAML frontmatter in plan-reports.
 - `--phase developer` filter: extracts groups with `phase: developer` or no phase specified
 - `--phase reviewer` filter: extracts only groups with `phase: reviewer`
 
+### concurrency_group (optional, v0.7)
+- Concurrency group name for this task (string)
+- Tasks in the same group are limited to concurrent runs as specified by `concurrency_limits`
+- When omitted: no concurrency group (only `--max-workers` applies)
+
+## Manifest top-level fields
+
+| Field | Type | Description |
+|---|---|---|
+| `concurrency_limits` | object | Map of group name to max concurrent executions (1–256). Required when any task uses `concurrency_group` (v0.7) |
+
+### Usage example
+
+```yaml
+concurrency_limits:
+  claude-api: 3   # up to 3 claude-api group tasks at once
+  db-write: 1     # db-write group tasks run serially
+```
+
 ## Timeout decision matrix
 
 Specifying a scale in `phase_scales` lets `plan-to-manifest.js` resolve timeouts automatically. Direct values are only for individual group adjustments.

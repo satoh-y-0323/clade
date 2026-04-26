@@ -115,6 +115,10 @@ phase_scales:
   developer: medium   # developer フェーズ全体のデフォルト scale（small | medium | large）
   reviewer: small     # reviewer フェーズ全体のデフォルト scale（small | medium | large）
 
+# コンカレンシーグループの制限（省略可）
+concurrency_limits:
+  claude-api: 3    # claude-api グループのタスクは同時3つまで
+
 parallel_groups:
   pre_implementation:          # 先行着手グループ（不要な場合はキーごと省略）
     tasks: [T0]
@@ -128,6 +132,7 @@ parallel_groups:
     agent: worktree-developer
     depends_on: [pre_implementation]   # pre_implementation がある場合のみ
     read_only: false
+    concurrency_group: claude-api      # このタスクを claude-api グループに属させる（省略可）
     writes:
       - src/user/**
   group-b:
@@ -198,6 +203,24 @@ rate limit が頻発する場合の推奨設定（manifest v0.5 以降）:
 | `group-*.read_only` | YAML boolean で指定（`true` / `false`）。`worktree-developer` は `false`、`code-reviewer` / `security-reviewer` は `true` |
 | `group-*.writes` | そのグループが書き込むファイルパターン（**グループ間で重複禁止**。`read_only: true` のグループでは省略）|
 | `group-*.depends_on` | 依存グループのキー名リスト（インライン記法 `[pre_implementation]` を使用）|
+| `group-*.concurrency_group` | 省略可。このタスクが属するコンカレンシーグループ名。同グループは `concurrency_limits` で同時実行数を制限する（manifest v0.7 以降） |
+| `concurrency_limits` | 省略可。グループ名をキー、同時実行上限を値とするトップレベルマップ。`concurrency_group` を使う場合は記載する（manifest v0.7 以降） |
+
+### concurrency_group の使いどころ
+
+`--max-workers` が全タスク横断の上限であるのに対し、`concurrency_group` はグループ別の上限です。
+同じ Claude API を叩くタスクが多い場合にレート制限を避けるために使います。
+
+例：8タスクを `--max-workers 6` で実行するが、Claude API 呼び出しタスクは同時3つまでに制限したい場合：
+
+```yaml
+concurrency_limits:
+  claude-api: 3
+parallel_groups:
+  task-a:
+    concurrency_group: claude-api
+    ...
+```
 
 **ファイルパターンの記法:**
 - `src/user/**` — `src/user/` 配下の全ファイル

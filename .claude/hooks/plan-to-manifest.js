@@ -238,6 +238,12 @@ const phaseScales = (parsed.phase_scales && typeof parsed.phase_scales === 'obje
   ? parsed.phase_scales
   : {};
 
+// concurrency_limits: フロントマターのトップレベルから読み取る
+// 例: { 'claude-api': 3, 'db-write': 1 }
+const concurrencyLimits = (parsed.concurrency_limits && typeof parsed.concurrency_limits === 'object')
+  ? parsed.concurrency_limits
+  : {};
+
 const groups = filterGroupsByPhase(parsed.parallel_groups, phaseFilter);
 if (Object.keys(groups).length === 0) {
   process.exit(0);
@@ -386,6 +392,13 @@ function findReportPaths(absolutePlanPath) {
  * @returns {string} - '0.5' | '0.4'
  */
 function resolveManifestVersion(groups) {
+  // v0.7: concurrency_group が1つでも存在する場合
+  const hasConcurrencyGroup = Object.values(groups).some(
+    g => typeof g.concurrency_group === 'string' && g.concurrency_group.length > 0
+  );
+  if (hasConcurrencyGroup) return '0.7';
+
+  // v0.5: retry_delay_sec / retry_backoff_factor が存在する場合
   const hasBackoffFields = Object.values(groups).some(
     g => (typeof g.retry_delay_sec === 'number' && g.retry_delay_sec > 0) ||
          (typeof g.retry_backoff_factor === 'number' && g.retry_backoff_factor > 1.0)
@@ -525,6 +538,10 @@ function buildTaskYaml(id, group, absolutePlanPath, phaseScales, reportPaths) {
   if (typeof group.retry_backoff_factor === 'number' && group.retry_backoff_factor > 1.0) {
     yaml += `\n    retry_backoff_factor: ${group.retry_backoff_factor}`;
   }
+  // concurrency_group: manifest v0.7 以降（省略時は出力しない）
+  if (typeof group.concurrency_group === 'string' && group.concurrency_group.length > 0) {
+    yaml += `\n    concurrency_group: ${group.concurrency_group}`;
+  }
 
   return yaml;
 }
@@ -541,14 +558,23 @@ const reportPaths = findReportPaths(absolutePlanPath);
 const taskYamls = orderedKeys.map(key => buildTaskYaml(key, groups[key], absolutePlanPath, phaseScales, reportPaths));
 
 const manifestVersion = resolveManifestVersion(groups);
+
+// concurrency_limits が存在する場合のみトップレベルセクションを出力
+const concurrencyLimitsYaml = Object.keys(concurrencyLimits).length > 0
+  ? 'concurrency_limits:\n' + Object.entries(concurrencyLimits)
+      .map(([group, limit]) => `  ${group}: ${limit}`)
+      .join('\n') + '\n'
+  : '';
+
 const manifestContent = [
   '---',
   `clade_plan_version: "${manifestVersion}"`,
+  concurrencyLimitsYaml ? concurrencyLimitsYaml.trimEnd() : null,
   'tasks:',
   taskYamls.join('\n'),
   '---',
   '',
-].join('\n');
+].filter(line => line !== null).join('\n');
 
 // ===== 出力 =====
 const outputDir = path.resolve('.claude/manifests');

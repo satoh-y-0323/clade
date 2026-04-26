@@ -83,7 +83,7 @@ plan-report の YAML フロントマターに `phase: developer` の `parallel_g
 
 ```bash
 node .claude/hooks/plan-to-manifest.js --phase developer {plan-report の絶対パス}
-clade-parallel run {developer-manifest パス}
+clade-parallel run {developer-manifest パス} --report {developer-manifest パスの .md を -report.json に置換したパス}
 ```
 完了後、全タスク成功ならユーザーに報告する。失敗タスクがある場合は失敗タスク名・終了コード・stderr の概要をユーザーに報告し、対応方針（`clade-parallel run --resume {developer-manifest パス}` で成功済みタスクをスキップして再実行 / 逐次モードでの修正）を確認する。
 
@@ -118,7 +118,7 @@ plan-report の YAML フロントマターに `phase: reviewer` の `parallel_gr
 
 ```bash
 node .claude/hooks/plan-to-manifest.js --phase reviewer {plan-report の絶対パス}
-clade-parallel run {reviewer-manifest パス}
+clade-parallel run {reviewer-manifest パス} --report {reviewer-manifest パスの .md を -report.json に置換したパス}
 ```
 完了後、生成された code-review-report と security-review-report を Read してユーザーに報告・承認を求める。失敗タスクがある場合は失敗タスク名・終了コード・stderr の概要をユーザーに報告し、対応方針（`clade-parallel run --resume {reviewer-manifest パス}` で成功済みタスクをスキップして再実行 / 逐次モードでの修正）を確認する。
 

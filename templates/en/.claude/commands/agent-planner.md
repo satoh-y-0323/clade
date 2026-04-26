@@ -118,6 +118,10 @@ phase_scales:
   developer: medium   # default scale for the developer phase (small | medium | large)
   reviewer: small     # default scale for the reviewer phase (small | medium | large)
 
+# Concurrency group limits (optional)
+concurrency_limits:
+  claude-api: 3    # up to 3 claude-api group tasks at once
+
 parallel_groups:
   pre_implementation:          # Lead group (omit this key entirely if not needed)
     tasks: [T0]
@@ -131,6 +135,7 @@ parallel_groups:
     agent: worktree-developer
     depends_on: [pre_implementation]   # only when pre_implementation exists
     read_only: false
+    concurrency_group: claude-api      # assign this task to the claude-api group (optional)
     writes:
       - src/user/**
   group-b:
@@ -200,6 +205,24 @@ Recommended settings when rate limits occur frequently (manifest v0.5+):
 | `group-*.read_only` | YAML boolean (`true` / `false`). Use `false` for `worktree-developer`, `true` for `code-reviewer` / `security-reviewer` |
 | `group-*.writes` | File patterns this group writes to (**no overlap between groups**; omit for `read_only: true` groups) |
 | `group-*.depends_on` | List of dependency group keys (use inline notation `[pre_implementation]`) |
+| `group-*.concurrency_group` | Optional. Concurrency group name for this task. Tasks in the same group are limited by `concurrency_limits` (manifest v0.7+) |
+| `concurrency_limits` | Optional. Top-level map of group name to max concurrent executions. Required when using `concurrency_group` (manifest v0.7+) |
+
+### When to use concurrency_group
+
+While `--max-workers` caps the total number of concurrent tasks, `concurrency_group` caps concurrency per group.
+Use it when many tasks share the same Claude API to avoid hitting rate limits.
+
+Example: running 8 tasks with `--max-workers 6`, but limiting Claude API tasks to 3 at a time:
+
+```yaml
+concurrency_limits:
+  claude-api: 3
+parallel_groups:
+  task-a:
+    concurrency_group: claude-api
+    ...
+```
 
 **File pattern syntax:**
 - `src/user/**` — all files under `src/user/`

@@ -83,7 +83,7 @@ If the plan-report's YAML frontmatter contains at least one `parallel_groups` en
 
 ```bash
 node .claude/hooks/plan-to-manifest.js --phase developer {absolute path to plan-report}
-clade-parallel run {developer-manifest path}
+clade-parallel run {developer-manifest path} --report {developer-manifest path with .md replaced by -report.json}
 ```
 After completion, report all-success to the user, or report failed task name, exit code, and stderr summary and ask how to proceed (`clade-parallel run --resume {developer-manifest path}` to re-run skipping already-succeeded tasks / fix in sequential mode).
 
@@ -118,7 +118,7 @@ If the plan-report's YAML frontmatter contains at least one `parallel_groups` en
 
 ```bash
 node .claude/hooks/plan-to-manifest.js --phase reviewer {absolute path to plan-report}
-clade-parallel run {reviewer-manifest path}
+clade-parallel run {reviewer-manifest path} --report {reviewer-manifest path with .md replaced by -report.json}
 ```
 After completion, Read the generated code-review-report and security-review-report, then report to the user and request approval. If any tasks failed, report the failed task name, exit code, and stderr summary to the user, and ask how to proceed (`clade-parallel run --resume {reviewer-manifest path}` to re-run skipping already-succeeded tasks / fix in sequential mode).
 
